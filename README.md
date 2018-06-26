@@ -347,7 +347,3 @@ public IActionResult Get(DynamicQueryOptions filter)
 ### Work in Progress Features
 
 * Operation shortcodes
-
-
-
-
