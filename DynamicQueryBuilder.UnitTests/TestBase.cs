@@ -23,6 +23,8 @@ namespace DynamicQueryBuilder.UnitTests
             public InnerMemberTestClass InnerMember { get; set; }
 
             public string Name { get; set; }
+
+            public int? NullableMember { get; set; }
         }
 
         protected ParameterExpression XParam
