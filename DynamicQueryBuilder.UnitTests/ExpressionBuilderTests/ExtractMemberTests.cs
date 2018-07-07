@@ -53,5 +53,12 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 ExpressionBuilder.ExtractMember(XParam, "Name.Age");
             });
         }
+
+        [Fact]
+        public void ExtractMemberShouldHandleNullableTypes()
+        {
+            const string reflectedValue = "x.NullableMember.Value";
+            Assert.Equal(reflectedValue, ExpressionBuilder.ExtractMember(XParam, "NullableMember").ToString());
+        }
     }
 }

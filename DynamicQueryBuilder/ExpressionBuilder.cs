@@ -352,6 +352,12 @@ namespace DynamicQueryBuilder
                 parentMember = Expression.PropertyOrField(parentMember, propertyName);
             }
 
+            // Nullable Type
+            if (Nullable.GetUnderlyingType(parentMember.Type) != null)
+            {
+                parentMember = Expression.PropertyOrField(parentMember, "Value");
+            }
+
             return parentMember;
         }
 
