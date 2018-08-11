@@ -168,6 +168,32 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
+        public void ApplyFiltersShouldApplyAllGivenQueryTypes()
+        {
+            IQueryable<TestModel> currentSet = CreateSampleSet();
+            var allQueryTypes = new DynamicQueryOptions
+            {
+                PaginationOption = new PaginationOption
+                {
+                    Count = 1,
+                    Offset = 1
+                },
+                SortOption = new SortOption
+                {
+                    PropertyName = "Age",
+                    SortingDirection = SortingDirection.Desc
+                },
+                Filters = new List<Filter> { new Filter { Operator = FilterOperation.Equals, PropertyName = "Age", Value = "5" } }
+            };
+
+            IQueryable<TestModel> result = currentSet.ApplyFilters(allQueryTypes);
+            string expressionString = result.Expression.ToString();
+            Assert.Contains($".OrderByDescending(x => Convert(x.{allQueryTypes.SortOption.PropertyName}, Object))", expressionString);
+            Assert.Contains($".Where(x => (x.{allQueryTypes.Filters[0].PropertyName} == {allQueryTypes.Filters[0].Value})", expressionString);
+            Assert.Contains($".Skip({allQueryTypes.PaginationOption.Offset}).Take({allQueryTypes.PaginationOption.Offset})", expressionString);
+        }
+
+        [Fact]
         public void ApplyFiltersShouldAssignDataSetCountWhenAssignDataSetCountIsTrue()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();

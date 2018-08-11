@@ -47,12 +47,15 @@ namespace DynamicQueryBuilder
                 ParameterExpression param = Expression.Parameter(typeof(T), "x");
                 if (dynamicQueryOptions.Filters != null && dynamicQueryOptions.Filters.Count > 0)
                 {
+                    // Copy the array since we need to mutate it, we should avoid mutating the real list.
+                    List<Filter> dqbFilters = dynamicQueryOptions.Filters.ToList();
+
                     // Since the expression is null at this point, we should create it with our first filter.
-                    exp = BuildFilterExpression<T>(param, dynamicQueryOptions.Filters.FirstOrDefault());
-                    dynamicQueryOptions.Filters.RemoveAt(0); // Remove the first since it was added already.
+                    exp = BuildFilterExpression<T>(param, dqbFilters.FirstOrDefault());
+                    dqbFilters.RemoveAt(0); // Remove the first since it was added already.
 
                     // Append the rest
-                    foreach (Filter item in dynamicQueryOptions.Filters)
+                    foreach (Filter item in dqbFilters)
                     {
                         exp = Expression.AndAlso(exp, BuildFilterExpression<T>(param, item));
                     }
@@ -74,7 +77,7 @@ namespace DynamicQueryBuilder
                     }
                 }
 
-                currentSet = exp != null ? queryable.Where(Expression.Lambda<Func<T, bool>>(exp, param)) : currentSet;
+                currentSet = exp != null ? currentSet.Where(Expression.Lambda<Func<T, bool>>(exp, param)) : currentSet;
                 if (dynamicQueryOptions.PaginationOption != null)
                 {
                     if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)

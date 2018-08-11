@@ -4,7 +4,7 @@
 
 using System.Linq;
 
-#if NETCOREAPP2_0
+#if NETCOREAPP2_1
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Primitives;
@@ -65,7 +65,7 @@ namespace DynamicQueryBuilder
         }
 #endif
 
-#if NETCOREAPP2_0
+#if NETCOREAPP2_1
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             ParameterDescriptor dynamicQueryParameter =
