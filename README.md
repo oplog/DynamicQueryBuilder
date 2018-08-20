@@ -4,7 +4,7 @@ Dynamic Query Builder currently can `filter` and `sort` the applied `IQueryable<
 
 DynamicQueryBuilder currently supports:
 
-* .NET Core 2.0
+* .NET Core 2.1
 * .NET Framework 4.5
 
 and above.
