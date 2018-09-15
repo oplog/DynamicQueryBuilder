@@ -4,23 +4,36 @@ Dynamic Query Builder currently can `filter` and `sort` the applied `IQueryable<
 
 DynamicQueryBuilder currently supports:
 
-* .NET Core 2.1
-* .NET Framework 4.5
+* .NET Standard 2.0
 
-and above.
+## Index
+
+- [DynamicQueryOptions Class](#DynamicQueryOptions)
+  * [Filtering](#Filtering)
+    + [Supported Operations](#Supported-Operations)
+- [Sorting](#Sorting)
+- [Accessing Nested Objects](#Accessing-Nested-Objects)
+- [Pagination](#Pagination)
+- [Dynamic Query Parsing](#Dynamic-Query-Parsing)
+  * [HTTP Parameters](#Http-Parameters)
+  * [HTTP Query Examples](#HTTP-Query-Examples)
+  * [Web Action Examples](#Web-Action-Examples)
+- [Work In Progress](#Work-In-Progress)
 
 ## How It Works
 
-To build a dynamic query you need to create an instance of `DynamicQueryOptions` class
+To build a dynamic query you need to create an instance of `DynamicQueryOptions` class.
 
-### DynamicQueryOptions class
+### DynamicQueryOptions
+
+- [Back to index](#Index)
 
 ```csharp
     public sealed class DynamicQueryOptions
     {
         public List<Filter> Filters { get; set; } = new List<Filter>();
 
-        public SortOption SortOption { get; set; }
+        public List<SortOption> SortOption { get; set; } = new List<SortOption>();
     }
 ```
 
@@ -28,11 +41,13 @@ which contains your `Filter` and `Sort` operation options.
 
 ## Filtering
 
+- [Back to index](#Index)
+
 Filters are `List<Filter>` instances in the `DynamicQueryOptions` class.
 
 Since you have to pass the value of the property as `string` the property type and value matching will be made automatically by the library. This includes `null` values as well.
 
-### Filter class
+### Filter Class
 
 ```csharp
     public sealed class Filter
@@ -44,6 +59,10 @@ Since you have to pass the value of the property as `string` the property type a
         public FilterOperation Operator { get; set; } = FilterOperation.Contains;
     }
 ```
+
+### Supported Operations
+
+- [Back to index](#Index)
 
 Supported filter operations:
 
@@ -76,6 +95,8 @@ var filter = new Filter
 
 ## Sorting
 
+- [Back to index](#Index)
+
 Sorting is an option to `DynamicQueryOptions` class as a `SortOption` instance.
 
 ### SortOption class
@@ -99,7 +120,12 @@ var mySortOption = new SortOption
 }
 ```
 
-#### Accessing nested objects
+TIP: DQB Supports multiple sort operations.
+
+
+#### Accessing Nested Objects
+
+- [Back to index](#Index)
 
 DynamicQueryBuilder can access nested objects with `.` delimeter like default LINQ.
 
@@ -140,6 +166,8 @@ var mySortOption = new SortOption
 
 ## Pagination
 
+- [Back to index](#Index)
+
 Pagination can be done by specifying options to the `PaginationOptions` class member of `DynamicQueryOptions` class.
 
 ```csharp
@@ -179,9 +207,13 @@ int totalDataSetCount = paginationOption.DataSetCount;
 
 ## Dynamic Query Parsing
 
+- [Back to index](#Index)
+
 Dynamic Query Builder can also parse the given `HTTP` request query parameters by its own conventions into a `DynamicQueryOptions` instance.
 
 #### Http Parameters
+
+- [Back to index](#Index)
 
 ##### `o` Parameter
 
@@ -205,7 +237,7 @@ Dynamic Query Builder can also parse the given `HTTP` request query parameters b
 
 * Refers to the `SortOption` class. 
 * This parameter can be placed anywhere in the querystring.
-*  **If this parameter occurs more than once, the first occurence will be assigned.**
+*  **If this parameter occurs more than once, sorting will be done in the given order.**
 
 ##### `offset` Parameter
 
@@ -220,6 +252,10 @@ Dynamic Query Builder can also parse the given `HTTP` request query parameters b
 *  **If this parameter occurs more than once, the first occurence will be assigned.**
 
 ---
+
+### HTTP Query Examples
+
+- [Back to index](#Index)
 
 ###### Valid Example: `?o=Equals&p=myproperty&v=myvalue`
 
@@ -291,7 +327,9 @@ Tip: if you do not provide any sorting direction, DynamicQueryBuilder will sort 
 
 ###### Valid Example with ascending sort without stating the direction: `?o=Equals&p=myproperty&v=myvalue&s=myproperty`
 
-## Example usage in a Web Action
+## Web Action Examples
+
+- [Back to index](#Index)
 
 #### DynamicQueryAttribute
 
@@ -344,6 +382,8 @@ public IActionResult Get(DynamicQueryOptions filter)
 ```
 ---
 
-### Work in Progress Features
+### Work In Progress
 
 * Operation shortcodes
+
+- [Back to index](#Index)
