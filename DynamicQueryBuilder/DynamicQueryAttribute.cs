@@ -2,18 +2,10 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
-using System.Linq;
-
-#if NETCOREAPP2_1
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Primitives;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
-#endif
-#if NET45
-using System.Web.Http.Controllers;
-using System.Web.Http.Filters;
-#endif
 
 namespace DynamicQueryBuilder
 {
@@ -47,25 +39,6 @@ namespace DynamicQueryBuilder
             _resolveFromParameter = resolveFromParameter;
         }
 
-#if NET45
-        public override void OnActionExecuting(HttpActionContext actionContext)
-        {
-            HttpParameterDescriptor dynamicQueryParameter =
-                actionContext.ActionDescriptor
-                             .GetParameters()
-                             .FirstOrDefault(x => x.ParameterType == typeof(DynamicQueryOptions));
-
-            if (dynamicQueryParameter != null)
-            {
-                DynamicQueryOptions options = ExpressionBuilder.ParseQueryOptions(actionContext.Request.RequestUri.Query);
-                actionContext.ActionArguments[dynamicQueryParameter.ParameterName] = options;
-            }
-
-            base.OnActionExecuting(actionContext);
-        }
-#endif
-
-#if NETCOREAPP2_1
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             ParameterDescriptor dynamicQueryParameter =
@@ -107,6 +80,5 @@ namespace DynamicQueryBuilder
 
             base.OnActionExecuting(context);
         }
-#endif
     }
 }
