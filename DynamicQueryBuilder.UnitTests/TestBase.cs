@@ -9,7 +9,7 @@ namespace DynamicQueryBuilder.UnitTests
 {
     public abstract class TestBase
     {
-        protected const string DYNAMIC_QUERY_STRING = "?o=Equals&p=Name&v=Value&s=Name,desc&offset=0&count=10";
+        protected const string DYNAMIC_QUERY_STRING = "?o=Equals&p=Name&v=Value&s=Name,desc&s=Age&offset=0&count=10";
         protected const string DYNAMIC_QUERY_STRING_PARAM = "dqb";
         protected string dynamicQueryWithParam = $"?{DYNAMIC_QUERY_STRING_PARAM}=o%3DEquals%26p%3Dcategory%26v%3DMovies";
 

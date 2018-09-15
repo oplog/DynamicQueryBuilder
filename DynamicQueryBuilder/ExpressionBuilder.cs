@@ -62,18 +62,24 @@ namespace DynamicQueryBuilder
                 }
 
                 IQueryable<T> queryable = currentSet.AsQueryable();
-                if (dynamicQueryOptions.SortOption != null)
+                if (dynamicQueryOptions.SortOptions != null && dynamicQueryOptions.SortOptions.Count > 0)
                 {
+                    const string ORDER_BY_FUNCTION_NAME = "OrderBy";
                     // OrderBy function requires a Func<T, TKey> since we don't have the TKey type plain System.Object should do the trick here.
-                    Expression orderMember = Expression.Convert(ExtractMember(param, dynamicQueryOptions.SortOption.PropertyName), typeof(object));
-                    var orderExpression = Expression.Lambda<Func<T, object>>(orderMember, param);
-                    if (dynamicQueryOptions.SortOption.SortingDirection == SortingDirection.Asc)
+                    foreach (SortOption sortOption in dynamicQueryOptions.SortOptions)
                     {
-                        currentSet = queryable.OrderBy(orderExpression);
-                    }
-                    else
-                    {
-                        currentSet = queryable.OrderByDescending(orderExpression);
+                        Expression orderMember = Expression.Convert(ExtractMember(param, sortOption.PropertyName), typeof(object));
+                        var orderExpression = Expression.Lambda<Func<T, object>>(orderMember, param);
+                        bool isOrdered = currentSet.Expression.ToString().Contains(ORDER_BY_FUNCTION_NAME);
+
+                        if (sortOption.SortingDirection == SortingDirection.Asc)
+                        {
+                            currentSet = isOrdered ? ((IOrderedQueryable<T>)currentSet).ThenBy(orderExpression) : queryable.OrderBy(orderExpression);
+                        }
+                        else
+                        {
+                            currentSet = isOrdered ? ((IOrderedQueryable<T>)currentSet).ThenByDescending(orderExpression) : queryable.OrderByDescending(orderExpression);
+                        }
                     }
                 }
 
@@ -191,30 +197,36 @@ namespace DynamicQueryBuilder
                 throw new QueryTripletsMismatchException("Invalid query structure. Operation, parameter name and value triplets are not matching.");
             }
 
-            if (sortOptions != null && sortOptions.Length >= 1 && !string.IsNullOrEmpty(sortOptions[0]))
+            if (sortOptions != null && sortOptions.Length >= 1)
             {
-                // Split the property name to sort and the direction.
-                string[] splittedParam = sortOptions[0].Split(',');
-                SortingDirection direction = SortingDirection.Asc;
-                if (splittedParam.Length == 2)
+                foreach (string sortOption in sortOptions)
                 {
-                    // If we get an array of 2 we have a sorting direction, try to apply it.
-                    if (!Enum.TryParse(splittedParam[1], true, out direction))
+                    if (!string.IsNullOrEmpty(sortOption))
                     {
-                        throw new InvalidDynamicQueryException("Invalid sorting direction");
+                        // Split the property name to sort and the direction.
+                        string[] splittedParam = sortOption.Split(',');
+                        SortingDirection direction = SortingDirection.Asc;
+                        if (splittedParam.Length == 2)
+                        {
+                            // If we get an array of 2 we have a sorting direction, try to apply it.
+                            if (!Enum.TryParse(splittedParam[1], true, out direction))
+                            {
+                                throw new InvalidDynamicQueryException("Invalid sorting direction");
+                            }
+                        }
+                        else if (splittedParam.Length > 2) // If we get more than 2 results in the array, url must be wrong.
+                        {
+                            throw new InvalidDynamicQueryException("Invalid query structure. SortOption is misformed");
+                        }
+
+                        // Create the sorting option.
+                        dynamicQueryOptions.SortOptions.Add(new SortOption
+                        {
+                            SortingDirection = direction,
+                            PropertyName = splittedParam[0].Trim().TrimStart().TrimEnd()
+                        });
                     }
                 }
-                else if (splittedParam.Length > 2) // If we get more than 2 results in the array, url must be wrong.
-                {
-                    throw new InvalidDynamicQueryException("Invalid query structure. SortOption is misformed");
-                }
-
-                // Create the sorting option.
-                dynamicQueryOptions.SortOption = new SortOption
-                {
-                    SortingDirection = direction,
-                    PropertyName = splittedParam[0].Trim().TrimStart().TrimEnd()
-                };
             }
 
             if (offsetOptions != null
