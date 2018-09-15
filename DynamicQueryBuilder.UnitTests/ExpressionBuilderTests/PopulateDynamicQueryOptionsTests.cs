@@ -54,13 +54,14 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             _reflectedObjectWithValidParametersAndSorted = new DynamicQueryOptions
             {
-                Filters = validListOfOperationsParsed,
-                SortOption = new SortOption
-                {
-                    PropertyName = validSortOptionsSplitted[0],
-                    SortingDirection = (SortingDirection)Enum.Parse(typeof(SortingDirection), validSortOptionsSplitted[1], true)
-                }
+                Filters = validListOfOperationsParsed
             };
+
+            _reflectedObjectWithValidParametersAndSorted.SortOptions.Add(new SortOption
+            {
+                PropertyName = validSortOptionsSplitted[0],
+                SortingDirection = (SortingDirection)Enum.Parse(typeof(SortingDirection), validSortOptionsSplitted[1], true)
+            });
         }
 
         [Fact]
@@ -93,15 +94,15 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         public void NullOrEmptySortOptions()
         {
             var opts = new DynamicQueryOptions();
-            SortOption currentSortOptsValue = opts.SortOption;
+            List<SortOption> currentSortOptsValue = opts.SortOptions;
 
             ExpressionBuilder.PopulateDynamicQueryOptions(
                 opts, _validOperations, _validParameterNames, _validParameterValues, null, _emptyArray, _emptyArray);
-            Assert.Equal(currentSortOptsValue, opts.SortOption);
+            Assert.Equal(currentSortOptsValue, opts.SortOptions);
 
             ExpressionBuilder.PopulateDynamicQueryOptions(
                 opts, _validOperations, _validParameterNames, _validParameterValues, _arrayOfOne, _emptyArray, _emptyArray);
-            Assert.Equal(currentSortOptsValue, opts.SortOption);
+            Assert.Equal(currentSortOptsValue, opts.SortOptions);
         }
 
         [Fact]
@@ -127,14 +128,16 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
-        public void ValidSortingOptionsShouldOnlyParseTheFirstMember()
+        public void ValidSortingOptionsShouldParseAllMembers()
         {
             var opts = new DynamicQueryOptions();
             ExpressionBuilder.PopulateDynamicQueryOptions(
                     opts, _validOperations, _validParameterNames, _validParameterValues, new string[] { "Name,Desc", "Age,Asc" }, _emptyArray, _emptyArray);
 
-            Assert.Equal("Name", opts.SortOption.PropertyName);
-            Assert.Equal(SortingDirection.Desc, opts.SortOption.SortingDirection);
+            Assert.Equal("Name", opts.SortOptions[0].PropertyName);
+            Assert.Equal(SortingDirection.Desc, opts.SortOptions[0].SortingDirection);
+            Assert.Equal("Age", opts.SortOptions[1].PropertyName);
+            Assert.Equal(SortingDirection.Asc, opts.SortOptions[1].SortingDirection);
         }
 
         [Fact]

@@ -27,8 +27,6 @@ namespace DynamicQueryBuilder
     {
         public List<Filter> Filters { get; set; } = new List<Filter>();
 
-        public SortOption SortOption { get; set; }
-
         public List<SortOption> SortOptions { get; set; } = new List<SortOption>();
 
         public PaginationOption PaginationOption { get; set; }

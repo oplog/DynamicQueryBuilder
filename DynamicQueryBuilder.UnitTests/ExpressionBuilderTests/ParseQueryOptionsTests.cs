@@ -41,17 +41,26 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                         Operator = FilterOperation.Equals
                     }
                 },
-                SortOption = new SortOption
-                {
-                    PropertyName = "Name",
-                    SortingDirection = SortingDirection.Desc
-                },
                 PaginationOption = new PaginationOption
                 {
                     Count = 10,
                     Offset = 0
                 }
             };
+
+            validOptions.SortOptions.AddRange(new SortOption[]
+            {
+                new SortOption
+                {
+                    PropertyName = "Name",
+                    SortingDirection = SortingDirection.Desc
+                },
+                new SortOption
+                {
+                    PropertyName = "Age",
+                    SortingDirection = SortingDirection.Asc
+                }
+            });
 
             DynamicQueryOptions validResult = ExpressionBuilder.ParseQueryOptions(DYNAMIC_QUERY_STRING);
             Assert.True(AreObjectPropertiesMatching(validOptions, validOptions));

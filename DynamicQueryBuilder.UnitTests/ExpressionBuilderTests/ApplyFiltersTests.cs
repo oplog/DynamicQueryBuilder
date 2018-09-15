@@ -30,25 +30,25 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
-        public void ApplyFiltersShouldReturnGivenSetWhenOptionsAreExistingButFiltersAreNull()
+        public void ApplyFiltersShouldReturnGivenSetWhenOptionsAndFiltersAreNull()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
             {
                 Filters = null,
-                SortOption = null
+                SortOptions = null
             }).AsQueryable();
 
             Assert.Equal(returnedSet.Expression, currentSet.Expression);
         }
 
         [Fact]
-        public void ApplyFiltersShouldReturnGivenSetWhenOptionsAreExistingButFiltersAreEmpty()
+        public void ApplyFiltersShouldReturnGivenSetWhenOptionsAndFiltersAreEmpty()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
             {
-                SortOption = null,
+                SortOptions = new List<SortOption>(),
                 Filters = new List<Filter>()
             }).AsQueryable();
 
@@ -93,28 +93,22 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         public void Apply_filters_should_append_sorting_options_to_the_given_query()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
-            var ascendingSortingOptions = new DynamicQueryOptions
+            var ascendingSortingOptions = new DynamicQueryOptions();
+            ascendingSortingOptions.SortOptions.Add(new SortOption
             {
-                SortOption = new SortOption
-                {
-                    PropertyName = "Age",
-                    SortingDirection = SortingDirection.Asc
-                }
-            };
+                PropertyName = "Age",
+                SortingDirection = SortingDirection.Asc
+            });
 
-            var descendingSortingOptions = new DynamicQueryOptions
+            var descendingSortingOptions = new DynamicQueryOptions();
+            descendingSortingOptions.SortOptions.Add(new SortOption
             {
-                SortOption = new SortOption
-                {
-                    PropertyName = "Age",
-                    SortingDirection = SortingDirection.Desc
-                }
-            };
+                PropertyName = "Age",
+                SortingDirection = SortingDirection.Desc
+            });
 
-            var directionNotSpecifiedSortingOptions = new DynamicQueryOptions
-            {
-                SortOption = new SortOption { PropertyName = "Age" }
-            };
+            var directionNotSpecifiedSortingOptions = new DynamicQueryOptions();
+            directionNotSpecifiedSortingOptions.SortOptions.Add(new SortOption { PropertyName = "Age" });
 
             // Unfortunately, there is no better way to check the sorting method here that i could find.
             IQueryable<TestModel> resultOfAscendingOption = currentSet.ApplyFilters(ascendingSortingOptions).AsQueryable();
