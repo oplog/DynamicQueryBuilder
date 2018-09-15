@@ -62,18 +62,24 @@ namespace DynamicQueryBuilder
                 }
 
                 IQueryable<T> queryable = currentSet.AsQueryable();
-                if (dynamicQueryOptions.SortOption != null)
+                if (dynamicQueryOptions.SortOptions.Count > 0)
                 {
+                    const string ORDER_BY_FUNCTION_NAME = "OrderBy";
                     // OrderBy function requires a Func<T, TKey> since we don't have the TKey type plain System.Object should do the trick here.
-                    Expression orderMember = Expression.Convert(ExtractMember(param, dynamicQueryOptions.SortOption.PropertyName), typeof(object));
-                    var orderExpression = Expression.Lambda<Func<T, object>>(orderMember, param);
-                    if (dynamicQueryOptions.SortOption.SortingDirection == SortingDirection.Asc)
+                    foreach (SortOption sortOption in dynamicQueryOptions.SortOptions)
                     {
-                        currentSet = queryable.OrderBy(orderExpression);
-                    }
-                    else
-                    {
-                        currentSet = queryable.OrderByDescending(orderExpression);
+                        Expression orderMember = Expression.Convert(ExtractMember(param, sortOption.PropertyName), typeof(object));
+                        var orderExpression = Expression.Lambda<Func<T, object>>(orderMember, param);
+                        bool isOrdered = currentSet.Expression.ToString().Contains(ORDER_BY_FUNCTION_NAME);
+
+                        if (sortOption.SortingDirection == SortingDirection.Asc)
+                        {
+                            currentSet = isOrdered ? ((IOrderedQueryable<T>)currentSet).ThenBy(orderExpression) : queryable.OrderBy(orderExpression);
+                        }
+                        else
+                        {
+                            currentSet = isOrdered ? ((IOrderedQueryable<T>)currentSet).ThenByDescending(orderExpression) : queryable.OrderByDescending(orderExpression);
+                        }
                     }
                 }
 

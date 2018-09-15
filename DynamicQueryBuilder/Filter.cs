@@ -29,6 +29,8 @@ namespace DynamicQueryBuilder
 
         public SortOption SortOption { get; set; }
 
+        public List<SortOption> SortOptions { get; set; } = new List<SortOption>();
+
         public PaginationOption PaginationOption { get; set; }
     }
 
