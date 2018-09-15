@@ -71,7 +71,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             foreach (string item in operations)
             {
-                var innerOperation = Enum.Parse<FilterOperation>(item);
+                var innerOperation = (FilterOperation)Enum.Parse(typeof(FilterOperation), item);
                 switch (innerOperation)
                 {
                     case FilterOperation.Equals:

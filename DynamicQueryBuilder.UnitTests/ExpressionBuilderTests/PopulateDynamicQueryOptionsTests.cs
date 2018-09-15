@@ -37,13 +37,13 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 {
                     Value = _validParameterValues[0],
                     PropertyName = _validParameterNames[0],
-                    Operator = Enum.Parse<FilterOperation>(_validOperations[0])
+                    Operator = (FilterOperation)Enum.Parse(typeof(FilterOperation), _validOperations[0])
                 },
                 new Filter
                 {
                     Value = _validParameterValues[1],
                     PropertyName = _validParameterNames[1],
-                    Operator = Enum.Parse<FilterOperation>(_validOperations[1], true)
+                    Operator = (FilterOperation)Enum.Parse(typeof(FilterOperation), _validOperations[1], true)
                 }
             };
 
@@ -58,7 +58,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 SortOption = new SortOption
                 {
                     PropertyName = validSortOptionsSplitted[0],
-                    SortingDirection = Enum.Parse<SortingDirection>(validSortOptionsSplitted[1], true)
+                    SortingDirection = (SortingDirection)Enum.Parse(typeof(SortingDirection), validSortOptionsSplitted[1], true)
                 }
             };
         }
