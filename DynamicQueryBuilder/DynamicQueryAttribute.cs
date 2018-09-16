@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
+using System.Collections.Generic;
 
 namespace DynamicQueryBuilder
 {
@@ -18,6 +19,7 @@ namespace DynamicQueryBuilder
         internal readonly bool _includeDataSetCountToPagination;
         internal readonly PaginationBehaviour _exceededPaginationCountBehaviour;
         internal readonly string _resolveFromParameter;
+        internal readonly Dictionary<string, FilterOperation> _opShortCodes;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DynamicQueryAttribute"/> class.
@@ -27,16 +29,19 @@ namespace DynamicQueryBuilder
         /// <param name="includeDataSetCountToPagination">Includes the total data set count to the options class.</param>
         /// <param name="exceededPaginationCountBehaviour">Behaviour when the requested data set count greater than max count size.</param>
         /// <param name="resolveFromParameter">Resolves the dynamic query string from the given query parameter value.</param>
+        /// <param name="opShortCodes">Key value pair for operation short code customization.</param>
         public DynamicQueryAttribute(
             int maxCountSize = 100,
             bool includeDataSetCountToPagination = true,
             PaginationBehaviour exceededPaginationCountBehaviour = PaginationBehaviour.GetMax,
-            string resolveFromParameter = "")
+            string resolveFromParameter = "",
+            Dictionary<string, FilterOperation> opShortCodes = null)
         {
             _maxCountSize = maxCountSize;
             _includeDataSetCountToPagination = includeDataSetCountToPagination;
             _exceededPaginationCountBehaviour = exceededPaginationCountBehaviour;
             _resolveFromParameter = resolveFromParameter;
+            _opShortCodes = opShortCodes;
         }
 
         public override void OnActionExecuting(ActionExecutingContext context)
@@ -49,7 +54,7 @@ namespace DynamicQueryBuilder
             if (dynamicQueryParameter != null)
             {
                 DynamicQueryOptions parsedOptions =
-                    ExpressionBuilder.ParseQueryOptions(context.HttpContext.Request.QueryString.Value, _resolveFromParameter);
+                    ExpressionBuilder.ParseQueryOptions(context.HttpContext.Request.QueryString.Value, _resolveFromParameter, _opShortCodes);
                 if (parsedOptions.PaginationOption != null)
                 {
                     parsedOptions.PaginationOption.AssignDataSetCount = _includeDataSetCountToPagination;

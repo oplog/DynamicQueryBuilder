@@ -62,8 +62,66 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 }
             });
 
-            DynamicQueryOptions validResult = ExpressionBuilder.ParseQueryOptions(DYNAMIC_QUERY_STRING);
-            Assert.True(AreObjectPropertiesMatching(validOptions, validOptions));
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions(DYNAMIC_QUERY_STRING);
+            Assert.True(AreObjectPropertiesMatching(validOptions, result));
+        }
+
+        [Fact]
+        public void ParseQueryOptionsShouldHandleOperationShortCodes()
+        {
+            var validOptions = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Value = "123",
+                        PropertyName = "name",
+                        Operator = FilterOperation.Equals
+                    },
+                    new Filter
+                    {
+                        Value = "21",
+                        PropertyName = "age",
+                        Operator = FilterOperation.GreaterThanOrEqual
+                    }
+                }
+            };
+
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=eq&p=name&v=123&o=gtoe&p=age&v=21");
+            Assert.True(AreObjectPropertiesMatching(validOptions, result));
+        }
+
+        [Fact]
+        public void ParseQueryOptionsShouldHandleOperationCustomShortCodes()
+        {
+            var validOptions = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Value = "123",
+                        PropertyName = "name",
+                        Operator = FilterOperation.Equals
+                    },
+                    new Filter
+                    {
+                        Value = "21",
+                        PropertyName = "age",
+                        Operator = FilterOperation.GreaterThanOrEqual
+                    }
+                }
+            };
+
+            var customOpShortCodes = new Dictionary<string, FilterOperation>
+            {
+                { "fizz", FilterOperation.Equals },
+                { "buzz", FilterOperation.GreaterThanOrEqual }
+            };
+
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=fizz&p=name&v=123&o=buzz&p=age&v=21", opShortCodes: customOpShortCodes);
+            Assert.True(AreObjectPropertiesMatching(validOptions, result));
         }
 
         [Fact]
@@ -82,8 +140,17 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 }
             };
 
-            DynamicQueryOptions validResult = ExpressionBuilder.ParseQueryOptions(dynamicQueryWithParam, DYNAMIC_QUERY_STRING_PARAM);
-            Assert.True(AreObjectPropertiesMatching(validOptions, validOptions));
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions(dynamicQueryWithParam, DYNAMIC_QUERY_STRING_PARAM);
+            Assert.True(AreObjectPropertiesMatching(validOptions, result));
+        }
+
+        [Fact]
+        public void ParseQueryOptionsShouldThrowExceptionWhenInvalidOperationProvided()
+        {
+            Assert.Throws<DynamicQueryException>(() =>
+            {
+                ExpressionBuilder.ParseQueryOptions("o=invalid&p=operation&v=provided");
+            });
         }
 
         [Fact]

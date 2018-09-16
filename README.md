@@ -8,17 +8,18 @@ DynamicQueryBuilder currently supports:
 
 ## Index
 
-- [DynamicQueryOptions Class](#DynamicQueryOptions)
-  * [Filtering](#Filtering)
-    + [Supported Operations](#Supported-Operations)
-- [Sorting](#Sorting)
-- [Accessing Nested Objects](#Accessing-Nested-Objects)
-- [Pagination](#Pagination)
-- [Dynamic Query Parsing](#Dynamic-Query-Parsing)
-  * [HTTP Parameters](#Http-Parameters)
-  * [HTTP Query Examples](#HTTP-Query-Examples)
-  * [Web Action Examples](#Web-Action-Examples)
-- [Work In Progress](#Work-In-Progress)
+- [DynamicQueryOptions Class](###DynamicQueryOptions)
+  * [Filtering](##Filtering)
+    + [Supported Operations](###Supported-Operations)
+- [Sorting](##Sorting)
+- [Accessing Nested Objects](####Accessing-Nested-Objects)
+- [Pagination](##Pagination)
+- [Dynamic Query Parsing](##Dynamic-Query-Parsing)
+  * [HTTP Parameters](####Http-Parameters)
+  * [HTTP Query Examples](###HTTP-Query-Examples)
+  * [Web Action Examples](##Web-Action-Examples)
+  * [Operation Shortcodes](##Operation-Shortcodes)
+- [Work In Progress](###Work-In-Progress)
 
 ## How It Works
 
@@ -26,7 +27,7 @@ To build a dynamic query you need to create an instance of `DynamicQueryOptions`
 
 ### DynamicQueryOptions
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 ```csharp
     public sealed class DynamicQueryOptions
@@ -41,7 +42,7 @@ which contains your `Filter` and `Sort` operation options.
 
 ## Filtering
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 Filters are `List<Filter>` instances in the `DynamicQueryOptions` class.
 
@@ -62,7 +63,7 @@ Since you have to pass the value of the property as `string` the property type a
 
 ### Supported Operations
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 Supported filter operations:
 
@@ -95,7 +96,7 @@ var filter = new Filter
 
 ## Sorting
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 Sorting is an option to `DynamicQueryOptions` class as a `SortOption` instance.
 
@@ -125,7 +126,7 @@ TIP: DQB Supports multiple sort operations.
 
 #### Accessing Nested Objects
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 DynamicQueryBuilder can access nested objects with `.` delimeter like default LINQ.
 
@@ -166,7 +167,7 @@ var mySortOption = new SortOption
 
 ## Pagination
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 Pagination can be done by specifying options to the `PaginationOptions` class member of `DynamicQueryOptions` class.
 
@@ -207,13 +208,13 @@ int totalDataSetCount = paginationOption.DataSetCount;
 
 ## Dynamic Query Parsing
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 Dynamic Query Builder can also parse the given `HTTP` request query parameters by its own conventions into a `DynamicQueryOptions` instance.
 
 #### Http Parameters
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 ##### `o` Parameter
 
@@ -255,7 +256,7 @@ Dynamic Query Builder can also parse the given `HTTP` request query parameters b
 
 ### HTTP Query Examples
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 ###### Valid Example: `?o=Equals&p=myproperty&v=myvalue`
 
@@ -327,9 +328,27 @@ Tip: if you do not provide any sorting direction, DynamicQueryBuilder will sort 
 
 ###### Valid Example with ascending sort without stating the direction: `?o=Equals&p=myproperty&v=myvalue&s=myproperty`
 
+## Operation ShortCodes
+
+- [Back to index](##Index)
+
+DQB has default operation short codes for shorter HTTP queries which are below;
+
+```csharp
+{ "eq", FilterOperation.Equals },
+{ "lt", FilterOperation.LessThan },
+{ "cts", FilterOperation.Contains },
+{ "ne", FilterOperation.NotEqual },
+{ "ew", FilterOperation.EndsWith },
+{ "sw", FilterOperation.StartsWith },
+{ "gt", FilterOperation.GreaterThan },
+{ "ltoe", FilterOperation.LessThanOrEqual },
+{ "gtoe", FilterOperation.GreaterThanOrEqual }
+```
+
 ## Web Action Examples
 
-- [Back to index](#Index)
+- [Back to index](##Index)
 
 #### DynamicQueryAttribute
 
@@ -342,7 +361,11 @@ int maxCountSize = 100,
     // Declares the switch for inclusion of total data set count to `PaginationOptions` class.
 bool includeDataSetCountToPagination = true,
     // Declares the behaviour when the requested page size exceeds the assigned maximum count.
-PaginationBehaviour exceededPaginationCountBehaviour = PaginationBehaviour.GetMax)
+PaginationBehaviour exceededPaginationCountBehaviour = PaginationBehaviour.GetMax,
+    // Resolves the dynamic query string from the given query parameter value.
+string resolveFromParameter = "",
+    // Key value pair for operation short code customization.
+Dictionary<string, FilterOperation> opShortCodes = null)
 ```
 
 ### PaginationBehaviour enum
@@ -380,10 +403,27 @@ public IActionResult Get(DynamicQueryOptions filter)
     return Ok(myDataSet.ApplyFilters(filter));
 }
 ```
+
+### Example for OperationShortCodeCustomization
+
+```csharp
+
+private readonly Dictionary<string, FilterOperation> _customOps = new Dictionary<string, FilterOperation>
+{
+ // .. custom entries
+};
+
+[HttpGet("getMyDataSet")]
+[DynamicQuery(maxCountSize: 101, includeDataSetCountToPagination: true, exceededPaginationCountBehaviour: PaginationBehaviour.GetMax, opShortCodes: _customOps)]
+public IActionResult Get(DynamicQueryOptions filter)
+{
+    IEnumerable<MyObject> myDataSet = _myRepository.GetMyObjectList();
+    return Ok(myDataSet.ApplyFilters(filter));
+}
+
+```
 ---
 
 ### Work In Progress
 
-* Operation shortcodes
-
-- [Back to index](#Index)
+- [Back to index](##Index)
