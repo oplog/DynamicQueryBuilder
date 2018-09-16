@@ -25,6 +25,19 @@ namespace DynamicQueryBuilder
         internal const string OFFSET_PARAMETER_KEY = "offset";
         internal const string COUNT_PARAMETER_KEY = "count";
 
+        public static readonly Dictionary<string, FilterOperation> DefaultOpShortCodes = new Dictionary<string, FilterOperation>
+        {
+            { "eq", FilterOperation.Equals },
+            { "lt", FilterOperation.LessThan },
+            { "cts", FilterOperation.Contains },
+            { "ne", FilterOperation.NotEqual },
+            { "ew", FilterOperation.EndsWith },
+            { "sw", FilterOperation.StartsWith },
+            { "gt", FilterOperation.GreaterThan },
+            { "ltoe", FilterOperation.LessThanOrEqual },
+            { "gtoe", FilterOperation.GreaterThanOrEqual }
+        };
+
         /// <summary>
         /// Applies the given DynamicQueryOptions to the IEnumerable instace.
         /// </summary>
@@ -103,7 +116,7 @@ namespace DynamicQueryBuilder
             }
         }
 
-        public static DynamicQueryOptions ParseQueryOptions(string query, string resolveFromParameter = "")
+        public static DynamicQueryOptions ParseQueryOptions(string query, string resolveFromParameter = "", Dictionary<string, FilterOperation> opShortCodes = null)
         {
             try
             {
@@ -147,7 +160,8 @@ namespace DynamicQueryBuilder
                     parameterValues,
                     sortOptions,
                     offsetOptions,
-                    countOptions);
+                    countOptions,
+                    opShortCodes ?? DefaultOpShortCodes);
 
                 return dynamicQueryOptions;
             }
@@ -164,7 +178,8 @@ namespace DynamicQueryBuilder
             string[] parameterValues,
             string[] sortOptions,
             string[] offsetOptions,
-            string[] countOptions)
+            string[] countOptions,
+            Dictionary<string, FilterOperation> opShortCodes = null)
         {
             if (dynamicQueryOptions == null)
             {
@@ -176,20 +191,30 @@ namespace DynamicQueryBuilder
             {
                 for (int i = 0; i < operations.Length; i++)
                 {
+                    FilterOperation foundOperation = default(FilterOperation);
+
                     // Check if we support this operation.
                     if (Enum.TryParse(operations[i], true, out FilterOperation parsedOperation))
                     {
-                        dynamicQueryOptions.Filters.Add(new Filter
-                        {
-                            Value = parameterValues[i],
-                            Operator = parsedOperation,
-                            PropertyName = parameterNames[i]
-                        });
+                        foundOperation = parsedOperation;
+                    }
+                    else if (opShortCodes != null
+                        && opShortCodes.Count > 0
+                        && opShortCodes.TryGetValue(operations[i], out FilterOperation shortCodeOperation)) // Whoop maybe its a short code ?
+                    {
+                        foundOperation = shortCodeOperation;
                     }
                     else
                     {
                         throw new OperationNotSupportedException($"Invalid operation {operations[i]}");
                     }
+
+                    dynamicQueryOptions.Filters.Add(new Filter
+                    {
+                        Operator = foundOperation,
+                        Value = parameterValues[i],
+                        PropertyName = parameterNames[i]
+                    });
                 }
             }
             else
