@@ -25,7 +25,7 @@ namespace DynamicQueryBuilder
         internal const string OFFSET_PARAMETER_KEY = "offset";
         internal const string COUNT_PARAMETER_KEY = "count";
 
-        public static readonly Dictionary<string, FilterOperation> DefaultOpShortCodes = new Dictionary<string, FilterOperation>
+        public static readonly CustomOpCodes DefaultOpShortCodes = new CustomOpCodes
         {
             { "eq", FilterOperation.Equals },
             { "lt", FilterOperation.LessThan },
@@ -116,7 +116,7 @@ namespace DynamicQueryBuilder
             }
         }
 
-        public static DynamicQueryOptions ParseQueryOptions(string query, string resolveFromParameter = "", Dictionary<string, FilterOperation> opShortCodes = null)
+        public static DynamicQueryOptions ParseQueryOptions(string query, string resolveFromParameter = "", CustomOpCodes opShortCodes = null)
         {
             try
             {
@@ -179,7 +179,7 @@ namespace DynamicQueryBuilder
             string[] sortOptions,
             string[] offsetOptions,
             string[] countOptions,
-            Dictionary<string, FilterOperation> opShortCodes = null)
+            CustomOpCodes opShortCodes = null)
         {
             if (dynamicQueryOptions == null)
             {

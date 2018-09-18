@@ -114,7 +114,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 }
             };
 
-            var customOpShortCodes = new Dictionary<string, FilterOperation>
+            var customOpShortCodes = new CustomOpCodes
             {
                 { "fizz", FilterOperation.Equals },
                 { "buzz", FilterOperation.GreaterThanOrEqual }
