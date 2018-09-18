@@ -62,7 +62,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 }
             });
 
-            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=MemberQuery&p=InnerTestModels&v=(o=eq&p=Role&v=(o=eq&p=OtherRole&v=admin))");
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=MemberQuery&p=InnerTestModels&v=(o=mq&p=Role&v=(o=eq&p=OtherRole&v=admin&o=eq&p=OtherSecondRole&v=1321)&o=eq&p=SecondLayer&v=1234)&o=cts&p=sth&v=firstlayer");
             Assert.True(AreObjectPropertiesMatching(validOptions, result));
         }
 

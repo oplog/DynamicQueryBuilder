@@ -36,7 +36,8 @@ namespace DynamicQueryBuilder
             { "sw", FilterOperation.StartsWith },
             { "gt", FilterOperation.GreaterThan },
             { "ltoe", FilterOperation.LessThanOrEqual },
-            { "gtoe", FilterOperation.GreaterThanOrEqual }
+            { "gtoe", FilterOperation.GreaterThanOrEqual },
+            { "mq", FilterOperation.MemberQuery }
         };
 
         /// <summary>
@@ -145,9 +146,12 @@ namespace DynamicQueryBuilder
                 }
 
                 DynamicQueryOptions innerQueryOptions = null;
-                if (decodedQuery.Contains("v=("))
+                const string innerMemberKey = "v=(";
+                int indexOfInnerMemberKey = decodedQuery.IndexOf(innerMemberKey);
+                if (indexOfInnerMemberKey != -1)
                 {
-                    var innerQuery = Regex.Match(decodedQuery, @"\(([^)]*)\)").Groups[1].Value;
+                    indexOfInnerMemberKey += innerMemberKey.Length;
+                    string innerQuery = decodedQuery.Substring(indexOfInnerMemberKey, decodedQuery.LastIndexOf(')') - indexOfInnerMemberKey);
                     innerQueryOptions = ParseQueryOptions(innerQuery);
                     decodedQuery = decodedQuery.Replace(innerQuery, string.Empty);
                 }
@@ -190,7 +194,7 @@ namespace DynamicQueryBuilder
             string[] offsetOptions,
             string[] countOptions,
             CustomOpCodes opShortCodes = null,
-            DynamicQueryOptions parsedInnerOptions = null)
+            DynamicQueryOptions memberQueryOptions = null)
         {
             if (dynamicQueryOptions == null)
             {
@@ -220,13 +224,22 @@ namespace DynamicQueryBuilder
                         throw new OperationNotSupportedException($"Invalid operation {operations[i]}");
                     }
 
-                    dynamicQueryOptions.Filters.Add(new Filter
+                    var composedFilter = new Filter
                     {
                         Operator = foundOperation,
-                        Value = foundOperation != FilterOperation.MemberQuery ? parameterValues[i] : string.Empty,
                         PropertyName = parameterNames[i],
-                        MemberOptions = parsedInnerOptions
-                    });
+                    };
+
+                    if (foundOperation == FilterOperation.MemberQuery)
+                    {
+                        composedFilter.Value = memberQueryOptions;
+                    }
+                    else
+                    {
+                        composedFilter.Value = parameterValues[i];
+                    }
+
+                    dynamicQueryOptions.Filters.Add(composedFilter);
                 }
             }
             else
@@ -303,15 +316,13 @@ namespace DynamicQueryBuilder
         /// <returns>Built query expression.</returns>
         internal static Expression BuildFilterExpression<T>(ParameterExpression param, Filter filter)
         {
-
-            if (filter.Operator == (FilterOperation)33)
+            if (filter.Operator == FilterOperation.MemberQuery)
             {
-
+                return null;
             }
 
-
             Expression parentMember = ExtractMember(param, filter.PropertyName);
-
+            string stringFilterValue = filter.Value.ToString();
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
             {
@@ -321,7 +332,7 @@ namespace DynamicQueryBuilder
                 }
 
                 // Split all data into a list
-                List<string> splittedValues = filter.Value.Split(',').ToList();
+                List<string> splittedValues = stringFilterValue.Split(',').ToList();
                 var equalsFilter = new Filter
                 {
                     Operator = FilterOperation.Equals,
@@ -344,8 +355,8 @@ namespace DynamicQueryBuilder
             }
 
             // We should convert the data into its own type before we do any query building.
-            object convertedValue = filter.Value != "null" ?
-                                    TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(filter.Value) :
+            object convertedValue = stringFilterValue != "null" ?
+                                    TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(stringFilterValue) :
                                     null;
 
             ConstantExpression constant = Expression.Constant(convertedValue);

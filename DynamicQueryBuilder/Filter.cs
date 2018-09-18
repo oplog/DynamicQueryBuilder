@@ -11,12 +11,9 @@ namespace DynamicQueryBuilder
     {
         public string PropertyName { get; set; }
 
-        public string Value { get; set; }
+        public object Value { get; set; }
 
         public FilterOperation Operator { get; set; } = FilterOperation.Contains;
-
-        public DynamicQueryOptions MemberOptions { get; set; }
-
     }
 
     public sealed class SortOption
