@@ -62,7 +62,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 }
             });
 
-            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions(DYNAMIC_QUERY_STRING);
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=MemberQuery&p=InnerTestModels&v=(o=eq&p=Role&v=(o=eq&p=OtherRole&v=admin))");
             Assert.True(AreObjectPropertiesMatching(validOptions, result));
         }
 

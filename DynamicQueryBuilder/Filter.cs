@@ -14,6 +14,9 @@ namespace DynamicQueryBuilder
         public string Value { get; set; }
 
         public FilterOperation Operator { get; set; } = FilterOperation.Contains;
+
+        public DynamicQueryOptions MemberOptions { get; set; }
+
     }
 
     public sealed class SortOption
@@ -67,6 +70,7 @@ namespace DynamicQueryBuilder
         StartsWith,
         GreaterThan,
         LessThanOrEqual,
-        GreaterThanOrEqual
+        GreaterThanOrEqual,
+        MemberQuery
     }
 }

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Web;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
@@ -143,6 +144,14 @@ namespace DynamicQueryBuilder
                     decodedQuery = HttpUtility.UrlDecode(query);
                 }
 
+                DynamicQueryOptions innerQueryOptions = null;
+                if (decodedQuery.Contains("v=("))
+                {
+                    var innerQuery = Regex.Match(decodedQuery, @"\(([^)]*)\)").Groups[1].Value;
+                    innerQueryOptions = ParseQueryOptions(innerQuery);
+                    decodedQuery = decodedQuery.Replace(innerQuery, string.Empty);
+                }
+
                 var defaultArrayValue = new List<string>().ToArray();
                 NameValueCollection queryCollection = HttpUtility.ParseQueryString(decodedQuery);
 
@@ -161,7 +170,8 @@ namespace DynamicQueryBuilder
                     sortOptions,
                     offsetOptions,
                     countOptions,
-                    opShortCodes ?? DefaultOpShortCodes);
+                    opShortCodes ?? DefaultOpShortCodes,
+                    innerQueryOptions);
 
                 return dynamicQueryOptions;
             }
@@ -179,7 +189,8 @@ namespace DynamicQueryBuilder
             string[] sortOptions,
             string[] offsetOptions,
             string[] countOptions,
-            Dictionary<string, FilterOperation> opShortCodes = null)
+            Dictionary<string, FilterOperation> opShortCodes = null,
+            DynamicQueryOptions parsedInnerOptions = null)
         {
             if (dynamicQueryOptions == null)
             {
@@ -212,8 +223,9 @@ namespace DynamicQueryBuilder
                     dynamicQueryOptions.Filters.Add(new Filter
                     {
                         Operator = foundOperation,
-                        Value = parameterValues[i],
-                        PropertyName = parameterNames[i]
+                        Value = foundOperation != FilterOperation.MemberQuery ? parameterValues[i] : string.Empty,
+                        PropertyName = parameterNames[i],
+                        MemberOptions = parsedInnerOptions
                     });
                 }
             }
@@ -291,6 +303,13 @@ namespace DynamicQueryBuilder
         /// <returns>Built query expression.</returns>
         internal static Expression BuildFilterExpression<T>(ParameterExpression param, Filter filter)
         {
+
+            if (filter.Operator == (FilterOperation)33)
+            {
+
+            }
+
+
             Expression parentMember = ExtractMember(param, filter.PropertyName);
 
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.

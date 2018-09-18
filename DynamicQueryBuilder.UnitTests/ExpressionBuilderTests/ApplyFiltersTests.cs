@@ -19,6 +19,13 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             public int Age { get; set; }
 
             public string Name { get; set; }
+
+            public List<InnerTestModel> InnerTestModels { get; set; }
+        }
+
+        internal class InnerTestModel
+        {
+            public string Role { get; set; }
         }
 
         [Fact]
