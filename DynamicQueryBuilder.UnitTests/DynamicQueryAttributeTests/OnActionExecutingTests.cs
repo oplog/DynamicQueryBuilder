@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -112,7 +113,7 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
             return context.ActionArguments.First().Value as DynamicQueryOptions;
         }
 
-        private ActionExecutingContext CreateContext(string query = null)
+        private ActionExecutingContext CreateContext(string query = null, CustomOpCodes customOpCodes = null)
         {
             var actionDescriptor = new ActionDescriptor
             {
@@ -129,6 +130,12 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
 
             HttpContext httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString(query ?? DYNAMIC_QUERY_STRING);
+            if (customOpCodes != null)
+            {
+                var serviceProvider = new ServiceCollection();
+                serviceProvider.AddSingleton(customOpCodes);
+                httpContext.RequestServices = serviceProvider.BuildServiceProvider(true);
+            }
 
             var actionContext = new ActionExecutingContext(
                 new ActionContext(httpContext, new RouteData(), actionDescriptor),
