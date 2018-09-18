@@ -8,18 +8,18 @@ DynamicQueryBuilder currently supports:
 
 ## Index
 
-- <a href="#DynamicQueryOptions">DynamicQueryOptions Class</a> 
-  * <a href="#Filtering">Filtering</a> 
-    + <a href="#Supported-Operations">Supported Operations</a> 
-- <a href="#Sorting">Sorting</a>
-- <a href="#Accessing Nested Objects">Accessing-Nested-Objects</a> 
-- <a href="#Pagination">Pagination</a>
-- <a href="#Dynamic-Query-Parsing">Dynamic Query Parsing</a>
-  * <a href="#Http-Parameters">HTTP Parameters</a>
-  * <a href="#HTTP-Query-Examples">HTTP Query Examples</a>
-  * <a href="#Web-Action-Examples">Web Action Examples</a>
-  * <a href="#Operation-Shortcodes">Operation Shortcodes</a>
-- <a href="#Work-In-Progress">Work In Progress</a>
+- <a href="#dynamicqueryoptions">DynamicQueryOptions Class</a> 
+  * <a href="#filtering">Filtering</a> 
+    + <a href="#supported-operations">Supported Operations</a> 
+- <a href="#sorting">Sorting</a>
+- <a href="#accessing-nested-objects">Accessing Nested Objects</a> 
+- <a href="#pagination">Pagination</a>
+- <a href="#dynamic-query-parsing">Dynamic Query Parsing</a>
+  * <a href="#http-parameters">HTTP Parameters</a>
+  * <a href="#http-query-examples">HTTP Query Examples</a>
+  * <a href="#web-action-examples">Web Action Examples</a>
+  * <a href="#operation-shortcodes">Operation Shortcodes</a>
+- <a href="#work-in-progress">Work In Progress</a>
 
 ## How It Works
 
@@ -27,7 +27,7 @@ To build a dynamic query you need to create an instance of `DynamicQueryOptions`
 
 ### DynamicQueryOptions
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 ```csharp
     public sealed class DynamicQueryOptions
@@ -42,7 +42,7 @@ which contains your `Filter` and `Sort` operation options.
 
 ## Filtering
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 Filters are `List<Filter>` instances in the `DynamicQueryOptions` class.
 
@@ -63,7 +63,7 @@ Since you have to pass the value of the property as `string` the property type a
 
 ### Supported Operations
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 Supported filter operations:
 
@@ -96,7 +96,7 @@ var filter = new Filter
 
 ## Sorting
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 Sorting is an option to `DynamicQueryOptions` class as a `SortOption` instance.
 
@@ -126,7 +126,7 @@ TIP: DQB Supports multiple sort operations.
 
 #### Accessing Nested Objects
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 DynamicQueryBuilder can access nested objects with `.` delimeter like default LINQ.
 
@@ -167,7 +167,7 @@ var mySortOption = new SortOption
 
 ## Pagination
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 Pagination can be done by specifying options to the `PaginationOptions` class member of `DynamicQueryOptions` class.
 
@@ -208,13 +208,13 @@ int totalDataSetCount = paginationOption.DataSetCount;
 
 ## Dynamic Query Parsing
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 Dynamic Query Builder can also parse the given `HTTP` request query parameters by its own conventions into a `DynamicQueryOptions` instance.
 
 #### Http Parameters
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 ##### `o` Parameter
 
@@ -256,7 +256,7 @@ Dynamic Query Builder can also parse the given `HTTP` request query parameters b
 
 ### HTTP Query Examples
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 ###### Valid Example: `?o=Equals&p=myproperty&v=myvalue`
 
@@ -330,7 +330,7 @@ Tip: if you do not provide any sorting direction, DynamicQueryBuilder will sort 
 
 ## Operation ShortCodes
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 DQB has default operation short codes for shorter HTTP queries which are below;
 
@@ -348,7 +348,7 @@ DQB has default operation short codes for shorter HTTP queries which are below;
 
 ## Web Action Examples
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
 
 #### DynamicQueryAttribute
 
@@ -418,4 +418,4 @@ Warning: You should register every single filter operation even if you don't wan
 
 ### Work In Progress
 
-- <a href="#Index">Index</a>
+- <a href="#index">Index</a>
