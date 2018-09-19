@@ -55,7 +55,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             IQueryable<TestModel> currentSet = CreateSampleSet();
             DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=MemberQuery&p=InnerTestModels&v=(o=eq&p=Role&v=admin)&o=cts&p=name&v=i");
 
-            currentSet.ApplyFilters(result);  
+            currentSet.ApplyFilters(result);
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
             {
                 SortOptions = new List<SortOption>(),
