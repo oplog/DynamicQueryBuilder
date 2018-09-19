@@ -53,9 +53,9 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         public void ApplyFiltersShouldReturnGivenSetWhenOptionsAndFiltersAreEmpty()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
-            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=MemberQuery&p=InnerTestModels&v=(o=eq&p=Role&v=hasan)&o=cts&p=sth&v=firstlayer");
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=MemberQuery&p=InnerTestModels&v=(o=eq&p=Role&v=admin)&o=cts&p=name&v=i");
 
-            currentSet.ApplyFilters(result); 
+            currentSet.ApplyFilters(result);  
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
             {
                 SortOptions = new List<SortOption>(),

@@ -389,10 +389,11 @@ namespace DynamicQueryBuilder
                     return Expression.Call(parentMember, endsWithMethod, constant);
 
                 case FilterOperation.MemberQuery:
+                    var innerParam = Expression.Parameter(parentMember.Type.GenericTypeArguments[0], parentMember.Type.GenericTypeArguments[0].Name);
                     var anyMethod = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static).FirstOrDefault(x => x.Name == "Any" && x.GetParameters().Count() == 2).MakeGenericMethod(new[] { parentMember.Type.GenericTypeArguments[0] });
 
-                    var result = BuildFilterExpression<T>(Expression.Parameter(parentMember.Type.GenericTypeArguments[0], parentMember.Type.GenericTypeArguments[0].Name), (filter.Value as DynamicQueryOptions).Filters.First());
-                    return Expression.Call(anyMethod, Expression.PropertyOrField(param, filter.PropertyName), result);
+                    var result = BuildFilterExpression<T>(innerParam, (filter.Value as DynamicQueryOptions).Filters.First());
+                    return Expression.Call(anyMethod, Expression.PropertyOrField(param, filter.PropertyName), Expression.Lambda(result, innerParam));
                 default:
                     return null;
             }
