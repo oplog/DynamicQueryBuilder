@@ -314,9 +314,9 @@ namespace DynamicQueryBuilder
         /// <param name="param">Created parameter instance or current expression body.</param>
         /// <param name="filter">Filter instance to build.</param>
         /// <returns>Built query expression.</returns>
-        internal static Expression BuildFilterExpression<T>(ParameterExpression param, Filter filter)
+        internal static Expression BuildFilterExpression<T>(ParameterExpression param, Filter filter, Expression builtParent = null)
         {
-            Expression parentMember = ExtractMember(param, filter.PropertyName);
+            Expression parentMember = builtParent ?? ExtractMember(param, filter.PropertyName);
             string stringFilterValue = filter.Value.ToString();
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
@@ -389,9 +389,10 @@ namespace DynamicQueryBuilder
                     return Expression.Call(parentMember, endsWithMethod, constant);
 
                 case FilterOperation.MemberQuery:
-                    var anyMethod = typeof(Enumerable).GetMethod("Any", new[] { parentMember.Type });
+                    var anyMethod = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static).FirstOrDefault(x => x.Name == "Any" && x.GetParameters().Count() == 2).MakeGenericMethod(new[] { parentMember.Type.GenericTypeArguments[0] });
 
-                    return Expression.Call(parentMember, anyMethod, constant);
+                    var result = BuildFilterExpression<T>(Expression.Parameter(parentMember.Type.GenericTypeArguments[0], parentMember.Type.GenericTypeArguments[0].Name), (filter.Value as DynamicQueryOptions).Filters.First());
+                    return Expression.Call(anyMethod, Expression.PropertyOrField(param, filter.PropertyName), result);
                 default:
                     return null;
             }

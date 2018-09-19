@@ -20,7 +20,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             public string Name { get; set; }
 
-            public List<InnerTestModel> InnerTestModels { get; set; }
+            public ICollection<InnerTestModel> InnerTestModels { get; set; }
         }
 
         internal class InnerTestModel
@@ -53,9 +53,9 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         public void ApplyFiltersShouldReturnGivenSetWhenOptionsAndFiltersAreEmpty()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
-            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=MemberQuery&p=InnerTestModels&v=(o=mq&p=Role&v=(o=eq&p=OtherRole&v=admin&o=eq&p=OtherSecondRole&v=1321)&o=eq&p=SecondLayer&v=1234)&o=cts&p=sth&v=firstlayer");
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions("o=MemberQuery&p=InnerTestModels&v=(o=eq&p=Role&v=hasan)&o=cts&p=sth&v=firstlayer");
 
-            currentSet.ApplyFilters(result);
+            currentSet.ApplyFilters(result); 
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
             {
                 SortOptions = new List<SortOption>(),
