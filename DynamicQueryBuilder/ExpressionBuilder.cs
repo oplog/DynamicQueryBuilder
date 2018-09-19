@@ -10,7 +10,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Web;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
@@ -305,6 +304,7 @@ namespace DynamicQueryBuilder
         private static readonly MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
         private static readonly MethodInfo endsWithMethod = typeof(string).GetMethod("EndsWith", new[] { typeof(string) });
         private static readonly MethodInfo startsWithMethod = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
+
         #endregion
 
         /// <summary>
@@ -316,11 +316,6 @@ namespace DynamicQueryBuilder
         /// <returns>Built query expression.</returns>
         internal static Expression BuildFilterExpression<T>(ParameterExpression param, Filter filter)
         {
-            if (filter.Operator == FilterOperation.MemberQuery)
-            {
-                return null;
-            }
-
             Expression parentMember = ExtractMember(param, filter.PropertyName);
             string stringFilterValue = filter.Value.ToString();
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
@@ -355,9 +350,13 @@ namespace DynamicQueryBuilder
             }
 
             // We should convert the data into its own type before we do any query building.
-            object convertedValue = stringFilterValue != "null" ?
-                                    TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(stringFilterValue) :
-                                    null;
+            object convertedValue = null;
+            if (filter.Operator != FilterOperation.MemberQuery)
+            {
+                convertedValue = stringFilterValue != "null" ?
+                                 TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(stringFilterValue) :
+                                 null;
+            }
 
             ConstantExpression constant = Expression.Constant(convertedValue);
             switch (filter.Operator)
@@ -389,6 +388,10 @@ namespace DynamicQueryBuilder
                 case FilterOperation.EndsWith:
                     return Expression.Call(parentMember, endsWithMethod, constant);
 
+                case FilterOperation.MemberQuery:
+                    var anyMethod = typeof(Enumerable).GetMethod("Any", new[] { parentMember.Type });
+
+                    return Expression.Call(parentMember, anyMethod, constant);
                 default:
                     return null;
             }
