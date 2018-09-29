@@ -106,6 +106,16 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
             Assert.Equal(0, executedOptionsOffsetNegative.PaginationOption.Offset);
         }
 
+        [Fact]
+        public void ShouldParseDataSetCountWhenIncludeDataSetCountAssignedAndThereIsNoPaginationOption()
+        {
+            var attributeInstance = new DynamicQueryAttribute();
+            string queryWithOffsetNegative = DYNAMIC_QUERY_STRING.Replace("offset=0", string.Empty).Replace("count=10", string.Empty);
+            DynamicQueryOptions executedOptionsOffsetNegative = ExecuteAction(attributeInstance, queryWithOffsetNegative);
+            Assert.NotNull(executedOptionsOffsetNegative.PaginationOption);
+            Assert.True(executedOptionsOffsetNegative.PaginationOption.AssignDataSetCount);
+        }
+
         private DynamicQueryOptions ExecuteAction(DynamicQueryAttribute parameterlessInstance, string query = null)
         {
             ActionExecutingContext context = CreateContext(query);
