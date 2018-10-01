@@ -13,8 +13,13 @@ namespace DynamicQueryBuilder
         /// </summary>
         public class DynamicQueryException : Exception
         {
-            public DynamicQueryException(string message, Exception innerException = null)
-                : base(message, innerException) { }
+            public DynamicQueryException(string message, string requestedQuery = null, Exception innerException = null)
+                : base(message, innerException)
+            {
+                RequestedQuery = requestedQuery;
+            }
+
+            public string RequestedQuery { get; private set; }
         }
 
         /// <summary>
@@ -23,7 +28,7 @@ namespace DynamicQueryBuilder
         public sealed class InvalidDynamicQueryException : DynamicQueryException
         {
             public InvalidDynamicQueryException(string message, Exception innerException = null)
-                : base(message, innerException) { }
+                : base(message, null, innerException) { }
         }
 
         /// <summary>
@@ -32,7 +37,7 @@ namespace DynamicQueryBuilder
         public sealed class QueryTripletsMismatchException : DynamicQueryException
         {
             public QueryTripletsMismatchException(string message, Exception innerException = null)
-                : base(message, innerException) { }
+                : base(message, null, innerException) { }
         }
 
         /// <summary>
@@ -41,7 +46,7 @@ namespace DynamicQueryBuilder
         public sealed class OperationNotSupportedException : DynamicQueryException
         {
             public OperationNotSupportedException(string message, Exception innerException = null)
-                : base(message, innerException) { }
+                : base(message, null, innerException) { }
         }
 
         /// <summary>
@@ -50,7 +55,7 @@ namespace DynamicQueryBuilder
         public sealed class MaximumResultSetExceededException : DynamicQueryException
         {
             public MaximumResultSetExceededException(string message, Exception innerException = null)
-                : base(message, innerException) { }
+                : base(message, null, innerException) { }
         }
     }
 }

@@ -112,7 +112,7 @@ namespace DynamicQueryBuilder
             }
             catch (Exception ex)
             {
-                throw new DynamicQueryException("DynamicQueryBuilder has encountered an unhandled exception", ex);
+                throw new DynamicQueryException("DynamicQueryBuilder has encountered an unhandled exception", string.Empty, ex);
             }
         }
 
@@ -167,7 +167,7 @@ namespace DynamicQueryBuilder
             }
             catch (Exception ex)
             {
-                throw new DynamicQueryException("DynamicQueryBuilder has encountered an unhandled exception", ex);
+                throw new DynamicQueryException("DynamicQueryBuilder has encountered an unhandled exception", query, ex);
             }
         }
 
