@@ -1,4 +1,9 @@
-# Dynamic Query Builder Usage
+# DynamicQueryBuilder
+
+[![Travis](https://travis-ci.org/oplog/DynamicQueryBuilder.svg?branch=master)](https://travis-ci.org/oplog/DynamicQueryBuilder)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/oplog/DynamicQueryBuilder/blob/master/LICENSE)
+
+# Usage
 
 Dynamic Query Builder currently can `filter` and `sort` the applied `IQueryable<T>` instance with an extension behaviour.
 
