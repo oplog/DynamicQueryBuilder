@@ -1,0 +1,3 @@
+cd DynamicQueryBuilder.UnitTests
+dotnet restore
+dotnet test
