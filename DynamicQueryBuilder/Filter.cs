@@ -68,6 +68,7 @@ namespace DynamicQueryBuilder
         GreaterThan,
         LessThanOrEqual,
         GreaterThanOrEqual,
-        MemberQuery
+        Any,
+        All
     }
 }

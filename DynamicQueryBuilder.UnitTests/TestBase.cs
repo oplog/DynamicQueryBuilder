@@ -2,6 +2,7 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.UnitTests.ExpressionBuilderTests;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -14,7 +15,6 @@ namespace DynamicQueryBuilder.UnitTests
         protected const string DYNAMIC_QUERY_STRING_WITH_SHORTCODE = "?o=eq&p=Name&v=Value&s=Name,desc&s=Age&offset=0&count=10";
         protected const string DYNAMIC_QUERY_STRING_PARAM = "dqb";
         protected string dynamicQueryWithParam = $"?{DYNAMIC_QUERY_STRING_PARAM}=o%3DEquals%26p%3Dcategory%26v%3DMovies";
-
         protected readonly Dictionary<string, FilterOperation> OpShortCodes = new Dictionary<string, FilterOperation>
         {
             { "eq", FilterOperation.Equals },

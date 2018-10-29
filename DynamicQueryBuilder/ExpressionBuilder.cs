@@ -36,8 +36,20 @@ namespace DynamicQueryBuilder
             { "gt", FilterOperation.GreaterThan },
             { "ltoe", FilterOperation.LessThanOrEqual },
             { "gtoe", FilterOperation.GreaterThanOrEqual },
-            { "mq", FilterOperation.MemberQuery }
+            { "any", FilterOperation.Any },
+            { "all", FilterOperation.All }
         };
+
+        private static readonly MethodInfo _countFunction = BuildLINQExtensionMethod(nameof(Enumerable.Count), numberOfParameters: 1);
+
+        private static readonly MethodInfo _skipFunction = BuildLINQExtensionMethod(nameof(Enumerable.Skip));
+
+        private static readonly MethodInfo _takeFunction = BuildLINQExtensionMethod(nameof(Enumerable.Take));
+
+        public static IQueryable<T> ApplyFilters<T>(this IQueryable<T> currentSet, DynamicQueryOptions dynamicQueryOptions)
+        {
+            return ApplyFiltersNew(currentSet, dynamicQueryOptions).Cast<T>();
+        }
 
         /// <summary>
         /// Applies the given DynamicQueryOptions to the IEnumerable instace.
@@ -46,11 +58,11 @@ namespace DynamicQueryBuilder
         /// <param name="currentSet">Existing IEnumerable instance.</param>
         /// <param name="dynamicQueryOptions">Query options to apply.</param>
         /// <returns>DynamicQueryOptions applied IEnumerable instance,</returns>
-        public static IQueryable<T> ApplyFilters<T>(this IQueryable<T> currentSet, DynamicQueryOptions dynamicQueryOptions)
+        public static IQueryable ApplyFiltersNew(this IQueryable currentSet, DynamicQueryOptions dynamicQueryOptions)
         {
             try
             {
-                if (dynamicQueryOptions == null)
+                if (dynamicQueryOptions == null || currentSet == null)
                 {
                     return currentSet;
                 }
@@ -58,55 +70,87 @@ namespace DynamicQueryBuilder
                 Expression exp = null;
 
                 // Create the query parameter
-                ParameterExpression param = Expression.Parameter(typeof(T), "x");
+                ParameterExpression param = Expression.Parameter(currentSet.ElementType, currentSet.ElementType.Name.ToLower());
                 if (dynamicQueryOptions.Filters != null && dynamicQueryOptions.Filters.Count > 0)
                 {
                     // Copy the array since we need to mutate it, we should avoid mutating the real list.
                     List<Filter> dqbFilters = dynamicQueryOptions.Filters.ToList();
 
                     // Since the expression is null at this point, we should create it with our first filter.
-                    exp = BuildFilterExpression<T>(param, dqbFilters.FirstOrDefault());
+                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault());
                     dqbFilters.RemoveAt(0); // Remove the first since it was added already.
 
                     // Append the rest
                     foreach (Filter item in dqbFilters)
                     {
-                        exp = Expression.AndAlso(exp, BuildFilterExpression<T>(param, item));
+                        exp = Expression.AndAlso(exp, BuildFilterExpression(param, item));
                     }
                 }
 
-                IQueryable<T> queryable = currentSet.AsQueryable();
                 if (dynamicQueryOptions.SortOptions != null && dynamicQueryOptions.SortOptions.Count > 0)
                 {
-                    const string ORDER_BY_FUNCTION_NAME = "OrderBy";
                     // OrderBy function requires a Func<T, TKey> since we don't have the TKey type plain System.Object should do the trick here.
                     foreach (SortOption sortOption in dynamicQueryOptions.SortOptions)
                     {
                         Expression orderMember = Expression.Convert(ExtractMember(param, sortOption.PropertyName), typeof(object));
-                        var orderExpression = Expression.Lambda<Func<T, object>>(orderMember, param);
-                        bool isOrdered = currentSet.Expression.ToString().Contains(ORDER_BY_FUNCTION_NAME);
+                        var orderExpression = Expression.Lambda(orderMember, param);
+                        bool isOrdered = currentSet.Expression.ToString().Contains(nameof(Enumerable.OrderBy));
 
-                        if (sortOption.SortingDirection == SortingDirection.Asc)
+                        string methodName = isOrdered
+                            ? nameof(Enumerable.ThenBy)
+                            : nameof(Enumerable.OrderBy);
+
+                        if (sortOption.SortingDirection == SortingDirection.Desc)
                         {
-                            currentSet = isOrdered ? ((IOrderedQueryable<T>)currentSet).ThenBy(orderExpression) : queryable.OrderBy(orderExpression);
+                            methodName = string.Concat(methodName, "Descending");
                         }
-                        else
-                        {
-                            currentSet = isOrdered ? ((IOrderedQueryable<T>)currentSet).ThenByDescending(orderExpression) : queryable.OrderByDescending(orderExpression);
-                        }
+
+                        currentSet = currentSet.Provider.CreateQuery(
+                            Expression.Call(typeof(Queryable),
+                                            methodName,
+                                            new Type[]
+                                            {
+                                                currentSet.ElementType,
+                                                typeof(object)
+                                            },
+                                            currentSet.Expression,
+                                            Expression.Quote(orderExpression)));
                     }
+
                 }
 
-                currentSet = exp != null ? currentSet.Where(Expression.Lambda<Func<T, bool>>(exp, param)) : currentSet;
+                if (exp != null)
+                {
+                    MethodCallExpression whereFilter = Expression.Call(
+                        BuildLINQExtensionMethod(
+                            nameof(Enumerable.Where),
+                            genericElementType: currentSet.ElementType,
+                            enumerableType: typeof(Queryable)),
+                        currentSet.Expression,
+                        Expression.Quote(Expression.Lambda(exp, param)));
+
+                    currentSet = currentSet.Provider.CreateQuery(whereFilter);
+                }
+
                 if (dynamicQueryOptions.PaginationOption != null)
                 {
                     if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)
                     {
-                        dynamicQueryOptions.PaginationOption.DataSetCount = currentSet.Count();
+                        dynamicQueryOptions.PaginationOption.DataSetCount = (int)_countFunction.Invoke(null, new[] { currentSet });
                     }
 
-                    currentSet = currentSet.Skip(dynamicQueryOptions.PaginationOption.Offset)
-                                           .Take(dynamicQueryOptions.PaginationOption.Count);
+                    MethodCallExpression skip = Expression.Call(
+                        _skipFunction,
+                        currentSet.Expression,
+                        Expression.Constant(dynamicQueryOptions.PaginationOption.Offset));
+
+                    currentSet = currentSet.Provider.CreateQuery(skip);
+                    MethodCallExpression take = Expression.Call(
+                        _takeFunction,
+                        currentSet.Expression,
+                        Expression.Constant(dynamicQueryOptions.PaginationOption.Offset));
+
+                    currentSet = currentSet.Provider.CreateQuery(take);
                 }
 
                 return currentSet;
@@ -229,7 +273,7 @@ namespace DynamicQueryBuilder
                         PropertyName = parameterNames[i],
                     };
 
-                    if (foundOperation == FilterOperation.MemberQuery)
+                    if (foundOperation == FilterOperation.Any)
                     {
                         composedFilter.Value = memberQueryOptions;
                     }
@@ -317,7 +361,7 @@ namespace DynamicQueryBuilder
         internal static Expression BuildFilterExpression<T>(ParameterExpression param, Filter filter, Expression builtParent = null)
         {
             Expression parentMember = builtParent ?? ExtractMember(param, filter.PropertyName);
-            string stringFilterValue = filter.Value.ToString();
+            string stringFilterValue = filter.Value?.ToString();
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
             {
@@ -351,7 +395,7 @@ namespace DynamicQueryBuilder
 
             // We should convert the data into its own type before we do any query building.
             object convertedValue = null;
-            if (filter.Operator != FilterOperation.MemberQuery)
+            if (filter.Operator != FilterOperation.Any)
             {
                 convertedValue = stringFilterValue != "null" ?
                                  TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(stringFilterValue) :
@@ -388,12 +432,104 @@ namespace DynamicQueryBuilder
                 case FilterOperation.EndsWith:
                     return Expression.Call(parentMember, endsWithMethod, constant);
 
-                case FilterOperation.MemberQuery:
+                case FilterOperation.Any:
                     var innerParam = Expression.Parameter(parentMember.Type.GenericTypeArguments[0], parentMember.Type.GenericTypeArguments[0].Name);
                     var anyMethod = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static).FirstOrDefault(x => x.Name == nameof(Enumerable.Any) && x.GetParameters().Count() == 2).MakeGenericMethod(new[] { parentMember.Type.GenericTypeArguments[0] });
 
                     var result = BuildFilterExpression<T>(innerParam, (filter.Value as DynamicQueryOptions).Filters.First());
                     return Expression.Call(anyMethod, Expression.PropertyOrField(param, filter.PropertyName), Expression.Lambda(result, innerParam));
+                default:
+                    return null;
+            }
+        }
+
+        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, Expression builtParent = null)
+        {
+            Expression parentMember = builtParent ?? ExtractMember(param, filter.PropertyName);
+            string stringFilterValue = filter.Value.ToString();
+            // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
+            if (filter.Operator == FilterOperation.In)
+            {
+                if (filter.Value == null)
+                {
+                    throw new DynamicQueryException("You can't pass type null to In. Pass null as a string instead.");
+                }
+
+                // Split all data into a list
+                List<string> splittedValues = stringFilterValue.Split(',').ToList();
+                var equalsFilter = new Filter
+                {
+                    Operator = FilterOperation.Equals,
+                    PropertyName = filter.PropertyName,
+                    Value = splittedValues.First()
+                };
+
+                // Create the expression with the first value.
+                Expression builtInExpression = BuildFilterExpression(param, equalsFilter);
+                splittedValues.RemoveAt(0); // Remove the first value
+
+                // Create query for every splitted value and append them.
+                foreach (var item in splittedValues)
+                {
+                    equalsFilter.Value = item;
+                    builtInExpression = Expression.Or(builtInExpression, BuildFilterExpression(param, equalsFilter));
+                }
+
+                return builtInExpression;
+            }
+
+            // We should convert the data into its own type before we do any query building.
+            object convertedValue = null;
+            if (filter.Operator != FilterOperation.Any)
+            {
+                convertedValue = stringFilterValue != "null" ?
+                                 TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(stringFilterValue) :
+                                 null;
+            }
+
+            ConstantExpression constant = Expression.Constant(convertedValue);
+            switch (filter.Operator)
+            {
+                case FilterOperation.Equals:
+                    return Expression.Equal(parentMember, constant);
+
+                case FilterOperation.NotEqual:
+                    return Expression.NotEqual(parentMember, constant);
+
+                case FilterOperation.Contains:
+                    return Expression.Call(parentMember, containsMethod, constant);
+
+                case FilterOperation.GreaterThan:
+                    return Expression.GreaterThan(parentMember, constant);
+
+                case FilterOperation.GreaterThanOrEqual:
+                    return Expression.GreaterThanOrEqual(parentMember, constant);
+
+                case FilterOperation.LessThan:
+                    return Expression.LessThan(parentMember, constant);
+
+                case FilterOperation.LessThanOrEqual:
+                    return Expression.LessThanOrEqual(parentMember, constant);
+
+                case FilterOperation.StartsWith:
+                    return Expression.Call(parentMember, startsWithMethod, constant);
+
+                case FilterOperation.EndsWith:
+                    return Expression.Call(parentMember, endsWithMethod, constant);
+
+                case FilterOperation.Any:
+                case FilterOperation.All:
+                    ParameterExpression memberParam = Expression.Parameter(
+                        parentMember.Type.GenericTypeArguments[0],
+                        parentMember.Type.GenericTypeArguments[0].Name);
+
+                    MethodInfo requestedFunction = BuildLINQExtensionMethod(filter.Operator.ToString(), genericElementType: memberParam.Type);
+                    Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First());
+
+                    return Expression.Call(
+                        requestedFunction,
+                        Expression.PropertyOrField(param, filter.PropertyName),
+                        Expression.Lambda(builtMemberExpression, memberParam));
                 default:
                     return null;
             }
@@ -434,6 +570,20 @@ namespace DynamicQueryBuilder
             }
 
             return parentMember;
+        }
+
+        private static MethodInfo BuildLINQExtensionMethod(
+            string functionName,
+            int numberOfParameters = 2,
+            int overloadNumber = 0,
+            Type genericElementType = null,
+            Type enumerableType = null)
+        {
+            return (enumerableType ?? typeof(Queryable))
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(x => x.Name == functionName && x.GetParameters().Count() == numberOfParameters)
+            .ElementAt(overloadNumber)
+            .MakeGenericMethod(new[] { genericElementType ?? typeof(object) });
         }
 
         private static bool AreCountsMatching(string[] operations, string[] parameterNames, string[] parameterValues)
