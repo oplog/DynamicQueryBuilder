@@ -249,6 +249,18 @@ namespace DynamicQueryBuilder
             }
         }
 
+        /// <summary>
+        /// Populates an Instance of DynamicQueryOptions from parsed query string values.
+        /// </summary>
+        /// <param name="dynamicQueryOptions">DynamicQueryOptions ref to populate to.</param>
+        /// <param name="operations">Operations array.</param>
+        /// <param name="parameterNames">ParameterNames array.</param>
+        /// <param name="parameterValues">ParameterValues array.</param>
+        /// <param name="sortOptions">SortOptions array.</param>
+        /// <param name="offsetOptions">Offset array.</param>
+        /// <param name="countOptions">Count array.</param>
+        /// <param name="opShortCodes">CustomOpCodes instance.</param>
+        /// <param name="memberQueryOptions">TODO: Allan please remove this.</param>
         internal static void PopulateDynamicQueryOptions(
             DynamicQueryOptions dynamicQueryOptions,
             string[] operations,
@@ -294,7 +306,7 @@ namespace DynamicQueryBuilder
                         PropertyName = parameterNames[i],
                     };
 
-                    if (foundOperation == FilterOperation.Any)
+                    if (foundOperation >= FilterOperation.Any)
                     {
                         composedFilter.Value = memberQueryOptions;
                     }
@@ -373,7 +385,7 @@ namespace DynamicQueryBuilder
         /// <returns>Built query expression.</returns>
         internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter)
         {
-            Expression parentMember = builtParent ?? ExtractMember(param, filter.PropertyName);
+            Expression parentMember = ExtractMember(param, filter.PropertyName);
             string stringFilterValue = filter.Value?.ToString();
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
@@ -408,7 +420,7 @@ namespace DynamicQueryBuilder
 
             // We should convert the data into its own type before we do any query building.
             object convertedValue = null;
-            if (filter.Operator != FilterOperation.Any)
+            if (filter.Operator < FilterOperation.Any)
             {
                 convertedValue = stringFilterValue != "null" ?
                                  TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(stringFilterValue) :
@@ -451,7 +463,11 @@ namespace DynamicQueryBuilder
                         parentMember.Type.GenericTypeArguments[0],
                         parentMember.Type.GenericTypeArguments[0].Name);
 
-                    MethodInfo requestedFunction = BuildLINQExtensionMethod(filter.Operator.ToString(), genericElementType: memberParam.Type);
+                    MethodInfo requestedFunction = BuildLINQExtensionMethod(
+                        filter.Operator.ToString(),
+                        genericElementType: memberParam.Type,
+                        enumerableType: typeof(Enumerable));
+
                     Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First());
 
                     return Expression.Call(

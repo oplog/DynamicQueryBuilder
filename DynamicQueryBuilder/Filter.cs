@@ -68,7 +68,7 @@ namespace DynamicQueryBuilder
         GreaterThan,
         LessThanOrEqual,
         GreaterThanOrEqual,
-        Any,
+        Any = 100, // Above 100 reserved for collection member operations
         All
     }
 }

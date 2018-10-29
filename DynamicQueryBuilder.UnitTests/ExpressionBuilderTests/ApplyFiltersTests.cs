@@ -39,6 +39,38 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
+        public void AnyShouldWork()
+        {
+            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Operator = FilterOperation.Any,
+                        PropertyName = "InnerTestModels",
+                        Value = new DynamicQueryOptions
+                        {
+                            Filters = new List<Filter>
+                            {
+                                new Filter
+                                {
+                                    Operator = FilterOperation.Equals,
+                                    PropertyName = "Role",
+                                    Value = "123"
+                                }
+                            }
+                        }
+                    }
+                }
+            }).AsQueryable();
+
+            currentSet = currentSet.Cast<TestModel>();
+            Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
+        }
+
+        [Fact]
         public void ApplyFiltersShouldReturnGivenSetWhenOptionsAndFiltersAreNull()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();

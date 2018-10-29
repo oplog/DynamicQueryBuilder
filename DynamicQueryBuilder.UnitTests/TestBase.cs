@@ -2,7 +2,6 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
-using DynamicQueryBuilder.UnitTests.ExpressionBuilderTests;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq.Expressions;
