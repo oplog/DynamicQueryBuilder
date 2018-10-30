@@ -11,7 +11,7 @@ namespace DynamicQueryBuilder
     {
         public string PropertyName { get; set; }
 
-        public string Value { get; set; }
+        public object Value { get; set; }
 
         public FilterOperation Operator { get; set; } = FilterOperation.Contains;
     }
@@ -67,6 +67,8 @@ namespace DynamicQueryBuilder
         StartsWith,
         GreaterThan,
         LessThanOrEqual,
-        GreaterThanOrEqual
+        GreaterThanOrEqual,
+        Any = 100, // Above 100 reserved for collection member operations
+        All
     }
 }

@@ -18,7 +18,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         {
             Assert.Throws<DynamicQueryException>(() =>
             {
-                ExpressionBuilder.BuildFilterExpression<MemberTestClass>(
+                ExpressionBuilder.BuildFilterExpression(
                     XParam, new Filter { Value = null, PropertyName = "Name", Operator = FilterOperation.In });
             });
         }
@@ -26,7 +26,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ShouldConvertNullAsStringToTypeAsString()
         {
-            ExpressionBuilder.BuildFilterExpression<MemberTestClass>(
+            ExpressionBuilder.BuildFilterExpression(
                 XParam, new Filter { Value = "null", PropertyName = "Name", Operator = FilterOperation.Equals });
         }
 
@@ -34,7 +34,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         public void ShouldConvertInOperationToMultipleEquals()
         {
             const string resultOfQuery = "(((x.Name == \"te\") Or (x.Name == \" test\")) Or (x.Name == \" testx\"))";
-            Expression result = ExpressionBuilder.BuildFilterExpression<MemberTestClass>(
+            Expression result = ExpressionBuilder.BuildFilterExpression(
                 XParam,
                 new Filter { Value = "te, test, testx", PropertyName = "Name", Operator = FilterOperation.In });
 
@@ -42,10 +42,10 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
-        public void ShouldHandleNullParamterValues()
+        public void ShouldHandleNullParameterValues()
         {
             const string resultOfQuery = "(x.Name == \"\")";
-            Expression result = ExpressionBuilder.BuildFilterExpression<MemberTestClass>(
+            Expression result = ExpressionBuilder.BuildFilterExpression(
                 XParam,
                 new Filter { Value = null, PropertyName = "Name", Operator = FilterOperation.Equals });
 
@@ -111,14 +111,14 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ShouldReturnRullWhenNotSupportedOperationPassed() // don't know how this would happen tho.
         {
-            Expression result = ExpressionBuilder.BuildFilterExpression<MemberTestClass>(
+            Expression result = ExpressionBuilder.BuildFilterExpression(
             XParam, new Filter { Value = "test", PropertyName = "Name", Operator = (FilterOperation)999 });
             Assert.Null(result);
         }
 
         private string BuildQuery(FilterOperation operation, string value = "test", string propName = "Name")
         {
-            return ExpressionBuilder.BuildFilterExpression<MemberTestClass>(
+            return ExpressionBuilder.BuildFilterExpression(
                         XParam,
                         new Filter { Value = value, PropertyName = propName, Operator = operation })?.ToString();
         }
