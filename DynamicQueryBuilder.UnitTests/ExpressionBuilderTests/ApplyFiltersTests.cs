@@ -84,6 +84,22 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
+        public void ApplyFiltersShouldReturnDataSetCountWhenThereIsNoPaginationOptionInRequest()
+        {
+            IQueryable<TestModel> currentSet = CreateSampleSet();
+            int currentSetCount = currentSet.Count();
+            var filter = new DynamicQueryOptions
+            {
+                SortOptions = new List<SortOption>(),
+                Filters = new List<Filter>(),
+                PaginationOption = new PaginationOption { AssignDataSetCount = true }
+            };
+
+            IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(filter).AsQueryable();
+            Assert.Equal(currentSetCount, filter.PaginationOption.DataSetCount);
+        }
+
+        [Fact]
         public void ApplyFiltersShouldAppendGivenFiltersToTheGivenSet()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
