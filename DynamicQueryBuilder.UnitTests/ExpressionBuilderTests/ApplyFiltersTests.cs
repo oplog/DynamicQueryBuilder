@@ -39,35 +39,20 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
-        public void AnyShouldWork()
+        public void ApplyFilterShouldBeAbleToHandleMemberQueries_Any()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
-            IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
-            {
-                Filters = new List<Filter>
-                {
-                    new Filter
-                    {
-                        Operator = FilterOperation.Any,
-                        PropertyName = "InnerTestModels",
-                        Value = new DynamicQueryOptions
-                        {
-                            Filters = new List<Filter>
-                            {
-                                new Filter
-                                {
-                                    Operator = FilterOperation.Equals,
-                                    PropertyName = "Role",
-                                    Value = "123"
-                                }
-                            }
-                        }
-                    }
-                }
-            }).AsQueryable();
+            IQueryable<TestModel> returnedSet = PrepareForMemberQuery(FilterOperation.Any);
+            Assert.Equal(2, returnedSet.Count());
+            Assert.Equal("testOne", returnedSet.ElementAt(0).Name);
+            Assert.Equal("testTwo", returnedSet.ElementAt(1).Name);
+        }
 
-            currentSet = currentSet.Cast<TestModel>();
-            Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
+        [Fact]
+        public void ApplyFilterShouldBeAbleToHandleMemberQueries_All()
+        {
+            IQueryable<TestModel> returnedSet = PrepareForMemberQuery(FilterOperation.All);
+            Assert.Equal(1, returnedSet.Count());
+            Assert.Equal("testTwo", returnedSet.ElementAt(0).Name);
         }
 
         [Fact]
@@ -272,13 +257,88 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.NotEqual(currentSet.Count(), optionsWithoutAssignDataCount.PaginationOption.DataSetCount);
         }
 
+        private IQueryable<TestModel> PrepareForMemberQuery(FilterOperation operation)
+        {
+            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Operator = operation,
+                        PropertyName = "InnerTestModels",
+                        Value = new DynamicQueryOptions
+                        {
+                            Filters = new List<Filter>
+                            {
+                                new Filter
+                                {
+                                    Operator = FilterOperation.Equals,
+                                    PropertyName = "Role",
+                                    Value = "Admin"
+                                }
+                            }
+                        }
+                    }
+                }
+            }).AsQueryable();
+
+            return returnedSet;
+        }
+
         private IQueryable<TestModel> CreateSampleSet()
         {
             return new List<TestModel>
             {
-                new TestModel { Age = 10, Name = "testOne" },
-                new TestModel { Age = 12, Name = "testThree" },
-                new TestModel { Age = 11, Name = "testTwo" }
+                new TestModel
+                {
+                    Age = 10,
+                    Name = "testOne",
+                    InnerTestModels = new List<InnerTestModel>
+                    {
+                        new InnerTestModel
+                        {
+                            Role = "Admin"
+                        },
+                        new InnerTestModel
+                        {
+                            Role = "User"
+                        }
+                    }
+                },
+                new TestModel
+                {
+                    Age = 12,
+                    Name = "testThree",
+                    InnerTestModels = new List<InnerTestModel>
+                    {
+                        new InnerTestModel
+                        {
+                            Role = "User"
+                        },
+                        new InnerTestModel
+                        {
+                            Role = "User"
+                        }
+                    }
+                },
+                new TestModel
+                {
+                    Age = 11,
+                    Name = "testTwo",
+                    InnerTestModels = new List<InnerTestModel>
+                    {
+                        new InnerTestModel
+                        {
+                            Role = "Admin"
+                        },
+                        new InnerTestModel
+                        {
+                            Role = "Admin"
+                        }
+                    }
+                }
             }.AsQueryable();
         }
     }
