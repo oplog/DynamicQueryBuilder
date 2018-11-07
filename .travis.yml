@@ -5,7 +5,7 @@ services:
   - postgresql
 before_script:
   - psql -c 'CREATE USER test_user WITH LOGIN SUPERUSER INHERIT CREATEDB CREATEROLE REPLICATION;'
-  - psql -c 'alter user test_user password '12345''
+  - psql -c "alter user test_user password '1234'" -U test_user
   - psql -c 'create database dqb_int_test;' -U test_user
 sudo: required
 dotnet: 2.1.403
