@@ -210,5 +210,19 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 ExpressionBuilder.ParseQueryOptions(DYNAMIC_QUERY_STRING, DYNAMIC_QUERY_STRING_PARAM);
             });
         }
+
+        [Fact]
+        public void ParseQueryOptionsShouldThrowExceptionAndIncludeTheRequestedQueryInTheExceptionWhenQueryIsInvalid()
+        {
+            const string veryFaultyQueryString = "extremely=wrong&query=string";
+            try
+            {
+                ExpressionBuilder.ParseQueryOptions(veryFaultyQueryString);
+            }
+            catch (DynamicQueryException ex)
+            {
+                Assert.Equal(ex.RequestedQuery, veryFaultyQueryString);
+            }
+        }
     }
 }

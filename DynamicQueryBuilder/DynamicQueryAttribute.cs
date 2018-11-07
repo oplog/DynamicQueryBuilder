@@ -75,6 +75,13 @@ namespace DynamicQueryBuilder
                         parsedOptions.PaginationOption.Offset = 0;
                     }
                 }
+                else if (_includeDataSetCountToPagination && parsedOptions.PaginationOption == null)
+                {
+                    parsedOptions.PaginationOption = new PaginationOption
+                    {
+                        AssignDataSetCount = true
+                    };
+                }
 
                 context.ActionArguments[dynamicQueryParameter.Name] = parsedOptions;
             }
