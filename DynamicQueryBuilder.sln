@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicQueryBuilder", "Dyna
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicQueryBuilder.UnitTests", "DynamicQueryBuilder.UnitTests\DynamicQueryBuilder.UnitTests.csproj", "{FFDB1B44-5047-4C46-AA93-EA864370AFCC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicQueryBuilder.IntegrationTests", "DynamicQueryBuilder.IntegrationTests\DynamicQueryBuilder.IntegrationTests.csproj", "{4E42803F-E979-4923-9287-B258FE3D9CDD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{FFDB1B44-5047-4C46-AA93-EA864370AFCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FFDB1B44-5047-4C46-AA93-EA864370AFCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FFDB1B44-5047-4C46-AA93-EA864370AFCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E42803F-E979-4923-9287-B258FE3D9CDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E42803F-E979-4923-9287-B258FE3D9CDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E42803F-E979-4923-9287-B258FE3D9CDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E42803F-E979-4923-9287-B258FE3D9CDD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

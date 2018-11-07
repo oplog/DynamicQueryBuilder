@@ -162,7 +162,7 @@ namespace DynamicQueryBuilder
                     MethodCallExpression take = Expression.Call(
                         _takeFunction,
                         currentSet.Expression,
-                        Expression.Constant(dynamicQueryOptions.PaginationOption.Offset));
+                        Expression.Constant(dynamicQueryOptions.PaginationOption.Count));
 
                     currentSet = currentSet.Provider.CreateQuery(take);
                 }
