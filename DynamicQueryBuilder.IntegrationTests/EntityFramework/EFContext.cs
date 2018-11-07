@@ -12,7 +12,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql("Host=localhost;Database=dqb_int_test;Username=test_user;Password=1234");
+            optionsBuilder.UseNpgsql("Host=localhost;Database=dqb_int_test;Username=postgres;Password=1234");
             base.OnConfiguring(optionsBuilder);
         }
 
