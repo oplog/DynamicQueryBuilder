@@ -10,6 +10,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Web;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
@@ -63,7 +64,7 @@ namespace DynamicQueryBuilder
         /// <returns>DynamicQueryOptions applied IEnumerable instance,</returns>
         public static IQueryable<T> ApplyFilters<T>(this IQueryable<T> currentSet, DynamicQueryOptions dynamicQueryOptions)
         {
-            return ApplyFilters((IQueryable)currentSet, dynamicQueryOptions).Cast<T>();
+            return ApplyFilters((IQueryable)currentSet, dynamicQueryOptions).OfType<T>();
         }
 
         /// <summary>
@@ -104,11 +105,30 @@ namespace DynamicQueryBuilder
                 if (dynamicQueryOptions.SortOptions != null && dynamicQueryOptions.SortOptions.Count > 0)
                 {
                     // OrderBy function requires a Func<T, TKey> since we don't have the TKey type plain System.Object should do the trick here.
+                    bool orderedByDqb = false;
                     foreach (SortOption sortOption in dynamicQueryOptions.SortOptions)
                     {
                         Expression orderMember = Expression.Convert(ExtractMember(param, sortOption.PropertyName), typeof(object));
-                        var orderExpression = Expression.Lambda(orderMember, param);
-                        bool isOrdered = currentSet.Expression.ToString().Contains(nameof(Enumerable.OrderBy));
+                        LambdaExpression orderExpression = Expression.Lambda(orderMember, param);
+                        bool isOrdered =
+                            currentSet.Expression.ToString().Contains($"{nameof(Enumerable.OrderBy)}")
+                            || currentSet.Expression.ToString().Contains($"{nameof(Enumerable.OrderByDescending)}");
+
+                        if (isOrdered && !orderedByDqb)
+                        {
+                            Match propertyOrderedBefore = Regex.Match(
+                                currentSet.Expression.ToString(),
+                                $@"{nameof(Enumerable.OrderBy)}(\([^\)]+{sortOption.PropertyName}\))");
+
+                            if (propertyOrderedBefore.Length < 1)
+                            {
+                                propertyOrderedBefore = Regex.Match(
+                                    currentSet.Expression.ToString(),
+                                    $@"{nameof(Enumerable.OrderByDescending)}(\([^\)]+{sortOption.PropertyName}\))");
+                            }
+
+                            isOrdered = propertyOrderedBefore.Length < 1;
+                        }
 
                         string methodName = isOrdered
                             ? nameof(Enumerable.ThenBy)
@@ -129,6 +149,8 @@ namespace DynamicQueryBuilder
                                             },
                                             currentSet.Expression,
                                             Expression.Quote(orderExpression)));
+
+                        orderedByDqb = true;
                     }
 
                 }
@@ -148,11 +170,6 @@ namespace DynamicQueryBuilder
 
                 if (dynamicQueryOptions.PaginationOption != null)
                 {
-                    if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)
-                    {
-                        dynamicQueryOptions.PaginationOption.DataSetCount = (int)_countFunction.Invoke(null, new[] { currentSet });
-                    }
-
                     MethodCallExpression skip = Expression.Call(
                         _skipFunction,
                         currentSet.Expression,
@@ -165,6 +182,11 @@ namespace DynamicQueryBuilder
                         Expression.Constant(dynamicQueryOptions.PaginationOption.Count));
 
                     currentSet = currentSet.Provider.CreateQuery(take);
+                    if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)
+                    {
+                        dynamicQueryOptions.PaginationOption.DataSetCount = (int)_countFunction.Invoke(null, new[] { currentSet });
+                    }
+
                 }
 
                 return currentSet;
