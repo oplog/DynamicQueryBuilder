@@ -22,9 +22,11 @@ namespace DynamicQueryBuilder
         internal const string OPERATION_PARAMETER_KEY = "o";
         internal const string PARAMETER_NAME_KEY = "p";
         internal const string PARAMETER_VALUE_KEY = "v";
+        internal const string CASE_SENSITIVITY_PARAMETER_OPTION = "cs";
         internal const string SORT_OPTIONS_PARAMETER_KEY = "s";
         internal const string OFFSET_PARAMETER_KEY = "offset";
         internal const string COUNT_PARAMETER_KEY = "count";
+        internal const char PARAMETER_OPTION_DELIMITER = ',';
 
         public static readonly CustomOpCodes DefaultOpShortCodes = new CustomOpCodes
         {
@@ -105,29 +107,41 @@ namespace DynamicQueryBuilder
                 if (dynamicQueryOptions.SortOptions != null && dynamicQueryOptions.SortOptions.Count > 0)
                 {
                     // OrderBy function requires a Func<T, TKey> since we don't have the TKey type plain System.Object should do the trick here.
-                    bool orderedByDqb = false;
                     foreach (SortOption sortOption in dynamicQueryOptions.SortOptions)
                     {
-                        Expression orderMember = Expression.Convert(ExtractMember(param, sortOption.PropertyName), typeof(object));
-                        LambdaExpression orderExpression = Expression.Lambda(orderMember, param);
+                        Expression propertyMember = ExtractMember(param, sortOption.PropertyName);
+                        LambdaExpression orderExpression = Expression.Lambda(propertyMember, param);
+
+                        // Has the set been ordered before ? So that we can be able to apply ThenBy instead of OrderBy functions.
                         bool isOrdered =
                             currentSet.Expression.ToString().Contains($"{nameof(Enumerable.OrderBy)}")
                             || currentSet.Expression.ToString().Contains($"{nameof(Enumerable.OrderByDescending)}");
 
-                        if (isOrdered && !orderedByDqb)
+                        if (isOrdered)
                         {
-                            Match propertyOrderedBefore = Regex.Match(
+                            // If the set has been ordered before was it our property ?
+                            Match setOrderedBefore = Regex.Match(
                                 currentSet.Expression.ToString(),
-                                $@"{nameof(Enumerable.OrderBy)}(\([^\)]+{sortOption.PropertyName}\))");
+                                $@"{nameof(Enumerable.OrderBy)}(\([^\)]+\))");
 
-                            if (propertyOrderedBefore.Length < 1)
+                            // Might be ordered descending ?
+                            if (setOrderedBefore.Length < 1)
                             {
-                                propertyOrderedBefore = Regex.Match(
+                                setOrderedBefore = Regex.Match(
                                     currentSet.Expression.ToString(),
-                                    $@"{nameof(Enumerable.OrderByDescending)}(\([^\)]+{sortOption.PropertyName}\))");
+                                    $@"{nameof(Enumerable.OrderByDescending)}(\([^\)]+\))");
                             }
 
-                            isOrdered = propertyOrderedBefore.Length < 1;
+                            if (setOrderedBefore.Length > 1)
+                            {
+                                if (setOrderedBefore.Groups[1].Value.Contains(sortOption.PropertyName))
+                                {
+                                    /* If we find a match, we should be setting the isOrdered flag as false since we cannot use 
+                                     * ThenBy on the same property even if our property was ordered before. */
+
+                                    isOrdered = false;
+                                }
+                            }
                         }
 
                         string methodName = isOrdered
@@ -139,18 +153,30 @@ namespace DynamicQueryBuilder
                             methodName = string.Concat(methodName, "Descending");
                         }
 
-                        currentSet = currentSet.Provider.CreateQuery(
-                            Expression.Call(typeof(Queryable),
-                                            methodName,
-                                            new Type[]
-                                            {
-                                                currentSet.ElementType,
-                                                typeof(object)
-                                            },
-                                            currentSet.Expression,
-                                            Expression.Quote(orderExpression)));
+                        MethodCallExpression sortExpression = null;
+                        if (propertyMember.Type == typeof(string))
+                        {
+                            sortExpression = Expression.Call(
+                                BuildLINQExtensionMethod(methodName,
+                                                         numberOfParameters: 3,
+                                                         genericElementTypes: new[] { currentSet.ElementType, propertyMember.Type }),
+                                currentSet.Expression,
+                                Expression.Quote(orderExpression),
+                                Expression.Constant(sortOption.CaseSensitive
+                                ? StringComparer.InvariantCulture
+                                : StringComparer.InvariantCultureIgnoreCase));
+                        }
+                        else
+                        {
+                            sortExpression = Expression.Call(
+                                BuildLINQExtensionMethod(methodName, 
+                                                         numberOfParameters: 2,
+                                                         genericElementTypes: new[] { currentSet.ElementType, propertyMember.Type }),
+                                currentSet.Expression,
+                                Expression.Quote(orderExpression));
+                        }
 
-                        orderedByDqb = true;
+                        currentSet = currentSet.Provider.CreateQuery(sortExpression);
                     }
 
                 }
@@ -160,7 +186,7 @@ namespace DynamicQueryBuilder
                     MethodCallExpression whereFilter = Expression.Call(
                         BuildLINQExtensionMethod(
                             nameof(Enumerable.Where),
-                            genericElementType: currentSet.ElementType,
+                            genericElementTypes: new[] { currentSet.ElementType },
                             enumerableType: typeof(Queryable)),
                         currentSet.Expression,
                         Expression.Quote(Expression.Lambda(exp, param)));
@@ -245,12 +271,35 @@ namespace DynamicQueryBuilder
                 var defaultArrayValue = new List<string>().ToArray();
                 NameValueCollection queryCollection = HttpUtility.ParseQueryString(decodedQuery);
 
-                string[] operations = queryCollection.GetValues(OPERATION_PARAMETER_KEY) ?? defaultArrayValue;
-                string[] parameterNames = queryCollection.GetValues(PARAMETER_NAME_KEY) ?? defaultArrayValue;
-                string[] parameterValues = queryCollection.GetValues(PARAMETER_VALUE_KEY) ?? defaultArrayValue;
-                string[] sortOptions = queryCollection.GetValues(SORT_OPTIONS_PARAMETER_KEY) ?? defaultArrayValue;
-                string[] offsetOptions = queryCollection.GetValues(OFFSET_PARAMETER_KEY) ?? defaultArrayValue;
-                string[] countOptions = queryCollection.GetValues(COUNT_PARAMETER_KEY) ?? defaultArrayValue;
+                string[] operations = queryCollection
+                    .GetValues(OPERATION_PARAMETER_KEY)
+                    ?.Select(x=>x.ClearSpaces())
+                    .ToArray() ?? defaultArrayValue;
+
+                string[] parameterNames = queryCollection
+                    .GetValues(PARAMETER_NAME_KEY)
+                    ?.Select(x => x.ClearSpaces())
+                    .ToArray() ?? defaultArrayValue;
+
+                string[] parameterValues = queryCollection
+                    .GetValues(PARAMETER_VALUE_KEY)
+                    ?.Select(x => x.ClearSpaces())
+                    .ToArray() ?? defaultArrayValue;
+
+                string[] sortOptions = queryCollection
+                    .GetValues(SORT_OPTIONS_PARAMETER_KEY)
+                    ?.Select(x => x.ClearSpaces())
+                    .ToArray() ?? defaultArrayValue;
+
+                string[] offsetOptions = queryCollection
+                    .GetValues(OFFSET_PARAMETER_KEY)
+                    ?.Select(x => x.ClearSpaces())
+                    .ToArray() ?? defaultArrayValue;
+
+                string[] countOptions = queryCollection
+                    .GetValues(COUNT_PARAMETER_KEY)
+                    ?.Select(x => x.ClearSpaces())
+                    .ToArray() ?? defaultArrayValue;
 
                 PopulateDynamicQueryOptions(
                     dynamicQueryOptions,
@@ -322,10 +371,26 @@ namespace DynamicQueryBuilder
                         throw new OperationNotSupportedException($"Invalid operation {operations[i]}");
                     }
 
+                    string[] splittedParameterName = parameterNames[i].Split(PARAMETER_OPTION_DELIMITER);
+                    bool isCaseSensitive = false;
+                    if (splittedParameterName.Length > 1)
+                    {
+                        if (splittedParameterName[1].ToLower() == CASE_SENSITIVITY_PARAMETER_OPTION)
+                        {
+                            isCaseSensitive = true;
+                        }
+                        else
+                        {
+                            throw new InvalidDynamicQueryException($"Invalid extra option provided for filter property {splittedParameterName[0]}. Received value was {splittedParameterName[1]}");
+                        }
+                    }
+
+
                     var composedFilter = new Filter
                     {
                         Operator = foundOperation,
-                        PropertyName = parameterNames[i],
+                        PropertyName = splittedParameterName[0],
+                        CaseSensitive = isCaseSensitive
                     };
 
                     if (foundOperation >= FilterOperation.Any)
@@ -352,7 +417,9 @@ namespace DynamicQueryBuilder
                     if (!string.IsNullOrEmpty(sortOption))
                     {
                         // Split the property name to sort and the direction.
-                        string[] splittedParam = sortOption.Split(',');
+                        string[] splittedParam = sortOption.Split(PARAMETER_OPTION_DELIMITER);
+
+                        bool isCaseSensitive = false;
                         SortingDirection direction = SortingDirection.Asc;
                         if (splittedParam.Length == 2)
                         {
@@ -362,7 +429,18 @@ namespace DynamicQueryBuilder
                                 throw new InvalidDynamicQueryException("Invalid sorting direction");
                             }
                         }
-                        else if (splittedParam.Length > 2) // If we get more than 2 results in the array, url must be wrong.
+                        else if (splittedParam.Length == 3)
+                        {
+                            if (splittedParam[2].ToLower() == CASE_SENSITIVITY_PARAMETER_OPTION)
+                            {
+                                isCaseSensitive = true;
+                            }
+                            else
+                            {
+                                throw new InvalidDynamicQueryException($"Invalid extra option provided for sort property {splittedParam[0]}. Received value was {splittedParam[2]}");
+                            }
+                        }
+                        else if (splittedParam.Length > 3) // If we get more than 3 results in the array, url must be wrong.
                         {
                             throw new InvalidDynamicQueryException("Invalid query structure. SortOption is misformed");
                         }
@@ -371,7 +449,8 @@ namespace DynamicQueryBuilder
                         dynamicQueryOptions.SortOptions.Add(new SortOption
                         {
                             SortingDirection = direction,
-                            PropertyName = splittedParam[0].Trim().TrimStart().TrimEnd()
+                            PropertyName = splittedParam[0],
+                            CaseSensitive = isCaseSensitive
                         });
                     }
                 }
@@ -418,12 +497,12 @@ namespace DynamicQueryBuilder
                 }
 
                 // Split all data into a list
-                List<string> splittedValues = stringFilterValue.Split(',').ToList();
+                List<string> splittedValues = stringFilterValue.Split(PARAMETER_OPTION_DELIMITER).ToList();
                 var equalsFilter = new Filter
                 {
                     Operator = FilterOperation.Equals,
                     PropertyName = filter.PropertyName,
-                    Value = splittedValues.First()
+                    Value = splittedValues.First().ToLowerInvariant()
                 };
 
                 // Create the expression with the first value.
@@ -444,9 +523,12 @@ namespace DynamicQueryBuilder
             object convertedValue = null;
             if (filter.Operator < FilterOperation.Any)
             {
-                convertedValue = stringFilterValue != "null" ?
-                                 TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(stringFilterValue) :
-                                 null;
+                convertedValue = stringFilterValue != "null" 
+                    ? TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(
+                        filter.CaseSensitive 
+                        ? stringFilterValue 
+                        : stringFilterValue.ToLowerInvariant()) 
+                    : null;
             }
 
             ConstantExpression constant = Expression.Constant(convertedValue);
@@ -478,7 +560,7 @@ namespace DynamicQueryBuilder
 
                 case FilterOperation.EndsWith:
                     return Expression.Call(parentMember, _stringEndsWithMethod, constant);
-
+                    
                 case FilterOperation.Any:
                 case FilterOperation.All:
                     ParameterExpression memberParam = Expression.Parameter(
@@ -487,7 +569,7 @@ namespace DynamicQueryBuilder
 
                     MethodInfo requestedFunction = BuildLINQExtensionMethod(
                         filter.Operator.ToString(),
-                        genericElementType: memberParam.Type,
+                        genericElementTypes: new[] { memberParam.Type },
                         enumerableType: typeof(Enumerable));
 
                     Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First());
@@ -542,14 +624,14 @@ namespace DynamicQueryBuilder
             string functionName,
             int numberOfParameters = 2,
             int overloadNumber = 0,
-            Type genericElementType = null,
+            Type[] genericElementTypes = null,
             Type enumerableType = null)
         {
             return (enumerableType ?? typeof(Queryable))
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Where(x => x.Name == functionName && x.GetParameters().Count() == numberOfParameters)
             .ElementAt(overloadNumber)
-            .MakeGenericMethod(new[] { genericElementType ?? typeof(object) });
+            .MakeGenericMethod(genericElementTypes ?? new[] { typeof(object) });
         }
 
         private static bool AreCountsMatching(string[] operations, string[] parameterNames, string[] parameterValues)

@@ -121,7 +121,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void Apply_filters_should_append_sorting_options_to_the_given_query()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet().OrderBy(x => x.Age);
+            IQueryable<TestModel> currentSet = CreateSampleSet();
             var ascendingSortingOptions = new DynamicQueryOptions();
             ascendingSortingOptions.SortOptions.Add(new SortOption
             {
@@ -142,18 +142,18 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             // Unfortunately, there is no better way to check the sorting method here that i could find.
             IQueryable<TestModel> resultOfAscendingOption = currentSet.ApplyFilters(ascendingSortingOptions);
             Assert.Equal(resultOfAscendingOption.ElementAt(0).Age, currentSet.ElementAt(0).Age);
-            Assert.Equal(resultOfAscendingOption.ElementAt(1).Age, currentSet.ElementAt(1).Age);
-            Assert.Equal(resultOfAscendingOption.ElementAt(2).Age, currentSet.ElementAt(2).Age);
+            Assert.Equal(resultOfAscendingOption.ElementAt(1).Age, currentSet.ElementAt(2).Age);
+            Assert.Equal(resultOfAscendingOption.ElementAt(2).Age, currentSet.ElementAt(1).Age);
 
             IQueryable<TestModel> resultOfDescendingOption = currentSet.ApplyFilters(descendingSortingOptions);
-            Assert.Equal(resultOfDescendingOption.ElementAt(0).Age, currentSet.ElementAt(2).Age);
-            Assert.Equal(resultOfDescendingOption.ElementAt(1).Age, currentSet.ElementAt(1).Age);
+            Assert.Equal(resultOfDescendingOption.ElementAt(0).Age, currentSet.ElementAt(1).Age);
+            Assert.Equal(resultOfDescendingOption.ElementAt(1).Age, currentSet.ElementAt(2).Age);
             Assert.Equal(resultOfDescendingOption.ElementAt(2).Age, currentSet.ElementAt(0).Age);
 
             IQueryable<TestModel> resultOfDirectionNotSpecified = currentSet.ApplyFilters(directionNotSpecifiedSortingOptions);
             Assert.Equal(resultOfDirectionNotSpecified.ElementAt(0).Age, currentSet.ElementAt(0).Age);
-            Assert.Equal(resultOfDirectionNotSpecified.ElementAt(1).Age, currentSet.ElementAt(1).Age);
-            Assert.Equal(resultOfDirectionNotSpecified.ElementAt(2).Age, currentSet.ElementAt(2).Age);
+            Assert.Equal(resultOfDirectionNotSpecified.ElementAt(1).Age, currentSet.ElementAt(2).Age);
+            Assert.Equal(resultOfDirectionNotSpecified.ElementAt(2).Age, currentSet.ElementAt(1).Age);
         }
 
         [Fact]
@@ -220,8 +220,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             IQueryable<TestModel> result = currentSet.ApplyFilters(allQueryTypes);
             string expressionString = result.Expression.ToString();
             string paramName = nameof(TestModel).ToLower();
-            Assert.Contains($".OrderByDescending({paramName} => Convert({paramName}.{allQueryTypes.SortOptions[0].PropertyName}, Object))", expressionString);
-            Assert.Contains($".ThenBy({paramName} => Convert({paramName}.{allQueryTypes.SortOptions[1].PropertyName}, Object))", expressionString);
+            Assert.Contains($".OrderByDescending({paramName} => {paramName}.{allQueryTypes.SortOptions[0].PropertyName})", expressionString);
+            Assert.Contains($".ThenBy({paramName} => {paramName}.{allQueryTypes.SortOptions[1].PropertyName}, value(System.CultureAwareComparer))", expressionString);
             Assert.Contains($".Where({paramName} => ({paramName}.{allQueryTypes.Filters[0].PropertyName} == {allQueryTypes.Filters[0].Value})", expressionString);
             Assert.Contains($".Skip({allQueryTypes.PaginationOption.Offset}).Take({allQueryTypes.PaginationOption.Offset})", expressionString);
         }
