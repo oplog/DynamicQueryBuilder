@@ -290,5 +290,77 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
             Assert.Equal("Test_2", resultOfMemberAllQuantity[1].Name);
             Assert.Equal("Test_4", resultOfMemberAllQuantity[2].Name);
         }
+
+        [Fact]
+        public void CaseSensitivityShouldWork()
+        {
+            var queryable = _ctx.Users.AsQueryable();
+            var noResultFilterWithCSEnabled = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        CaseSensitive = true,
+                        Operator = FilterOperation.Equals,
+                        PropertyName = "Name",
+                        Value = "test_1"
+                    }
+                }
+            };
+            var withResultFilterWithCSEnabled = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter 
+                    {
+                        CaseSensitive = true,
+                        Operator = FilterOperation.Equals,
+                        PropertyName = "Name",
+                        Value = "Test_1"
+                    }
+                }
+            };
+
+            var filterWithCSDisabledOne = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {   // Default value of CS is false
+                        Operator = FilterOperation.Equals,
+                        PropertyName = "Name",
+                        Value = "test_1"
+                    }
+                }
+            };
+            var filterWithCSDisabledTwo = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {   // Default value of CS is false
+                        Operator = FilterOperation.Equals,
+                        PropertyName = "Name",
+                        Value = "Test_1"
+                    }
+                }
+            };
+
+            var resultOfNoResultFilterWithCSEnabled = queryable.ApplyFilters(noResultFilterWithCSEnabled).ToList();
+            var resultOfWithResultFilterWithCSEnabled = queryable.ApplyFilters(withResultFilterWithCSEnabled).ToList();
+
+            var resultOfWithCSDisabledOne = queryable.ApplyFilters(filterWithCSDisabledOne).ToList();
+            var resultOfWithCSDisabledTwo = queryable.ApplyFilters(filterWithCSDisabledTwo).ToList();
+
+            Assert.Empty(resultOfNoResultFilterWithCSEnabled);
+            Assert.NotEmpty(resultOfWithResultFilterWithCSEnabled);
+            Assert.Equal("Test_1", resultOfWithResultFilterWithCSEnabled[0].Name);
+
+            Assert.NotEmpty(resultOfWithCSDisabledOne);
+            Assert.NotEmpty(resultOfWithCSDisabledTwo);
+            Assert.Equal("Test_1", resultOfWithCSDisabledOne[0].Name);
+            Assert.Equal("Test_1", resultOfWithCSDisabledTwo[0].Name);
+        }
     }
 }

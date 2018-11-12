@@ -33,7 +33,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ShouldConvertInOperationToMultipleEquals()
         {
-            const string resultOfQuery = "(((x.Name == \"te\") Or (x.Name == \" test\")) Or (x.Name == \" testx\"))";
+            const string resultOfQuery = "(((x.Name.ToLowerInvariant() == \"te\") Or (x.Name.ToLowerInvariant() == \" test\")) Or (x.Name.ToLowerInvariant() == \" testx\"))";
             Expression result = ExpressionBuilder.BuildFilterExpression(
                 XParam,
                 new Filter { Value = "te, test, testx", PropertyName = "Name", Operator = FilterOperation.In });
@@ -44,7 +44,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ShouldHandleNullParameterValues()
         {
-            const string resultOfQuery = "(x.Name == \"\")";
+            const string resultOfQuery = "(x.Name.ToLowerInvariant() == \"\")";
             Expression result = ExpressionBuilder.BuildFilterExpression(
                 XParam,
                 new Filter { Value = null, PropertyName = "Name", Operator = FilterOperation.Equals });
@@ -55,12 +55,12 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ShouldHandleEveryFilterOperationSupported()
         {
-            const string resultOfEquals = "(x.Name == \"test\")";
+            const string resultOfEquals = "(x.Name.ToLowerInvariant() == \"test\")";
             const string resultOfLessThan = "(x.InnerMember.Age < 3)";
-            const string resultOfContains = "x.Name.Contains(\"test\")";
-            const string resultOfNotEquals = "(x.Name != \"test\")";
-            const string resultOfEndsWith = "x.Name.EndsWith(\"test\")";
-            const string resultOfEStartsWith = "x.Name.StartsWith(\"test\")";
+            const string resultOfContains = "x.Name.ToLowerInvariant().Contains(\"test\")";
+            const string resultOfNotEquals = "(x.Name.ToLowerInvariant() != \"test\")";
+            const string resultOfEndsWith = "x.Name.ToLowerInvariant().EndsWith(\"test\")";
+            const string resultOfEStartsWith = "x.Name.ToLowerInvariant().StartsWith(\"test\")";
             const string resultOfGreaterThan = "(x.InnerMember.Age > 3)";
             const string resultOfLessThanOrEquals = "(x.InnerMember.Age <= 3)";
             const string resultOfGreaterThanOrEquals = "(x.InnerMember.Age >= 3)";

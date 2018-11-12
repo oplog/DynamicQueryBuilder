@@ -108,7 +108,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(filters).AsQueryable();
             string paramName = nameof(TestModel).ToLower();
-            string expectedQuery = $"{paramName} => (({paramName}.Age == 10) AndAlso {paramName}.Name.StartsWith(\"testOne\"))";
+            string expectedQuery = $"{paramName} => (({paramName}.Age == 10) AndAlso {paramName}.Name.ToLowerInvariant().StartsWith(\"testone\"))";
             var expressionMethodCall = returnedSet.Expression as MethodCallExpression;
             Assert.NotNull(expressionMethodCall);
 

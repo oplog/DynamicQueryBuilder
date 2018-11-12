@@ -3,11 +3,19 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <DebugType>full</DebugType>
+    <Authors>Oplog</Authors>
+    <Company>Oplog</Company>
+    <Description>Lightweight LINQ query builder</Description>
+    <PackageLicenseUrl>https://github.com/oplog/DynamicQueryBuilder/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/oplog/DynamicQueryBuilder</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/oplog/DynamicQueryBuilder</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageTags>csharp,query-builder,linq,lightweight,dotnet-core,dotnet</PackageTags>
+    <NeutralLanguage>en</NeutralLanguage>
+    <SignAssembly>false</SignAssembly>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="..\stylecop.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc">

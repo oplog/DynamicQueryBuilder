@@ -55,6 +55,8 @@ namespace DynamicQueryBuilder
         private static readonly MethodInfo _stringEndsWithMethod = typeof(string).GetMethod("EndsWith", new[] { typeof(string) });
 
         private static readonly MethodInfo _stringStartsWithMethod = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
+
+        private static readonly MethodInfo _toLowerInvariantMethod = typeof(string).GetMethod("ToLowerInvariant");
         #endregion
 
         /// <summary>
@@ -169,7 +171,7 @@ namespace DynamicQueryBuilder
                         else
                         {
                             sortExpression = Expression.Call(
-                                BuildLINQExtensionMethod(methodName, 
+                                BuildLINQExtensionMethod(methodName,
                                                          numberOfParameters: 2,
                                                          genericElementTypes: new[] { currentSet.ElementType, propertyMember.Type }),
                                 currentSet.Expression,
@@ -273,7 +275,7 @@ namespace DynamicQueryBuilder
 
                 string[] operations = queryCollection
                     .GetValues(OPERATION_PARAMETER_KEY)
-                    ?.Select(x=>x.ClearSpaces())
+                    ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
                 string[] parameterNames = queryCollection
@@ -487,6 +489,11 @@ namespace DynamicQueryBuilder
         internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter)
         {
             Expression parentMember = ExtractMember(param, filter.PropertyName);
+            if (parentMember.Type == typeof(string) && !filter.CaseSensitive)
+            {
+                parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
+            }
+
             string stringFilterValue = filter.Value?.ToString();
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
@@ -523,11 +530,11 @@ namespace DynamicQueryBuilder
             object convertedValue = null;
             if (filter.Operator < FilterOperation.Any)
             {
-                convertedValue = stringFilterValue != "null" 
+                convertedValue = stringFilterValue != "null"
                     ? TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(
-                        filter.CaseSensitive 
-                        ? stringFilterValue 
-                        : stringFilterValue.ToLowerInvariant()) 
+                        filter.CaseSensitive
+                        ? stringFilterValue
+                        : stringFilterValue?.ToLowerInvariant())
                     : null;
             }
 
@@ -560,7 +567,7 @@ namespace DynamicQueryBuilder
 
                 case FilterOperation.EndsWith:
                     return Expression.Call(parentMember, _stringEndsWithMethod, constant);
-                    
+
                 case FilterOperation.Any:
                 case FilterOperation.All:
                     ParameterExpression memberParam = Expression.Parameter(

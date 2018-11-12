@@ -20,5 +20,8 @@ namespace DynamicQueryBuilder.IntegrationTests
 
         [Fact]
         void MemberQueriesShouldWork();
+
+        [Fact]
+        void CaseSensitivityShouldWork();
     }
 }
