@@ -145,6 +145,55 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
+        public void ParseQueryOptionsShouldParseMultipleLevelMemberQueries()
+        {
+            const string firstLevelInnerCollectionMemberKey = "FirstLevelInnerCollectionMember";
+            const string secondLevelInnerCollectionMemberKey = "SecondLevelInnerCollectionMember";
+            const string secondLevelInnerMemberProperty = "SecondLevelInnerMemberProperty";
+            const string secondLevelInnerMemberQueryValue = "3";
+
+            string innerMemberQuery = $"o=Any&p={firstLevelInnerCollectionMemberKey}&v=(o=All&p={secondLevelInnerCollectionMemberKey}&v=(o=Equals&p={secondLevelInnerMemberProperty}&v={secondLevelInnerMemberQueryValue}))";
+
+            var validOptions = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Value = new DynamicQueryOptions
+                        {
+                            Filters = new List<Filter>
+                            {
+                                new Filter
+                                {
+                                    Operator = FilterOperation.All,
+                                    PropertyName = secondLevelInnerCollectionMemberKey,
+                                    Value = new DynamicQueryOptions
+                                    {
+                                        Filters = new List<Filter>
+                                        {
+                                            new Filter
+                                            {
+                                                Operator = FilterOperation.Equals,
+                                                PropertyName = secondLevelInnerMemberProperty,
+                                                Value = secondLevelInnerMemberQueryValue
+                                            }
+                                        }
+                                     }
+                                }
+                            }
+                        },
+                        PropertyName = firstLevelInnerCollectionMemberKey,
+                        Operator = FilterOperation.Any
+                    }
+                }
+            };
+
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions(innerMemberQuery);
+            Assert.True(AreObjectPropertiesMatching(validOptions, result));
+        }
+
+        [Fact]
         public void ParseQueryOptionsShouldThrowExceptionWhenInvalidOperationProvided()
         {
             Assert.Throws<DynamicQueryException>(() =>

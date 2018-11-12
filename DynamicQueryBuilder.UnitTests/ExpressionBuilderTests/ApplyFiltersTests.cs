@@ -34,7 +34,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             IQueryable<TestModel> currentSet = CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(null).AsQueryable();
 
-            currentSet = currentSet.Cast<TestModel>();
+            currentSet = currentSet.OfType<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
         }
 
@@ -65,7 +65,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 SortOptions = null
             }).AsQueryable();
 
-            currentSet = currentSet.Cast<TestModel>();
+            currentSet = currentSet.OfType<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
         }
 
@@ -79,24 +79,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 Filters = new List<Filter>()
             }).AsQueryable();
 
-            currentSet = currentSet.Cast<TestModel>();
+            currentSet = currentSet.OfType<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
-        }
-
-        [Fact]
-        public void ApplyFiltersShouldReturnDataSetCountWhenThereIsNoPaginationOptionInRequest()
-        {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
-            int currentSetCount = currentSet.Count();
-            var filter = new DynamicQueryOptions
-            {
-                SortOptions = new List<SortOption>(),
-                Filters = new List<Filter>(),
-                PaginationOption = new PaginationOption { AssignDataSetCount = true }
-            };
-
-            IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(filter).AsQueryable();
-            Assert.Equal(currentSetCount, filter.PaginationOption.DataSetCount);
         }
 
         [Fact]
@@ -124,7 +108,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(filters).AsQueryable();
             string paramName = nameof(TestModel).ToLower();
-            string expectedQuery = $"{paramName} => (({paramName}.Age == 10) AndAlso {paramName}.Name.StartsWith(\"testOne\"))";
+            string expectedQuery = $"{paramName} => (({paramName}.Age == 10) AndAlso {paramName}.Name.ToLowerInvariant().StartsWith(\"testone\"))";
             var expressionMethodCall = returnedSet.Expression as MethodCallExpression;
             Assert.NotNull(expressionMethodCall);
 
@@ -236,8 +220,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             IQueryable<TestModel> result = currentSet.ApplyFilters(allQueryTypes);
             string expressionString = result.Expression.ToString();
             string paramName = nameof(TestModel).ToLower();
-            Assert.Contains($".OrderByDescending({paramName} => Convert({paramName}.{allQueryTypes.SortOptions[0].PropertyName}, Object))", expressionString);
-            Assert.Contains($".ThenBy({paramName} => Convert({paramName}.{allQueryTypes.SortOptions[1].PropertyName}, Object))", expressionString);
+            Assert.Contains($".OrderByDescending({paramName} => {paramName}.{allQueryTypes.SortOptions[0].PropertyName})", expressionString);
+            Assert.Contains($".ThenBy({paramName} => {paramName}.{allQueryTypes.SortOptions[1].PropertyName}, value(System.CultureAwareComparer))", expressionString);
             Assert.Contains($".Where({paramName} => ({paramName}.{allQueryTypes.Filters[0].PropertyName} == {allQueryTypes.Filters[0].Value})", expressionString);
             Assert.Contains($".Skip({allQueryTypes.PaginationOption.Offset}).Take({allQueryTypes.PaginationOption.Offset})", expressionString);
         }
@@ -266,11 +250,11 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 },
             };
 
-            currentSet.ApplyFilters(optionsWithAssignDataCount);
-            currentSet.ApplyFilters(optionsWithoutAssignDataCount);
+            var resultOfWith = currentSet.ApplyFilters(optionsWithAssignDataCount);
+            var resultOfWithout = currentSet.ApplyFilters(optionsWithoutAssignDataCount);
 
-            Assert.Equal(currentSet.Count(), optionsWithAssignDataCount.PaginationOption.DataSetCount);
-            Assert.NotEqual(currentSet.Count(), optionsWithoutAssignDataCount.PaginationOption.DataSetCount);
+            Assert.NotEqual(resultOfWithout.Count(), optionsWithoutAssignDataCount.PaginationOption.DataSetCount);
+            Assert.Equal(resultOfWith.Count(), optionsWithAssignDataCount.PaginationOption.DataSetCount);
         }
 
         private IQueryable<TestModel> PrepareForMemberQuery(FilterOperation operation)

@@ -14,6 +14,8 @@ namespace DynamicQueryBuilder
         public object Value { get; set; }
 
         public FilterOperation Operator { get; set; } = FilterOperation.Contains;
+
+        public bool CaseSensitive { get; set; } = false;
     }
 
     public sealed class SortOption
@@ -21,6 +23,8 @@ namespace DynamicQueryBuilder
         public string PropertyName { get; set; }
 
         public SortingDirection SortingDirection { get; set; }
+
+        public bool CaseSensitive { get; set; } = false;
     }
 
     public sealed class DynamicQueryOptions
