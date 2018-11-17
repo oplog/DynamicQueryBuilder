@@ -156,7 +156,7 @@ namespace DynamicQueryBuilder
                         }
 
                         MethodCallExpression sortExpression = null;
-                        if (propertyMember.Type == typeof(string))
+                        if (propertyMember.Type == typeof(string) && !dynamicQueryOptions.UsesSQL)
                         {
                             sortExpression = Expression.Call(
                                 BuildLINQExtensionMethod(methodName,
@@ -485,11 +485,14 @@ namespace DynamicQueryBuilder
         /// </summary>
         /// <param name="param">Created parameter instance or current expression body.</param>
         /// <param name="filter">Filter instance to build.</param>
+        /// <param name="usesSQL">Flag to detect if the query is going to run on a SQL database.</param>
         /// <returns>Built query expression.</returns>
-        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter)
+        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesSQL = true)
         {
             Expression parentMember = ExtractMember(param, filter.PropertyName);
-            if (parentMember.Type == typeof(string) && !filter.CaseSensitive)
+            if (parentMember.Type == typeof(string)
+                && !filter.CaseSensitive
+                && !usesSQL)
             {
                 parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
             }
@@ -532,7 +535,7 @@ namespace DynamicQueryBuilder
             {
                 convertedValue = stringFilterValue != "null"
                     ? TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(
-                        filter.CaseSensitive
+                       (filter.CaseSensitive && !usesSQL)
                         ? stringFilterValue
                         : stringFilterValue?.ToLowerInvariant())
                     : null;

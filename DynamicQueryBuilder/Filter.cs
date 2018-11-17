@@ -34,6 +34,8 @@ namespace DynamicQueryBuilder
         public List<SortOption> SortOptions { get; set; } = new List<SortOption>();
 
         public PaginationOption PaginationOption { get; set; }
+
+        public bool UsesSQL { get; set; }
     }
 
     public sealed class PaginationOption
