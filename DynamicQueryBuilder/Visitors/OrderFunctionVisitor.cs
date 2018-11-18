@@ -16,7 +16,10 @@ namespace DynamicQueryBuilder.Visitors
 
         private bool _toApply;
 
-        public OrderFunctionVisitor(Expression entryNode, IEnumerable<OrderOptionDetails> orderOptionDetails, Type setElementType)
+        public OrderFunctionVisitor(
+            Expression entryNode,
+            IEnumerable<OrderOptionDetails> orderOptionDetails,
+            Type setElementType)
         {
             _entryNode = entryNode;
             _setElementType = setElementType;
