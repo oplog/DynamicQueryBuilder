@@ -150,6 +150,11 @@ namespace DynamicQueryBuilder
 
                 if (dynamicQueryOptions.PaginationOption != null)
                 {
+                    if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)
+                    {
+                        dynamicQueryOptions.PaginationOption.DataSetCount = (int)_countFunction.Invoke(null, new[] { currentSet });
+                    }
+
                     if (dynamicQueryOptions.PaginationOption.Offset > 0)
                     {
                         MethodCallExpression skip = Expression.Call(
@@ -168,11 +173,6 @@ namespace DynamicQueryBuilder
                             Expression.Constant(dynamicQueryOptions.PaginationOption.Count));
 
                         currentSet = currentSet.Provider.CreateQuery(take);
-                    }
-
-                    if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)
-                    {
-                        dynamicQueryOptions.PaginationOption.DataSetCount = (int)_countFunction.Invoke(null, new[] { currentSet });
                     }
                 }
 

@@ -230,37 +230,6 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Contains($".Skip({allQueryTypes.PaginationOption.Offset}).Take({allQueryTypes.PaginationOption.Offset})", expressionString);
         }
 
-        [Fact]
-        public void ApplyFiltersShouldAssignDataSetCountWhenAssignDataSetCountIsTrue()
-        {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
-            var optionsWithAssignDataCount = new DynamicQueryOptions
-            {
-                PaginationOption = new PaginationOption
-                {
-                    Count = 1,
-                    Offset = 1,
-                    AssignDataSetCount = true
-                },
-            };
-
-            var optionsWithoutAssignDataCount = new DynamicQueryOptions
-            {
-                PaginationOption = new PaginationOption
-                {
-                    Count = 1,
-                    Offset = 1,
-                    AssignDataSetCount = false
-                },
-            };
-
-            var resultOfWith = currentSet.ApplyFilters(optionsWithAssignDataCount);
-            var resultOfWithout = currentSet.ApplyFilters(optionsWithoutAssignDataCount);
-
-            Assert.NotEqual(resultOfWithout.Count(), optionsWithoutAssignDataCount.PaginationOption.DataSetCount);
-            Assert.Equal(resultOfWith.Count(), optionsWithAssignDataCount.PaginationOption.DataSetCount);
-        }
-
         private IQueryable<TestModel> PrepareForMemberQuery(FilterOperation operation)
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
