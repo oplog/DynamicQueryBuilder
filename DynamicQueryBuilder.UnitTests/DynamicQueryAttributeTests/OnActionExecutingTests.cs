@@ -2,6 +2,8 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;

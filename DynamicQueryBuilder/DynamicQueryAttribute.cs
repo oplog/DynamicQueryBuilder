@@ -2,6 +2,8 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Linq;
@@ -46,11 +48,22 @@ namespace DynamicQueryBuilder
                        .Parameters
                        .FirstOrDefault(x => x.ParameterType == typeof(DynamicQueryOptions));
 
-            CustomOpCodes customFilters = context.HttpContext.RequestServices?.GetService(typeof(CustomOpCodes)) as CustomOpCodes;
+            DynamicQueryBuilderSettings dqbSettings = context
+                .HttpContext
+                .RequestServices?
+                .GetService(typeof(DynamicQueryBuilderSettings)) as DynamicQueryBuilderSettings
+                ?? new DynamicQueryBuilderSettings();
+
             if (dynamicQueryParameter != null)
             {
                 DynamicQueryOptions parsedOptions =
-                    ExpressionBuilder.ParseQueryOptions(context.HttpContext.Request.QueryString.Value, _resolveFromParameter, customFilters);
+                    ExpressionBuilder.ParseQueryOptions(
+                        context.HttpContext.Request.QueryString.Value,
+                        _resolveFromParameter,
+                        dqbSettings.CustomOpCodes);
+
+                parsedOptions.UsesCaseInsensitiveSource = dqbSettings.UsesCaseInsensitiveSource;
+                parsedOptions.IgnorePredefinedOrders = dqbSettings.IgnorePredefinedOrders;
                 if (parsedOptions.PaginationOption != null)
                 {
                     parsedOptions.PaginationOption.AssignDataSetCount = _includeDataSetCountToPagination;

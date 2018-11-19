@@ -2,6 +2,11 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
+using DynamicQueryBuilder.Utils;
+using DynamicQueryBuilder.Utils.Extensions;
+using DynamicQueryBuilder.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -10,7 +15,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Web;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
@@ -44,11 +48,11 @@ namespace DynamicQueryBuilder
         };
 
         #region ExtensionsMethods
-        private static readonly MethodInfo _countFunction = BuildLINQExtensionMethod(nameof(Enumerable.Count), numberOfParameters: 1);
+        private static readonly MethodInfo _countFunction = LINQUtils.BuildLINQExtensionMethod(nameof(Enumerable.Count), numberOfParameters: 1);
 
-        private static readonly MethodInfo _skipFunction = BuildLINQExtensionMethod(nameof(Enumerable.Skip));
+        private static readonly MethodInfo _skipFunction = LINQUtils.BuildLINQExtensionMethod(nameof(Enumerable.Skip));
 
-        private static readonly MethodInfo _takeFunction = BuildLINQExtensionMethod(nameof(Enumerable.Take));
+        private static readonly MethodInfo _takeFunction = LINQUtils.BuildLINQExtensionMethod(nameof(Enumerable.Take));
 
         private static readonly MethodInfo _stringContainsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
 
@@ -96,97 +100,45 @@ namespace DynamicQueryBuilder
                     List<Filter> dqbFilters = dynamicQueryOptions.Filters.ToList();
 
                     // Since the expression is null at this point, we should create it with our first filter.
-                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault());
+                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault(), dynamicQueryOptions.UsesCaseInsensitiveSource);
                     dqbFilters.RemoveAt(0); // Remove the first since it was added already.
 
                     // Append the rest
                     foreach (Filter item in dqbFilters)
                     {
-                        exp = Expression.AndAlso(exp, BuildFilterExpression(param, item));
+                        exp = Expression.AndAlso(exp, BuildFilterExpression(param, item, dynamicQueryOptions.UsesCaseInsensitiveSource));
                     }
                 }
 
                 if (dynamicQueryOptions.SortOptions != null && dynamicQueryOptions.SortOptions.Count > 0)
                 {
-                    // OrderBy function requires a Func<T, TKey> since we don't have the TKey type plain System.Object should do the trick here.
-                    foreach (SortOption sortOption in dynamicQueryOptions.SortOptions)
+                    List<OrderOptionDetails> orderLambdas = new List<OrderOptionDetails>();
+                    foreach (SortOption so in dynamicQueryOptions.SortOptions)
                     {
-                        Expression propertyMember = ExtractMember(param, sortOption.PropertyName);
-                        LambdaExpression orderExpression = Expression.Lambda(propertyMember, param);
-
-                        // Has the set been ordered before ? So that we can be able to apply ThenBy instead of OrderBy functions.
-                        bool isOrdered =
-                            currentSet.Expression.ToString().Contains($"{nameof(Enumerable.OrderBy)}")
-                            || currentSet.Expression.ToString().Contains($"{nameof(Enumerable.OrderByDescending)}");
-
-                        if (isOrdered)
+                        Expression paramExpr = ExtractMember(param, so.PropertyName);
+                        orderLambdas.Add(new OrderOptionDetails
                         {
-                            // If the set has been ordered before was it our property ?
-                            Match setOrderedBefore = Regex.Match(
-                                currentSet.Expression.ToString(),
-                                $@"{nameof(Enumerable.OrderBy)}(\([^\)]+\))");
-
-                            // Might be ordered descending ?
-                            if (setOrderedBefore.Length < 1)
-                            {
-                                setOrderedBefore = Regex.Match(
-                                    currentSet.Expression.ToString(),
-                                    $@"{nameof(Enumerable.OrderByDescending)}(\([^\)]+\))");
-                            }
-
-                            if (setOrderedBefore.Length > 1)
-                            {
-                                if (setOrderedBefore.Groups[1].Value.Contains(sortOption.PropertyName))
-                                {
-                                    /* If we find a match, we should be setting the isOrdered flag as false since we cannot use 
-                                     * ThenBy on the same property even if our property was ordered before. */
-
-                                    isOrdered = false;
-                                }
-                            }
-                        }
-
-                        string methodName = isOrdered
-                            ? nameof(Enumerable.ThenBy)
-                            : nameof(Enumerable.OrderBy);
-
-                        if (sortOption.SortingDirection == SortingDirection.Desc)
-                        {
-                            methodName = string.Concat(methodName, "Descending");
-                        }
-
-                        MethodCallExpression sortExpression = null;
-                        if (propertyMember.Type == typeof(string))
-                        {
-                            sortExpression = Expression.Call(
-                                BuildLINQExtensionMethod(methodName,
-                                                         numberOfParameters: 3,
-                                                         genericElementTypes: new[] { currentSet.ElementType, propertyMember.Type }),
-                                currentSet.Expression,
-                                Expression.Quote(orderExpression),
-                                Expression.Constant(sortOption.CaseSensitive
-                                ? StringComparer.InvariantCulture
-                                : StringComparer.InvariantCultureIgnoreCase));
-                        }
-                        else
-                        {
-                            sortExpression = Expression.Call(
-                                BuildLINQExtensionMethod(methodName,
-                                                         numberOfParameters: 2,
-                                                         genericElementTypes: new[] { currentSet.ElementType, propertyMember.Type }),
-                                currentSet.Expression,
-                                Expression.Quote(orderExpression));
-                        }
-
-                        currentSet = currentSet.Provider.CreateQuery(sortExpression);
+                            Direction = so.SortingDirection,
+                            Expression = Expression.Lambda(paramExpr, param),
+                            ParameterExpression = paramExpr,
+                            CaseSensitive = so.CaseSensitive
+                        });
                     }
 
+                    var orderVisitor = new OrderFunctionVisitor(
+                        currentSet.Expression,
+                        orderLambdas,
+                        currentSet.ElementType,
+                        dynamicQueryOptions.UsesCaseInsensitiveSource,
+                        dynamicQueryOptions.IgnorePredefinedOrders);
+
+                    currentSet = currentSet.Provider.CreateQuery(orderVisitor.ApplyOrders());
                 }
 
                 if (exp != null)
                 {
                     MethodCallExpression whereFilter = Expression.Call(
-                        BuildLINQExtensionMethod(
+                        LINQUtils.BuildLINQExtensionMethod(
                             nameof(Enumerable.Where),
                             genericElementTypes: new[] { currentSet.ElementType },
                             enumerableType: typeof(Queryable)),
@@ -198,23 +150,30 @@ namespace DynamicQueryBuilder
 
                 if (dynamicQueryOptions.PaginationOption != null)
                 {
-                    MethodCallExpression skip = Expression.Call(
-                        _skipFunction,
-                        currentSet.Expression,
-                        Expression.Constant(dynamicQueryOptions.PaginationOption.Offset));
-
-                    currentSet = currentSet.Provider.CreateQuery(skip);
-                    MethodCallExpression take = Expression.Call(
-                        _takeFunction,
-                        currentSet.Expression,
-                        Expression.Constant(dynamicQueryOptions.PaginationOption.Count));
-
-                    currentSet = currentSet.Provider.CreateQuery(take);
                     if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)
                     {
                         dynamicQueryOptions.PaginationOption.DataSetCount = (int)_countFunction.Invoke(null, new[] { currentSet });
                     }
 
+                    if (dynamicQueryOptions.PaginationOption.Offset > 0)
+                    {
+                        MethodCallExpression skip = Expression.Call(
+                        _skipFunction,
+                        currentSet.Expression,
+                        Expression.Constant(dynamicQueryOptions.PaginationOption.Offset));
+
+                        currentSet = currentSet.Provider.CreateQuery(skip);
+                    }
+
+                    if (dynamicQueryOptions.PaginationOption.Count > 0)
+                    {
+                        MethodCallExpression take = Expression.Call(
+                            _takeFunction,
+                            currentSet.Expression,
+                            Expression.Constant(dynamicQueryOptions.PaginationOption.Count));
+
+                        currentSet = currentSet.Provider.CreateQuery(take);
+                    }
                 }
 
                 return currentSet;
@@ -485,11 +444,14 @@ namespace DynamicQueryBuilder
         /// </summary>
         /// <param name="param">Created parameter instance or current expression body.</param>
         /// <param name="filter">Filter instance to build.</param>
+        /// <param name="usesCaseInsensitiveSource">Flag to detect if the query is going to run on a SQL database.</param>
         /// <returns>Built query expression.</returns>
-        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter)
+        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
         {
             Expression parentMember = ExtractMember(param, filter.PropertyName);
-            if (parentMember.Type == typeof(string) && !filter.CaseSensitive)
+            if (parentMember.Type == typeof(string)
+                && filter.CaseSensitive
+                && !usesCaseInsensitiveSource)
             {
                 parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
             }
@@ -509,18 +471,19 @@ namespace DynamicQueryBuilder
                 {
                     Operator = FilterOperation.Equals,
                     PropertyName = filter.PropertyName,
-                    Value = splittedValues.First().ToLowerInvariant()
+                    Value = splittedValues.First().ToLowerInvariant(),
+                    CaseSensitive = filter.CaseSensitive
                 };
 
                 // Create the expression with the first value.
-                Expression builtInExpression = BuildFilterExpression(param, equalsFilter);
+                Expression builtInExpression = BuildFilterExpression(param, equalsFilter, usesCaseInsensitiveSource);
                 splittedValues.RemoveAt(0); // Remove the first value
 
                 // Create query for every splitted value and append them.
                 foreach (var item in splittedValues)
                 {
                     equalsFilter.Value = item;
-                    builtInExpression = Expression.Or(builtInExpression, BuildFilterExpression(param, equalsFilter));
+                    builtInExpression = Expression.Or(builtInExpression, BuildFilterExpression(param, equalsFilter, usesCaseInsensitiveSource));
                 }
 
                 return builtInExpression;
@@ -532,9 +495,11 @@ namespace DynamicQueryBuilder
             {
                 convertedValue = stringFilterValue != "null"
                     ? TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(
-                        filter.CaseSensitive
-                        ? stringFilterValue
-                        : stringFilterValue?.ToLowerInvariant())
+                       usesCaseInsensitiveSource
+                       ? stringFilterValue
+                        : filter.CaseSensitive
+                            ? stringFilterValue?.ToLowerInvariant()
+                            : stringFilterValue)
                     : null;
             }
 
@@ -574,12 +539,12 @@ namespace DynamicQueryBuilder
                         parentMember.Type.GenericTypeArguments[0],
                         parentMember.Type.GenericTypeArguments[0].Name);
 
-                    MethodInfo requestedFunction = BuildLINQExtensionMethod(
+                    MethodInfo requestedFunction = LINQUtils.BuildLINQExtensionMethod(
                         filter.Operator.ToString(),
                         genericElementTypes: new[] { memberParam.Type },
                         enumerableType: typeof(Enumerable));
 
-                    Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First());
+                    Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First(), usesCaseInsensitiveSource);
 
                     return Expression.Call(
                         requestedFunction,
@@ -625,20 +590,6 @@ namespace DynamicQueryBuilder
             }
 
             return parentMember;
-        }
-
-        private static MethodInfo BuildLINQExtensionMethod(
-            string functionName,
-            int numberOfParameters = 2,
-            int overloadNumber = 0,
-            Type[] genericElementTypes = null,
-            Type enumerableType = null)
-        {
-            return (enumerableType ?? typeof(Queryable))
-            .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Where(x => x.Name == functionName && x.GetParameters().Count() == numberOfParameters)
-            .ElementAt(overloadNumber)
-            .MakeGenericMethod(genericElementTypes ?? new[] { typeof(object) });
         }
 
         private static bool AreCountsMatching(string[] operations, string[] parameterNames, string[] parameterValues)

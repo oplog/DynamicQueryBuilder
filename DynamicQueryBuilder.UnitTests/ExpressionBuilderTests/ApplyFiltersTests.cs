@@ -2,6 +2,8 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -101,7 +103,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                    {
                        Value = "testOne",
                        PropertyName = "Name",
-                       Operator = FilterOperation.StartsWith
+                       Operator = FilterOperation.StartsWith,
+                       CaseSensitive = true
                    }
                 }
             };
@@ -213,7 +216,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 }, new SortOption
                 {
                     PropertyName = "Name",
-                    SortingDirection = SortingDirection.Asc
+                    SortingDirection = SortingDirection.Asc,
+                    CaseSensitive = true
                 }
             });
 
@@ -224,37 +228,6 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Contains($".ThenBy({paramName} => {paramName}.{allQueryTypes.SortOptions[1].PropertyName}, value(System.CultureAwareComparer))", expressionString);
             Assert.Contains($".Where({paramName} => ({paramName}.{allQueryTypes.Filters[0].PropertyName} == {allQueryTypes.Filters[0].Value})", expressionString);
             Assert.Contains($".Skip({allQueryTypes.PaginationOption.Offset}).Take({allQueryTypes.PaginationOption.Offset})", expressionString);
-        }
-
-        [Fact]
-        public void ApplyFiltersShouldAssignDataSetCountWhenAssignDataSetCountIsTrue()
-        {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
-            var optionsWithAssignDataCount = new DynamicQueryOptions
-            {
-                PaginationOption = new PaginationOption
-                {
-                    Count = 1,
-                    Offset = 1,
-                    AssignDataSetCount = true
-                },
-            };
-
-            var optionsWithoutAssignDataCount = new DynamicQueryOptions
-            {
-                PaginationOption = new PaginationOption
-                {
-                    Count = 1,
-                    Offset = 1,
-                    AssignDataSetCount = false
-                },
-            };
-
-            var resultOfWith = currentSet.ApplyFilters(optionsWithAssignDataCount);
-            var resultOfWithout = currentSet.ApplyFilters(optionsWithoutAssignDataCount);
-
-            Assert.NotEqual(resultOfWithout.Count(), optionsWithoutAssignDataCount.PaginationOption.DataSetCount);
-            Assert.Equal(resultOfWith.Count(), optionsWithAssignDataCount.PaginationOption.DataSetCount);
         }
 
         private IQueryable<TestModel> PrepareForMemberQuery(FilterOperation operation)

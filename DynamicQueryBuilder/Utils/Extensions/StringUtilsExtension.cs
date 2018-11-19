@@ -1,6 +1,6 @@
-﻿namespace DynamicQueryBuilder
+﻿namespace DynamicQueryBuilder.Utils.Extensions
 {
-    public static class StringUtils
+    public static class StringUtilsExtension
     {
         public static string ClearSpaces(this string input)
         {

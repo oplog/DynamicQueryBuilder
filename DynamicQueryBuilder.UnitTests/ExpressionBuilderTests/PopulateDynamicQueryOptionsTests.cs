@@ -2,6 +2,8 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
 using System;
 using System.Collections.Generic;
 using Xunit;

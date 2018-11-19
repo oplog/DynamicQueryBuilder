@@ -1,4 +1,6 @@
 ﻿using DynamicQueryBuilder.IntegrationTests.EntityFramework.SampleModels;
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -137,10 +139,12 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                     new Filter
                     {
                         Operator = FilterOperation.GreaterThanOrEqual,
-                         PropertyName = "Age",
-                         Value = "2"
+                        PropertyName = "Age",
+                        Value = "2"
                     }
-                }
+                },
+                UsesCaseInsensitiveSource = true,
+                IgnorePredefinedOrders = true
             }).ToList();
 
             var resultOfNameTestOne = queryable.ApplyFilters(new DynamicQueryOptions
@@ -153,7 +157,8 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                         PropertyName = "Name",
                         Value = "Test_1"
                     }
-                }
+                },
+                IgnorePredefinedOrders = true
             }).ToList();
 
             Assert.True(resultOfAgeTwo.Count == 3);
@@ -169,7 +174,9 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 {
                     Count = 1,
                     Offset = 2
-                }
+                },
+                UsesCaseInsensitiveSource = true,
+                IgnorePredefinedOrders = true
             }).ToList();
 
             Assert.Equal("Test_3", result[0].Name);
@@ -187,7 +194,8 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                         PropertyName = "Age",
                         SortingDirection = SortingDirection.Desc
                     }
-                }
+                },
+                IgnorePredefinedOrders = true
             }).ToList();
 
             Assert.Equal("Test_4", result[0].Name);
@@ -222,7 +230,8 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 {
                     Count = 10,
                     Offset = 1
-                }
+                },
+                IgnorePredefinedOrders = true
             }).ToList();
 
             Assert.True(result.Count == 2);
@@ -255,7 +264,8 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                             }
                         }
                     }
-                }
+                },
+                IgnorePredefinedOrders = true
             }).ToList();
 
             var resultOfMemberAnyName = queryable.ApplyFilters(new DynamicQueryOptions
@@ -279,7 +289,8 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                             }
                         }
                     }
-                }
+                },
+                IgnorePredefinedOrders = true
             }).ToList();
 
             Assert.True(resultOfMemberAnyName.Count == 1);
@@ -295,34 +306,36 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
         public void CaseSensitivityShouldWork()
         {
             var queryable = _ctx.Users.AsQueryable();
-            var noResultFilterWithCSEnabled = new DynamicQueryOptions
-            {
-                Filters = new List<Filter>
-                {
-                    new Filter
-                    {
-                        CaseSensitive = true,
-                        Operator = FilterOperation.Equals,
-                        PropertyName = "Name",
-                        Value = "test_1"
-                    }
-                }
-            };
             var withResultFilterWithCSEnabled = new DynamicQueryOptions
             {
                 Filters = new List<Filter>
                 {
-                    new Filter 
+                    new Filter
                     {
                         CaseSensitive = true,
                         Operator = FilterOperation.Equals,
                         PropertyName = "Name",
-                        Value = "Test_1"
+                        Value = "test_1"
                     }
-                }
+                },
+                IgnorePredefinedOrders = true
             };
 
-            var filterWithCSDisabledOne = new DynamicQueryOptions
+            var withResultFilterWithCSDisabled = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Operator = FilterOperation.Equals,
+                        PropertyName = "Name",
+                        Value = "Test_1"
+                    }
+                },
+                IgnorePredefinedOrders = true
+            };
+
+            var noResultFilterWithCSDisabledAndInvalidCase = new DynamicQueryOptions
             {
                 Filters = new List<Filter>
                 {
@@ -332,35 +345,17 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                         PropertyName = "Name",
                         Value = "test_1"
                     }
-                }
-            };
-            var filterWithCSDisabledTwo = new DynamicQueryOptions
-            {
-                Filters = new List<Filter>
-                {
-                    new Filter
-                    {   // Default value of CS is false
-                        Operator = FilterOperation.Equals,
-                        PropertyName = "Name",
-                        Value = "Test_1"
-                    }
-                }
+                },
+                IgnorePredefinedOrders = true
             };
 
-            var resultOfNoResultFilterWithCSEnabled = queryable.ApplyFilters(noResultFilterWithCSEnabled).ToList();
-            var resultOfWithResultFilterWithCSEnabled = queryable.ApplyFilters(withResultFilterWithCSEnabled).ToList();
+            var resultOfwithResultFilterWithCSEnabled = queryable.ApplyFilters(withResultFilterWithCSEnabled).ToList();
+            var resultOfwithResultFilterWithCSDisabled = queryable.ApplyFilters(withResultFilterWithCSDisabled).ToList();
+            var resultOfnoResultFilterWithCSDisabledAndInvalidCase = queryable.ApplyFilters(noResultFilterWithCSDisabledAndInvalidCase).ToList();
 
-            var resultOfWithCSDisabledOne = queryable.ApplyFilters(filterWithCSDisabledOne).ToList();
-            var resultOfWithCSDisabledTwo = queryable.ApplyFilters(filterWithCSDisabledTwo).ToList();
-
-            Assert.Empty(resultOfNoResultFilterWithCSEnabled);
-            Assert.NotEmpty(resultOfWithResultFilterWithCSEnabled);
-            Assert.Equal("Test_1", resultOfWithResultFilterWithCSEnabled[0].Name);
-
-            Assert.NotEmpty(resultOfWithCSDisabledOne);
-            Assert.NotEmpty(resultOfWithCSDisabledTwo);
-            Assert.Equal("Test_1", resultOfWithCSDisabledOne[0].Name);
-            Assert.Equal("Test_1", resultOfWithCSDisabledTwo[0].Name);
+            Assert.NotEmpty(resultOfwithResultFilterWithCSEnabled);
+            Assert.NotEmpty(resultOfwithResultFilterWithCSDisabled);
+            Assert.Empty(resultOfnoResultFilterWithCSDisabledAndInvalidCase);
         }
     }
 }
