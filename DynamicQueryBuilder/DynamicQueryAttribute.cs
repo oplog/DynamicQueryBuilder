@@ -2,6 +2,8 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Linq;
@@ -60,7 +62,8 @@ namespace DynamicQueryBuilder
                         _resolveFromParameter,
                         dqbSettings.CustomOpCodes);
 
-                parsedOptions.UsesSQL = dqbSettings.UsesSQL;
+                parsedOptions.UsesCaseInsensitiveSource = dqbSettings.UsesCaseInsensitiveSource;
+                parsedOptions.IgnorePredefinedOrders = dqbSettings.IgnorePredefinedOrders;
                 if (parsedOptions.PaginationOption != null)
                 {
                     parsedOptions.PaginationOption.AssignDataSetCount = _includeDataSetCountToPagination;

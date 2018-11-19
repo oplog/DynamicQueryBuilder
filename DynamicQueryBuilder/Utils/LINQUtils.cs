@@ -2,21 +2,8 @@
 using System.Linq;
 using System.Reflection;
 
-namespace DynamicQueryBuilder
+namespace DynamicQueryBuilder.Utils
 {
-    public static class StringUtils
-    {
-        public static string ClearSpaces(this string input)
-        {
-            if (!string.IsNullOrEmpty(input))
-            {
-                return input.Replace(" ", string.Empty);
-            }
-
-            return input;
-        }
-    }
-
     public static class LINQUtils
     {
         public static MethodInfo BuildLINQExtensionMethod(

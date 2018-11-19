@@ -2,6 +2,8 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +21,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Throws<DynamicQueryException>(() =>
             {
                 ExpressionBuilder.BuildFilterExpression(
-                    XParam, new Filter { Value = null, PropertyName = "Name", Operator = FilterOperation.In });
+                    XParam, new Filter { Value = null, PropertyName = "Name", Operator = FilterOperation.In, CaseSensitive = true });
             });
         }
 
@@ -27,7 +29,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         public void ShouldConvertNullAsStringToTypeAsString()
         {
             ExpressionBuilder.BuildFilterExpression(
-                XParam, new Filter { Value = "null", PropertyName = "Name", Operator = FilterOperation.Equals });
+                XParam, new Filter { Value = "null", PropertyName = "Name", Operator = FilterOperation.Equals, CaseSensitive = true });
         }
 
         [Fact]
@@ -36,7 +38,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             const string resultOfQuery = "(((x.Name.ToLowerInvariant() == \"te\") Or (x.Name.ToLowerInvariant() == \" test\")) Or (x.Name.ToLowerInvariant() == \" testx\"))";
             Expression result = ExpressionBuilder.BuildFilterExpression(
                 XParam,
-                new Filter { Value = "te, test, testx", PropertyName = "Name", Operator = FilterOperation.In });
+                new Filter { Value = "te, test, testx", PropertyName = "Name", Operator = FilterOperation.In, CaseSensitive = true });
 
             Assert.Equal(result.ToString(), resultOfQuery);
         }
@@ -44,7 +46,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ShouldHandleNullParameterValues()
         {
-            const string resultOfQuery = "(x.Name.ToLowerInvariant() == \"\")";
+            const string resultOfQuery = "(x.Name == \"\")";
             Expression result = ExpressionBuilder.BuildFilterExpression(
                 XParam,
                 new Filter { Value = null, PropertyName = "Name", Operator = FilterOperation.Equals });
@@ -120,7 +122,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         {
             return ExpressionBuilder.BuildFilterExpression(
                         XParam,
-                        new Filter { Value = value, PropertyName = propName, Operator = operation })?.ToString();
+                        new Filter { Value = value, PropertyName = propName, Operator = operation, CaseSensitive = true })?.ToString();
         }
     }
 }

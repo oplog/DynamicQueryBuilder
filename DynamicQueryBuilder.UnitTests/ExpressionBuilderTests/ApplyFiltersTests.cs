@@ -2,6 +2,8 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -101,7 +103,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                    {
                        Value = "testOne",
                        PropertyName = "Name",
-                       Operator = FilterOperation.StartsWith
+                       Operator = FilterOperation.StartsWith,
+                       CaseSensitive = true
                    }
                 }
             };
@@ -213,7 +216,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 }, new SortOption
                 {
                     PropertyName = "Name",
-                    SortingDirection = SortingDirection.Asc
+                    SortingDirection = SortingDirection.Asc,
+                    CaseSensitive = true
                 }
             });
 

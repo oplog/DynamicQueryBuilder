@@ -3,6 +3,9 @@
 // </copyright>
 
 using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
+using DynamicQueryBuilder.Utils;
+using DynamicQueryBuilder.Utils.Extensions;
 using DynamicQueryBuilder.Visitors;
 using System;
 using System.Collections.Generic;
@@ -97,13 +100,13 @@ namespace DynamicQueryBuilder
                     List<Filter> dqbFilters = dynamicQueryOptions.Filters.ToList();
 
                     // Since the expression is null at this point, we should create it with our first filter.
-                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault());
+                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault(), dynamicQueryOptions.UsesCaseInsensitiveSource);
                     dqbFilters.RemoveAt(0); // Remove the first since it was added already.
 
                     // Append the rest
                     foreach (Filter item in dqbFilters)
                     {
-                        exp = Expression.AndAlso(exp, BuildFilterExpression(param, item));
+                        exp = Expression.AndAlso(exp, BuildFilterExpression(param, item, dynamicQueryOptions.UsesCaseInsensitiveSource));
                     }
                 }
 
@@ -117,57 +120,19 @@ namespace DynamicQueryBuilder
                         {
                             Direction = so.SortingDirection,
                             Expression = Expression.Lambda(paramExpr, param),
-                            ParameterExpression = paramExpr
+                            ParameterExpression = paramExpr,
+                            CaseSensitive = so.CaseSensitive
                         });
                     }
 
-                    var orderVisitor = new OrderFunctionVisitor(currentSet.Expression, orderLambdas, currentSet.ElementType);
+                    var orderVisitor = new OrderFunctionVisitor(
+                        currentSet.Expression,
+                        orderLambdas,
+                        currentSet.ElementType,
+                        dynamicQueryOptions.UsesCaseInsensitiveSource,
+                        dynamicQueryOptions.IgnorePredefinedOrders);
+
                     currentSet = currentSet.Provider.CreateQuery(orderVisitor.ApplyOrders());
-                    //foreach (SortOption sortOption in dynamicQueryOptions.SortOptions)
-                    //{
-                    //    Expression propertyMember = ExtractMember(param, sortOption.PropertyName, true);
-                    //    LambdaExpression orderExpression = Expression.Lambda(propertyMember, param);
-
-                    //    if (orderVisitor.OrderByExpression != null)
-                    //    {
-                    //        string propertyName = GetCurrentOrderPropertyName(orderVisitor.OrderByExpression);
-                    //    }
-
-                    //    string methodName = orderExpression != null
-                    //        ? nameof(Enumerable.ThenBy)
-                    //        : nameof(Enumerable.OrderBy);
-
-                    //    if (sortOption.SortingDirection == SortingDirection.Desc)
-                    //    {
-                    //        methodName = string.Concat(methodName, "Descending");
-                    //    }
-
-                    //    MethodCallExpression sortExpression = null;
-                    //    if (propertyMember.Type == typeof(string) && !dynamicQueryOptions.UsesSQL)
-                    //    {
-                    //        sortExpression = Expression.Call(
-                    //            BuildLINQExtensionMethod(methodName,
-                    //                                     numberOfParameters: 3,
-                    //                                     genericElementTypes: new[] { currentSet.ElementType, propertyMember.Type }),
-                    //            currentSet.Expression,
-                    //            Expression.Quote(orderExpression),
-                    //            Expression.Constant(sortOption.CaseSensitive
-                    //            ? StringComparer.InvariantCulture
-                    //            : StringComparer.InvariantCultureIgnoreCase));
-                    //    }
-                    //    else
-                    //    {
-                    //        sortExpression = Expression.Call(
-                    //            BuildLINQExtensionMethod(methodName,
-                    //                                     numberOfParameters: 2,
-                    //                                     genericElementTypes: new[] { currentSet.ElementType, propertyMember.Type }),
-                    //            currentSet.Expression,
-                    //            Expression.Quote(orderExpression));
-                    //    }
-
-                    //    currentSet = currentSet.Provider.CreateQuery(sortExpression);
-                    //}
-
                 }
 
                 if (exp != null)
@@ -217,16 +182,6 @@ namespace DynamicQueryBuilder
             {
                 throw new DynamicQueryException("DynamicQueryBuilder has encountered an unhandled exception", string.Empty, ex);
             }
-        }
-
-        private static string GetCurrentOrderPropertyName(Expression orderExpression)
-        {
-            string[] orderParameter = orderExpression
-                .ToString()
-                .ClearSpaces()
-                .Split(new[] { "=>" }, StringSplitOptions.None);
-
-            return orderParameter[1].Replace($"{orderParameter[0]}.", string.Empty);
         }
 
         /// <summary>
@@ -489,14 +444,14 @@ namespace DynamicQueryBuilder
         /// </summary>
         /// <param name="param">Created parameter instance or current expression body.</param>
         /// <param name="filter">Filter instance to build.</param>
-        /// <param name="usesSQL">Flag to detect if the query is going to run on a SQL database.</param>
+        /// <param name="usesCaseInsensitiveSource">Flag to detect if the query is going to run on a SQL database.</param>
         /// <returns>Built query expression.</returns>
-        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesSQL = true)
+        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
         {
             Expression parentMember = ExtractMember(param, filter.PropertyName);
             if (parentMember.Type == typeof(string)
-                && !filter.CaseSensitive
-                && !usesSQL)
+                && filter.CaseSensitive
+                && !usesCaseInsensitiveSource)
             {
                 parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
             }
@@ -516,18 +471,19 @@ namespace DynamicQueryBuilder
                 {
                     Operator = FilterOperation.Equals,
                     PropertyName = filter.PropertyName,
-                    Value = splittedValues.First().ToLowerInvariant()
+                    Value = splittedValues.First().ToLowerInvariant(),
+                    CaseSensitive = filter.CaseSensitive
                 };
 
                 // Create the expression with the first value.
-                Expression builtInExpression = BuildFilterExpression(param, equalsFilter);
+                Expression builtInExpression = BuildFilterExpression(param, equalsFilter, usesCaseInsensitiveSource);
                 splittedValues.RemoveAt(0); // Remove the first value
 
                 // Create query for every splitted value and append them.
                 foreach (var item in splittedValues)
                 {
                     equalsFilter.Value = item;
-                    builtInExpression = Expression.Or(builtInExpression, BuildFilterExpression(param, equalsFilter));
+                    builtInExpression = Expression.Or(builtInExpression, BuildFilterExpression(param, equalsFilter, usesCaseInsensitiveSource));
                 }
 
                 return builtInExpression;
@@ -539,9 +495,11 @@ namespace DynamicQueryBuilder
             {
                 convertedValue = stringFilterValue != "null"
                     ? TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(
-                       (filter.CaseSensitive && !usesSQL)
-                        ? stringFilterValue
-                        : stringFilterValue?.ToLowerInvariant())
+                       usesCaseInsensitiveSource
+                       ? stringFilterValue
+                        : filter.CaseSensitive
+                            ? stringFilterValue?.ToLowerInvariant()
+                            : stringFilterValue)
                     : null;
             }
 
@@ -586,7 +544,7 @@ namespace DynamicQueryBuilder
                         genericElementTypes: new[] { memberParam.Type },
                         enumerableType: typeof(Enumerable));
 
-                    Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First());
+                    Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First(), usesCaseInsensitiveSource);
 
                     return Expression.Call(
                         requestedFunction,

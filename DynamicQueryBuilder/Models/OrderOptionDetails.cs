@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using DynamicQueryBuilder.Models.Enums;
+using System.Linq.Expressions;
 
 namespace DynamicQueryBuilder.Models
 {
@@ -9,5 +10,7 @@ namespace DynamicQueryBuilder.Models
         public SortingDirection Direction { get; set; }
 
         public Expression ParameterExpression { get; set; }
+
+        public bool CaseSensitive { get; set; }
     }
 }
