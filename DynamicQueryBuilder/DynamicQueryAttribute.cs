@@ -6,7 +6,9 @@ using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Collections.Specialized;
 using System.Linq;
+using System.Web;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 namespace DynamicQueryBuilder
@@ -19,7 +21,6 @@ namespace DynamicQueryBuilder
         internal readonly int _maxCountSize = 0;
         internal readonly bool _includeDataSetCountToPagination;
         internal readonly PaginationBehaviour _exceededPaginationCountBehaviour;
-        internal readonly string _resolveFromParameter;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DynamicQueryAttribute"/> class.
@@ -32,13 +33,11 @@ namespace DynamicQueryBuilder
         public DynamicQueryAttribute(
             int maxCountSize = 100,
             bool includeDataSetCountToPagination = true,
-            PaginationBehaviour exceededPaginationCountBehaviour = PaginationBehaviour.GetMax,
-            string resolveFromParameter = "")
+            PaginationBehaviour exceededPaginationCountBehaviour = PaginationBehaviour.GetMax)
         {
             _maxCountSize = maxCountSize;
             _includeDataSetCountToPagination = includeDataSetCountToPagination;
             _exceededPaginationCountBehaviour = exceededPaginationCountBehaviour;
-            _resolveFromParameter = resolveFromParameter;
         }
 
         public override void OnActionExecuting(ActionExecutingContext context)
@@ -56,10 +55,40 @@ namespace DynamicQueryBuilder
 
             if (dynamicQueryParameter != null)
             {
+                string queryValue = context.HttpContext.Request.QueryString.Value;
+                if (dqbSettings.QueryOptionsResolver != null)
+                {
+                    if (dqbSettings.QueryOptionsResolver is QueryStringResolver qsResolver)
+                    {
+                        NameValueCollection resolveParameterValues = HttpUtility.ParseQueryString(context.HttpContext.Request.QueryString.Value);
+                        string[] values = resolveParameterValues.GetValues(qsResolver.ResolveFrom);
+                        if (values == null || values.Length == 0)
+                        {
+                            throw new DynamicQueryException($"Couldn't resolve query from querystring parameter {qsResolver.ResolveFrom}");
+                        }
+
+                        queryValue = HttpUtility.UrlDecode(
+                            qsResolver.DecodeFunction != null 
+                            ? qsResolver.DecodeFunction(values[0])
+                            : values[0]);
+                    }
+                    else if (dqbSettings.QueryOptionsResolver is HttpHeaderResolver hhResolver)
+                    {
+                        string rawHeaderValue = context
+                            .HttpContext
+                            .Request
+                            .Headers[hhResolver.HttpHeaderName]
+                            .FirstOrDefault() ?? string.Empty;
+
+                        queryValue = hhResolver.DecodeFunction != null
+                            ? hhResolver.DecodeFunction(rawHeaderValue)
+                            : rawHeaderValue;
+                    }
+                }
+
                 DynamicQueryOptions parsedOptions =
                     ExpressionBuilder.ParseQueryOptions(
-                        context.HttpContext.Request.QueryString.Value,
-                        _resolveFromParameter,
+                        queryValue,
                         dqbSettings.CustomOpCodes);
 
                 parsedOptions.UsesCaseInsensitiveSource = dqbSettings.UsesCaseInsensitiveSource;

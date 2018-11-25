@@ -188,10 +188,9 @@ namespace DynamicQueryBuilder
         /// Parses a Querystring into DynamicQueryOptions instance.
         /// </summary>
         /// <param name="query">QueryString to parse.</param>
-        /// <param name="resolveFromParameter">QueryString parameter that the Query was sent with.</param>
         /// <param name="opShortCodes">Custom operation shortcodes.</param>
         /// <returns>Parsed DynamicQueryOptions instance.</returns>
-        public static DynamicQueryOptions ParseQueryOptions(string query, string resolveFromParameter = "", CustomOpCodes opShortCodes = null)
+        public static DynamicQueryOptions ParseQueryOptions(string query, CustomOpCodes opShortCodes = null)
         {
             try
             {
@@ -201,23 +200,7 @@ namespace DynamicQueryBuilder
                     return dynamicQueryOptions;
                 }
 
-                string decodedQuery;
-                if (!string.IsNullOrEmpty(resolveFromParameter))
-                {
-                    NameValueCollection resolveParameterValues = HttpUtility.ParseQueryString(query);
-                    string[] values = resolveParameterValues.GetValues(resolveFromParameter);
-                    if (values == null || values.Length == 0)
-                    {
-                        throw new DynamicQueryException($"Couldn't resolve query from {resolveFromParameter}");
-                    }
-
-                    decodedQuery = HttpUtility.UrlDecode(values[0]);
-                }
-                else
-                {
-                    decodedQuery = HttpUtility.UrlDecode(query);
-                }
-
+                string decodedQuery = HttpUtility.UrlDecode(query);
                 DynamicQueryOptions innerQueryOptions = null;
                 const string innerMemberKey = "v=(";
                 int indexOfInnerMemberKey = decodedQuery.IndexOf(innerMemberKey);
@@ -225,11 +208,11 @@ namespace DynamicQueryBuilder
                 {
                     indexOfInnerMemberKey += innerMemberKey.Length;
                     string innerQuery = decodedQuery.Substring(indexOfInnerMemberKey, decodedQuery.LastIndexOf(')') - indexOfInnerMemberKey);
-                    innerQueryOptions = ParseQueryOptions(innerQuery);
+                    innerQueryOptions = ParseQueryOptions(innerQuery, opShortCodes);
                     decodedQuery = decodedQuery.Replace(innerQuery, string.Empty);
                 }
 
-                var defaultArrayValue = new List<string>().ToArray();
+                string[] defaultArrayValue = new string[0];
                 NameValueCollection queryCollection = HttpUtility.ParseQueryString(decodedQuery);
 
                 string[] operations = queryCollection
@@ -292,7 +275,6 @@ namespace DynamicQueryBuilder
         /// <param name="offsetOptions">Offset array.</param>
         /// <param name="countOptions">Count array.</param>
         /// <param name="opShortCodes">CustomOpCodes instance.</param>
-        /// <param name="memberQueryOptions">TODO: Allan please remove this.</param>
         internal static void PopulateDynamicQueryOptions(
             DynamicQueryOptions dynamicQueryOptions,
             string[] operations,

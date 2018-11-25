@@ -11,8 +11,10 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Xunit;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
@@ -118,14 +120,85 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
             Assert.True(executedOptionsOffsetNegative.PaginationOption.AssignDataSetCount);
         }
 
-        private DynamicQueryOptions ExecuteAction(DynamicQueryAttribute parameterlessInstance, string query = null)
+        [Fact]
+        public void ShouldDetectQueryStringResolverQueryResolutionOptionWhenItsProvided()
         {
-            ActionExecutingContext context = CreateContext(query);
-            parameterlessInstance.OnActionExecuting(context);
+            var instance = new DynamicQueryAttribute();
+            var resultWithoutEncoding = ExecuteAction(
+                instance,
+                dynamicQueryWithParam,
+                new DynamicQueryBuilderSettings
+                {
+                    QueryOptionsResolver = new QueryStringResolver(DYNAMIC_QUERY_STRING_PARAM)
+                });
+
+            var resultWithEncoding = ExecuteAction(
+                instance,
+                dynamicQueryWithParamValueEncoded,
+                new DynamicQueryBuilderSettings
+                {
+                    QueryOptionsResolver = new QueryStringResolver(DYNAMIC_QUERY_STRING_PARAM, (qstring) =>
+                    {
+                        return Encoding.UTF8.GetString(Convert.FromBase64String(qstring));
+                    })
+                });
+
+            Assert.NotNull(resultWithoutEncoding.Filters);
+            Assert.NotEmpty(resultWithoutEncoding.Filters);
+
+            Assert.NotNull(resultWithEncoding.Filters);
+            Assert.NotEmpty(resultWithEncoding.Filters);
+        }
+
+        [Fact]
+        public void ShouldDetectHttpHeaderResolverQueryResolutionOptionWhenItsProvided()
+        {
+            var instance = new DynamicQueryAttribute();
+            string onlyQuery = dynamicQueryWithParam.Split($"?{DYNAMIC_QUERY_STRING_PARAM}=")[1];
+            string onlyQueryEncoded = dynamicQueryWithParamValueEncoded.Split($"?{DYNAMIC_QUERY_STRING_PARAM}=")[1];
+            var resultWithoutEncoding = ExecuteAction(
+                instance,
+                onlyQuery,
+                new DynamicQueryBuilderSettings
+                {
+                    QueryOptionsResolver = new HttpHeaderResolver(DYNAMIC_QUERY_STRING_PARAM)
+                },
+                true);
+
+            var resultWithEncoding = ExecuteAction(
+                instance,
+                onlyQueryEncoded,
+                new DynamicQueryBuilderSettings
+                {
+                    QueryOptionsResolver = new HttpHeaderResolver(DYNAMIC_QUERY_STRING_PARAM, (qstring) =>
+                    {
+                        return Encoding.UTF8.GetString(Convert.FromBase64String(qstring));
+                    })
+                },
+                true);
+
+            Assert.NotNull(resultWithoutEncoding.Filters);
+            Assert.NotEmpty(resultWithoutEncoding.Filters);
+
+            Assert.NotNull(resultWithEncoding.Filters);
+            Assert.NotEmpty(resultWithEncoding.Filters);
+        }
+
+        private DynamicQueryOptions ExecuteAction(
+            DynamicQueryAttribute attributeInstance,
+            string query = null,
+            DynamicQueryBuilderSettings settings = null,
+            bool queryOnHeader = false)
+        {
+            ActionExecutingContext context = CreateContext(query, settings, queryOnHeader);
+            attributeInstance.OnActionExecuting(context);
             return context.ActionArguments.First().Value as DynamicQueryOptions;
         }
 
-        private ActionExecutingContext CreateContext(string query = null, CustomOpCodes customOpCodes = null)
+        private ActionExecutingContext CreateContext(
+            string query = null,
+            DynamicQueryBuilderSettings opts = null,
+            bool queryOnHeader = false)
         {
             var actionDescriptor = new ActionDescriptor
             {
@@ -141,11 +214,22 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
             };
 
             HttpContext httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString(query ?? DYNAMIC_QUERY_STRING);
-            if (customOpCodes != null)
+            if (queryOnHeader)
+            {
+                var hhResolver = opts.QueryOptionsResolver as HttpHeaderResolver;
+                httpContext.Request.Headers.Add(
+                    DYNAMIC_QUERY_STRING_PARAM,
+                    query ?? DYNAMIC_QUERY_STRING);
+            }
+            else
+            {
+                httpContext.Request.QueryString = new QueryString(query ?? DYNAMIC_QUERY_STRING);
+            }
+
+            if (opts != null)
             {
                 var serviceProvider = new ServiceCollection();
-                serviceProvider.AddSingleton(customOpCodes);
+                serviceProvider.AddSingleton(opts);
                 httpContext.RequestServices = serviceProvider.BuildServiceProvider(true);
             }
 
