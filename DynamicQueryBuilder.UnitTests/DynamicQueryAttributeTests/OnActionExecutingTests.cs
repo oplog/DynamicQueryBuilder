@@ -137,10 +137,7 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
                 dynamicQueryWithParamValueEncoded,
                 new DynamicQueryBuilderSettings
                 {
-                    QueryOptionsResolver = new QueryStringResolver(DYNAMIC_QUERY_STRING_PARAM, (qstring) =>
-                    {
-                        return Encoding.UTF8.GetString(Convert.FromBase64String(qstring));
-                    })
+                    QueryOptionsResolver = new QueryStringResolver(DYNAMIC_QUERY_STRING_PARAM, (qstring) => Encoding.UTF8.GetString(Convert.FromBase64String(qstring)))
                 });
 
             Assert.NotNull(resultWithoutEncoding.Filters);
@@ -170,10 +167,7 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
                 onlyQueryEncoded,
                 new DynamicQueryBuilderSettings
                 {
-                    QueryOptionsResolver = new HttpHeaderResolver(DYNAMIC_QUERY_STRING_PARAM, (qstring) =>
-                    {
-                        return Encoding.UTF8.GetString(Convert.FromBase64String(qstring));
-                    })
+                    QueryOptionsResolver = new HttpHeaderResolver(DYNAMIC_QUERY_STRING_PARAM, (qstring) => Encoding.UTF8.GetString(Convert.FromBase64String(qstring)))
                 },
                 true);
 
