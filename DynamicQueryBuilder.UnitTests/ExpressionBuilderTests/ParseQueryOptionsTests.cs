@@ -127,26 +127,6 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
-        public void ParseQueryOptionsShouldParseQueryFromGivenParameterWhenProvided()
-        {
-            var validOptions = new DynamicQueryOptions
-            {
-                Filters = new List<Filter>
-                {
-                    new Filter
-                    {
-                        Value = "Movies",
-                        PropertyName = "category",
-                        Operator = FilterOperation.Equals
-                    }
-                }
-            };
-
-            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions(dynamicQueryWithParam, DYNAMIC_QUERY_STRING_PARAM);
-            Assert.True(AreObjectPropertiesMatching(validOptions, result));
-        }
-
-        [Fact]
         public void ParseQueryOptionsShouldParseMultipleLevelMemberQueries()
         {
             const string firstLevelInnerCollectionMemberKey = "FirstLevelInnerCollectionMember";
@@ -201,15 +181,6 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Throws<DynamicQueryException>(() =>
             {
                 ExpressionBuilder.ParseQueryOptions("o=invalid&p=operation&v=provided");
-            });
-        }
-
-        [Fact]
-        public void ParseQueryOptionsShouldThrowExceptionWhenResolveParamProvidedButNotPresent()
-        {
-            Assert.Throws<DynamicQueryException>(() =>
-            {
-                ExpressionBuilder.ParseQueryOptions(DYNAMIC_QUERY_STRING, DYNAMIC_QUERY_STRING_PARAM);
             });
         }
 

@@ -4,8 +4,10 @@
 
 using DynamicQueryBuilder.Models.Enums;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace DynamicQueryBuilder.UnitTests
 {
@@ -29,6 +31,8 @@ namespace DynamicQueryBuilder.UnitTests
         };
 
         protected string dynamicQueryWithParam = $"?{DYNAMIC_QUERY_STRING_PARAM}=o%3DEquals%26p%3Dcategory%26v%3DMovies";
+
+        protected string dynamicQueryWithParamValueEncoded = $"?{DYNAMIC_QUERY_STRING_PARAM}={Convert.ToBase64String(Encoding.UTF8.GetBytes("o%3DEquals%26p%3Dcategory%26v%3DMovies"))}";
 
         protected sealed class InnerMemberTestClass
         {

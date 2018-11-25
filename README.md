@@ -22,6 +22,7 @@ DynamicQueryBuilder currently supports:
 - <a href="#accessing-nested-objects">Accessing Nested Objects</a> 
 - <a href="#pagination">Pagination</a>
 - <a href="#dynamic-query-parsing">Dynamic Query Parsing</a>
+  * <a href="#query-delivery-methods">Query Delivery Methods</a>
   * <a href="#http-parameters">HTTP Parameters</a>
   * <a href="#http-query-examples">HTTP Query Examples</a>
   * <a href="#web-action-examples">Web Action Examples</a>
@@ -218,6 +219,50 @@ int totalDataSetCount = paginationOption.DataSetCount;
 - <a href="#index">Index</a>
 
 Dynamic Query Builder can also parse the given `HTTP` request query parameters by its own conventions into a `DynamicQueryOptions` instance.
+
+#### Query Delivery Methods
+
+- <a href="#index">Index</a>
+
+Dynamic Query Builder can retrieve your encoded/non-encoded queries via options below: 
+
+##### Request QueryString
+
+This can be configured on `QueryOptionsResolver` property of `DynamicQueryBuilderSettings` class by initializing `QueryStringResolver` class.
+
+Below, there is an example of configuring DQB to retrieve queries from query string
+
+```csharp
+string parameterToResolveFrom = "myparamtoresolve";
+Func<string, string> decodeFunction = (encodedQuery) => magicDecode(encodedQuery);
+
+new DynamicQueryBuilderSettings
+{
+    // Other configurations
+    QueryOptionsResolver = new QueryStringResolver(parameterToResolveFrom, decodeFunction)
+}
+```
+
+Tip: you can leave `parameterToResolveFrom` null to resolve your queries directly from the raw querystring.
+
+##### Request HTTP Header
+
+This can be configured on `QueryOptionsResolver` property of `DynamicQueryBuilderSettings` class by initializing `HttpHeaderResolver` class.
+
+Below, there is an example of configuring DQB to retrieve queries from HTTP Headers
+
+```csharp
+string httpHeaderName = "myhttpheadername";
+Func<string, string> decodeFunction = (encodedQuery) => magicDecode(encodedQuery);
+
+new DynamicQueryBuilderSettings
+{
+    // Other configurations
+    QueryOptionsResolver = new HttpHeaderResolver(httpHeaderName, decodeFunction)
+}
+```
+
+Tip: you can always leave `decodeFunction` null if your queries are not encoded.
 
 #### Http Parameters
 
