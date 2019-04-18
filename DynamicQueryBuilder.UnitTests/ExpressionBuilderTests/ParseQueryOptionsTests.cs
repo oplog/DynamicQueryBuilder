@@ -4,8 +4,11 @@
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
+
 using System.Collections.Generic;
+
 using Xunit;
+
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
@@ -196,6 +199,18 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             {
                 Assert.Equal(ex.RequestedQuery, veryFaultyQueryString);
             }
+        }
+
+        [Fact]
+        public void ParseQueryOptionsShouldNotClearSpacesInValueParameterValue()
+        {
+            const string finalParameterValue = "Movies and Music";
+            string valueWithSpace = string.Concat(dynamicQueryWithParam.Replace("dqb=", string.Empty), "%20and%20Music");
+
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions(valueWithSpace);
+            Assert.NotNull(result.Filters);
+            Assert.NotEmpty(result.Filters);
+            Assert.Equal(result.Filters[0].Value, finalParameterValue);
         }
     }
 }

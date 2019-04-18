@@ -7,6 +7,7 @@ using DynamicQueryBuilder.Models.Enums;
 using DynamicQueryBuilder.Utils;
 using DynamicQueryBuilder.Utils.Extensions;
 using DynamicQueryBuilder.Visitors;
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -16,6 +17,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Web;
+
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 [assembly: InternalsVisibleTo("DynamicQueryBuilder.UnitTests")]
@@ -227,7 +229,6 @@ namespace DynamicQueryBuilder
 
                 string[] parameterValues = queryCollection
                     .GetValues(PARAMETER_VALUE_KEY)
-                    ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
                 string[] sortOptions = queryCollection
