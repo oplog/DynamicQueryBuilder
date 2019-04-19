@@ -4,12 +4,16 @@
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
+
 using Moq;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+
 using Xunit;
+
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
@@ -36,7 +40,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             IQueryable<TestModel> currentSet = CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(null).AsQueryable();
 
-            currentSet = currentSet.OfType<TestModel>();
+            currentSet = currentSet.Cast<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
         }
 
@@ -67,7 +71,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 SortOptions = null
             }).AsQueryable();
 
-            currentSet = currentSet.OfType<TestModel>();
+            currentSet = currentSet.Cast<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
         }
 
@@ -81,7 +85,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 Filters = new List<Filter>()
             }).AsQueryable();
 
-            currentSet = currentSet.OfType<TestModel>();
+            currentSet = currentSet.Cast<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
         }
 

@@ -74,7 +74,7 @@ namespace DynamicQueryBuilder
         /// <returns>DynamicQueryOptions applied IEnumerable instance,</returns>
         public static IQueryable<T> ApplyFilters<T>(this IQueryable<T> currentSet, DynamicQueryOptions dynamicQueryOptions)
         {
-            return ApplyFilters((IQueryable)currentSet, dynamicQueryOptions).OfType<T>();
+            return ApplyFilters((IQueryable)currentSet, dynamicQueryOptions).Cast<T>();
         }
 
         /// <summary>
@@ -229,7 +229,7 @@ namespace DynamicQueryBuilder
 
                 string[] parameterValues = queryCollection
                     .GetValues(PARAMETER_VALUE_KEY)
-                    .ToArray() ?? defaultArrayValue;
+                    ?.ToArray() ?? defaultArrayValue;
 
                 string[] sortOptions = queryCollection
                     .GetValues(SORT_OPTIONS_PARAMETER_KEY)
