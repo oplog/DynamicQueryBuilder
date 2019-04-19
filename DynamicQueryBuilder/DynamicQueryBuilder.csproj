@@ -15,7 +15,7 @@
     <SignAssembly>false</SignAssembly>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>1.0.3-pre01</Version>
+    <Version>1.0.3-pre02</Version>
     <AssemblyVersion>1.0.0.3</AssemblyVersion>
     <FileVersion>1.0.0.3</FileVersion>
     <PackageReleaseNotes>Added settings model for Web projects
