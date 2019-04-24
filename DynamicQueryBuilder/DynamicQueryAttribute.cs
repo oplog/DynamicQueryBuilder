@@ -20,6 +20,7 @@ namespace DynamicQueryBuilder
     {
         internal readonly int _maxCountSize = 0;
         internal readonly bool _includeDataSetCountToPagination;
+        internal readonly DynamicQueryBuilderSettings _optionalSettings;
         internal readonly PaginationBehaviour _exceededPaginationCountBehaviour;
 
         /// <summary>
@@ -28,15 +29,18 @@ namespace DynamicQueryBuilder
         /// </summary>
         /// <param name="maxCountSize">Max data set count for the result set.</param>
         /// <param name="includeDataSetCountToPagination">Includes the total data set count to the options class.</param>
+        /// <param name="settings">Optional settings to override global dqb settings.</param>
         /// <param name="exceededPaginationCountBehaviour">Behaviour when the requested data set count greater than max count size.</param>
         /// <param name="resolveFromParameter">Resolves the dynamic query string from the given query parameter value.</param>
         public DynamicQueryAttribute(
             int maxCountSize = 100,
             bool includeDataSetCountToPagination = true,
+            DynamicQueryBuilderSettings settings = null,
             PaginationBehaviour exceededPaginationCountBehaviour = PaginationBehaviour.GetMax)
         {
             _maxCountSize = maxCountSize;
             _includeDataSetCountToPagination = includeDataSetCountToPagination;
+            _optionalSettings = settings;
             _exceededPaginationCountBehaviour = exceededPaginationCountBehaviour;
         }
 
@@ -47,10 +51,10 @@ namespace DynamicQueryBuilder
                        .Parameters
                        .FirstOrDefault(x => x.ParameterType == typeof(DynamicQueryOptions));
 
-            DynamicQueryBuilderSettings dqbSettings = context
-                .HttpContext
-                .RequestServices?
-                .GetService(typeof(DynamicQueryBuilderSettings)) as DynamicQueryBuilderSettings
+            DynamicQueryBuilderSettings dqbSettings = _optionalSettings
+                ?? context.HttpContext
+                          .RequestServices?
+                          .GetService(typeof(DynamicQueryBuilderSettings)) as DynamicQueryBuilderSettings
                 ?? new DynamicQueryBuilderSettings();
 
             if (dynamicQueryParameter != null)
@@ -68,7 +72,7 @@ namespace DynamicQueryBuilder
                         }
 
                         queryValue = HttpUtility.UrlDecode(
-                            qsResolver.DecodeFunction != null 
+                            qsResolver.DecodeFunction != null
                             ? qsResolver.DecodeFunction(values[0])
                             : values[0]);
                     }
