@@ -6,7 +6,7 @@
     <Authors>Oplog</Authors>
     <Company>Oplog</Company>
     <Description>Lightweight LINQ query builder</Description>
-    <PackageLicenseUrl>https://github.com/oplog/DynamicQueryBuilder/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/oplog/DynamicQueryBuilder</PackageProjectUrl>
     <RepositoryUrl>https://github.com/oplog/DynamicQueryBuilder</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
@@ -15,12 +15,13 @@
     <SignAssembly>false</SignAssembly>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>1.0.3-pre02</Version>
+    <Version>1.0.3-pre03</Version>
     <AssemblyVersion>1.0.0.3</AssemblyVersion>
     <FileVersion>1.0.0.3</FileVersion>
     <PackageReleaseNotes>Added settings model for Web projects
 Added case sensitivity default option flag
 Added smart ordering</PackageReleaseNotes>
+    <PackageLicenseExpression></PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

@@ -4,6 +4,7 @@
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
@@ -11,11 +12,14 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 using Xunit;
+
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
@@ -176,6 +180,22 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
 
             Assert.NotNull(resultWithEncoding.Filters);
             Assert.NotEmpty(resultWithEncoding.Filters);
+        }
+
+        [Fact]
+        public void ShouldBeAbleToHandleEmptyQueries()
+        {
+            var attr = new DynamicQueryAttribute();
+            var settings = new DynamicQueryBuilderSettings
+            {
+                QueryOptionsResolver = new QueryStringResolver(DYNAMIC_QUERY_STRING_PARAM)
+            };
+
+            var result = ExecuteAction(attr, string.Empty, settings);
+
+            Assert.NotNull(result);
+            Assert.Empty(result.Filters);
+            Assert.Empty(result.SortOptions);
         }
 
         private DynamicQueryOptions ExecuteAction(
