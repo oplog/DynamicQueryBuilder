@@ -179,6 +179,38 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
+        public void ParseQueryOptionsShouldParseMultipleLevelMemberQueriesWithPrimitiveTypes()
+        {
+            string innerMemberQuery = $"o=Any&p=InnerPrimitiveList&v=(o=eq&p=_&v=3)";
+            var validOptions = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Value = new DynamicQueryOptions
+                        {
+                            Filters = new List<Filter>
+                            {
+                                new Filter
+                                {
+                                    Operator = FilterOperation.Equals,
+                                    PropertyName = "_",
+                                    Value = "3"
+                                }
+                            }
+                        },
+                        PropertyName = nameof(ApplyFiltersTests.TestModel.InnerPrimitiveList),
+                        Operator = FilterOperation.Any
+                    }
+                }
+            };
+
+            DynamicQueryOptions result = ExpressionBuilder.ParseQueryOptions(innerMemberQuery);
+            Assert.True(AreObjectPropertiesMatching(validOptions, result));
+        }
+
+        [Fact]
         public void ParseQueryOptionsShouldThrowExceptionWhenInvalidOperationProvided()
         {
             Assert.Throws<DynamicQueryException>(() =>

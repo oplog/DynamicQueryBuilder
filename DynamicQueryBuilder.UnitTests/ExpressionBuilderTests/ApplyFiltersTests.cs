@@ -26,6 +26,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             public string Name { get; set; }
 
+            public ICollection<string> InnerPrimitiveList { get; set; }
+
             public ICollection<InnerTestModel> InnerTestModels { get; set; }
         }
 
@@ -234,6 +236,48 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Contains($".Skip({allQueryTypes.PaginationOption.Offset}).Take({allQueryTypes.PaginationOption.Offset})", expressionString);
         }
 
+        [Fact]
+        public void ApplyFiltersShouldHandlePrimitiveCollectionTypes()
+        {
+            IQueryable<TestModel> currentSet = CreateSampleSet();
+            var filters = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                   new Filter
+                   {
+                       Value = new DynamicQueryOptions
+                       {
+                           Filters = new List<Filter>
+                           {
+                               new Filter
+                               {
+                                   Operator = FilterOperation.Equals,
+                                   PropertyName = "_",
+                                   Value = "3"
+                               }
+                           }
+                       },
+                       PropertyName = nameof(TestModel.InnerPrimitiveList),
+                       Operator = FilterOperation.Any
+                   }
+                },
+                SortOptions = new List<SortOption>
+                {
+                    new SortOption
+                    {
+                        PropertyName = nameof(TestModel.Age)
+                    }
+                }
+            };
+
+            List<TestModel> result = currentSet.ApplyFilters(filters).ToList();
+            Assert.NotEmpty(result);
+            Assert.Equal(2, result.Count);
+            Assert.Equal(currentSet.ElementAtOrDefault(0), result[0]);
+            Assert.Equal(currentSet.ElementAtOrDefault(1), result[1]);
+        }
+
         private IQueryable<TestModel> PrepareForMemberQuery(FilterOperation operation)
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
@@ -282,6 +326,12 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                         {
                             Role = "User"
                         }
+                    },
+                    InnerPrimitiveList = new List<string>
+                    {
+                        "1",
+                        "2",
+                        "3"
                     }
                 },
                 new TestModel
@@ -298,6 +348,12 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                         {
                             Role = "User"
                         }
+                    },
+                    InnerPrimitiveList = new List<string>
+                    {
+                        "3",
+                        "4",
+                        "5"
                     }
                 },
                 new TestModel
@@ -314,6 +370,12 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                         {
                             Role = "Admin"
                         }
+                    },
+                    InnerPrimitiveList = new List<string>
+                    {
+                        "7",
+                        "7",
+                        "7"
                     }
                 }
             }.AsQueryable();

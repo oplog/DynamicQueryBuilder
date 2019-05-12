@@ -297,7 +297,7 @@ namespace DynamicQueryBuilder
             {
                 for (int i = 0; i < operations.Length; i++)
                 {
-                    FilterOperation foundOperation = default(FilterOperation);
+                    FilterOperation foundOperation;
 
                     // Check if we support this operation.
                     if (Enum.TryParse(operations[i], true, out FilterOperation parsedOperation))
@@ -552,7 +552,13 @@ namespace DynamicQueryBuilder
                 throw new DynamicQueryException("Both parameter expression and propertyname are required");
             }
 
+            if (propertyName == "_")
+            {
+                return param;
+            }
+
             Expression parentMember = param;
+
             // If the property name is refering to a nested object property, we should iterate through every nested type to get to the final property target.
             if (propertyName.Contains('.'))
             {

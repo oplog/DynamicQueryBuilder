@@ -118,6 +118,23 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Null(result);
         }
 
+        [Fact]
+        public void ShouldHandleInnerPrimitiveCollectionMembers()
+        {
+            const string resultOfQuery = "(x == \"3\")";
+            Expression result = ExpressionBuilder.BuildFilterExpression(
+                Expression.Parameter(typeof(string), "x"),
+                new Filter
+                {
+                    Value = "3",
+                    PropertyName = "_",
+                    Operator = FilterOperation.Equals
+                });
+
+            Assert.NotNull(result);
+            Assert.Equal(result.ToString(), resultOfQuery);
+        }
+
         private string BuildQuery(FilterOperation operation, string value = "test", string propName = "Name")
         {
             return ExpressionBuilder.BuildFilterExpression(
