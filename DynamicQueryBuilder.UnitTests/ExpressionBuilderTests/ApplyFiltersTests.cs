@@ -24,6 +24,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         {
             public int Age { get; set; }
 
+            public int? AgeN { get; set; }
+
             public string Name { get; set; }
 
             public ICollection<string> InnerPrimitiveList { get; set; }

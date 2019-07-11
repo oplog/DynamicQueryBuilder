@@ -117,7 +117,7 @@ namespace DynamicQueryBuilder
                     List<OrderOptionDetails> orderLambdas = new List<OrderOptionDetails>();
                     foreach (SortOption so in dynamicQueryOptions.SortOptions)
                     {
-                        Expression paramExpr = ExtractMember(param, so.PropertyName);
+                        Expression paramExpr = ExtractMember(param, so.PropertyName, false);
                         orderLambdas.Add(new OrderOptionDetails
                         {
                             Direction = so.SortingDirection,
@@ -431,7 +431,8 @@ namespace DynamicQueryBuilder
         /// <returns>Built query expression.</returns>
         internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
         {
-            Expression parentMember = ExtractMember(param, filter.PropertyName);
+            string stringFilterValue = filter.Value?.ToString();
+            Expression parentMember = ExtractMember(param, filter.PropertyName, stringFilterValue == "null");
             if (parentMember.Type == typeof(string)
                 && filter.CaseSensitive
                 && !usesCaseInsensitiveSource)
@@ -439,7 +440,6 @@ namespace DynamicQueryBuilder
                 parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
             }
 
-            string stringFilterValue = filter.Value?.ToString();
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
             {
@@ -544,8 +544,9 @@ namespace DynamicQueryBuilder
         /// </summary>
         /// <param name="param">Current parameter body.</param>
         /// <param name="propertyName">Parameter name to construct.</param>
+        /// <param name="isValueNull">Shows if the value that the query is looking for a null.</param>
         /// <returns>Constructed parameter name.</returns>
-        internal static Expression ExtractMember(ParameterExpression param, string propertyName)
+        internal static Expression ExtractMember(ParameterExpression param, string propertyName, bool isValueNull = false)
         {
             if (param == null || string.IsNullOrEmpty(propertyName))
             {
@@ -575,7 +576,9 @@ namespace DynamicQueryBuilder
             // Nullable Type
             if (Nullable.GetUnderlyingType(parentMember.Type) != null)
             {
-                parentMember = Expression.PropertyOrField(parentMember, "Value");
+                parentMember = isValueNull
+                    ? parentMember
+                    : Expression.PropertyOrField(parentMember, "Value");
             }
 
             return parentMember;
