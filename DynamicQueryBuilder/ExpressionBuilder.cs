@@ -580,6 +580,13 @@ namespace DynamicQueryBuilder
                     ? parentMember
                     : Expression.PropertyOrField(parentMember, "Value");
             }
+            else
+            {
+                if (isValueNull)
+                {
+                    throw new InvalidDynamicQueryException($"Type of property {propertyName} is not nullable but query value was received null");
+                }
+            }
 
             return parentMember;
         }
