@@ -582,7 +582,7 @@ namespace DynamicQueryBuilder
             }
             else
             {
-                if (isValueNull)
+                if (isValueNull && parentMember.Type != typeof(string))
                 {
                     throw new InvalidDynamicQueryException($"Type of property {propertyName} is not nullable but query value was received null");
                 }
