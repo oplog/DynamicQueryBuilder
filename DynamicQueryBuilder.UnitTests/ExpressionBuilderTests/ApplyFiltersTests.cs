@@ -239,6 +239,49 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
+        public void ApplyFiltersShouldHandleComparisonsDifferentlyForStrings()
+        {
+            IQueryable<TestModel> currentSet = CreateSampleSet();
+            var caseSensitiveFilters = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                   new Filter
+                   {
+                       Value = "testSix",
+                       PropertyName = nameof(TestModel.Name),
+                       Operator = FilterOperation.GreaterThan,
+                       CaseSensitive = true
+                   }
+                }
+            };
+
+            List<TestModel> result = currentSet.ApplyFilters(caseSensitiveFilters).ToList();
+            Assert.NotEmpty(result);
+            Assert.Equal(currentSet.ElementAtOrDefault(1), result[0]);
+            Assert.Equal(currentSet.ElementAtOrDefault(2), result[1]);
+
+            var caseInsensitiveFilters = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                   new Filter
+                   {
+                       Value = "testSix",
+                       PropertyName = nameof(TestModel.Name),
+                       Operator = FilterOperation.GreaterThan,
+                       CaseSensitive = false
+                   }
+                }
+            };
+
+            result = currentSet.ApplyFilters(caseInsensitiveFilters).ToList();
+            Assert.NotEmpty(result);
+            Assert.Equal(currentSet.ElementAtOrDefault(1), result[0]);
+            Assert.Equal(currentSet.ElementAtOrDefault(2), result[1]);
+        }
+
+        [Fact]
         public void ApplyFiltersShouldHandlePrimitiveCollectionTypes()
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();

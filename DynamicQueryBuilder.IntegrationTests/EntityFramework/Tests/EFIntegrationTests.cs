@@ -161,8 +161,34 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 IgnorePredefinedOrders = true
             }).ToList();
 
+            var resultOfStringsComparisonTest = queryable.ApplyFilters(new DynamicQueryOptions 
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Operator = FilterOperation.Any,
+                        PropertyName = "Orders",
+                        Value = new DynamicQueryOptions
+                        {
+                            Filters = new List<Filter>
+                            {
+                                new Filter
+                                {
+                                    Operator = FilterOperation.GreaterThan,
+                                    PropertyName = "ProductName",
+                                    Value = "Prod"
+                                }
+                            }
+                        }
+                    }
+                }
+            }).ToList();
+
             Assert.True(resultOfAgeTwo.Count == 3);
             Assert.True(resultOfNameTestOne.Count == 1);
+            Assert.True(resultOfStringsComparisonTest.Count == 1);
+            Assert.Equal("Test_4", resultOfStringsComparisonTest[0].Name);
         }
 
         [Fact(DisplayName = "EF_PaginationShouldWork")]
@@ -318,7 +344,8 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                         Value = "test_1"
                     }
                 },
-                IgnorePredefinedOrders = true
+                IgnorePredefinedOrders = true,
+                UsesCaseInsensitiveSource = true
             };
 
             var withResultFilterWithCSDisabled = new DynamicQueryOptions
@@ -349,13 +376,42 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 IgnorePredefinedOrders = true
             };
 
+            var stringsComparisonWithCaseSensitivityFilters = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Operator = FilterOperation.Any,
+                        PropertyName = "Orders",
+                        Value = new DynamicQueryOptions
+                        {
+                            Filters = new List<Filter>
+                            {
+                                new Filter
+                                {
+                                    Operator = FilterOperation.LessThan,
+                                    PropertyName = "ProductName",
+                                    Value = "AreUNUTZ?",
+                                    CaseSensitive = true
+                                }
+                            }
+                        }
+                    }
+                },
+                IgnorePredefinedOrders = true,
+                UsesCaseInsensitiveSource = false
+            };
+
             var resultOfwithResultFilterWithCSEnabled = queryable.ApplyFilters(withResultFilterWithCSEnabled).ToList();
             var resultOfwithResultFilterWithCSDisabled = queryable.ApplyFilters(withResultFilterWithCSDisabled).ToList();
             var resultOfnoResultFilterWithCSDisabledAndInvalidCase = queryable.ApplyFilters(noResultFilterWithCSDisabledAndInvalidCase).ToList();
+            var stringsComparisonWithCaseSensitivity = queryable.ApplyFilters(stringsComparisonWithCaseSensitivityFilters).ToList();
 
             Assert.NotEmpty(resultOfwithResultFilterWithCSEnabled);
             Assert.NotEmpty(resultOfwithResultFilterWithCSDisabled);
             Assert.Empty(resultOfnoResultFilterWithCSDisabledAndInvalidCase);
+            Assert.True(stringsComparisonWithCaseSensitivity.Count == 0);
         }
     }
 }
