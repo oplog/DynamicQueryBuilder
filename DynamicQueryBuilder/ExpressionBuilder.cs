@@ -429,15 +429,15 @@ namespace DynamicQueryBuilder
         /// </summary>
         /// <param name="param">Created parameter instance or current expression body.</param>
         /// <param name="filter">Filter instance to build.</param>
-        /// <param name="usesCaseSensitiveSource">Flag to detect if the query is going to run on a SQL database.</param>
+        /// <param name="usesCaseInsensitiveSource">Flag to detect if the query is going to run on a SQL database.</param>
         /// <returns>Built query expression.</returns>
-        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseSensitiveSource = false)
+        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
         {
             string stringFilterValue = filter.Value?.ToString();
             Expression parentMember = ExtractMember(param, filter.PropertyName, stringFilterValue == "null");
             if (parentMember.Type == typeof(string)
                 && !filter.CaseSensitive
-                && !usesCaseSensitiveSource)
+                && usesCaseInsensitiveSource)
             {
                 parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
             }
@@ -461,14 +461,14 @@ namespace DynamicQueryBuilder
                 };
 
                 // Create the expression with the first value.
-                Expression builtInExpression = BuildFilterExpression(param, equalsFilter, usesCaseSensitiveSource);
+                Expression builtInExpression = BuildFilterExpression(param, equalsFilter, usesCaseInsensitiveSource);
                 splittedValues.RemoveAt(0); // Remove the first value
 
                 // Create query for every splitted value and append them.
                 foreach (var item in splittedValues)
                 {
                     equalsFilter.Value = item;
-                    builtInExpression = Expression.Or(builtInExpression, BuildFilterExpression(param, equalsFilter, usesCaseSensitiveSource));
+                    builtInExpression = Expression.Or(builtInExpression, BuildFilterExpression(param, equalsFilter, usesCaseInsensitiveSource));
                 }
 
                 return builtInExpression;
@@ -480,11 +480,11 @@ namespace DynamicQueryBuilder
             {
                 convertedValue = stringFilterValue != "null"
                     ? TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(
-                       usesCaseSensitiveSource
-                       ? stringFilterValue
-                        : !filter.CaseSensitive
-                            ? stringFilterValue?.ToLowerInvariant()
-                            : stringFilterValue)
+                       !usesCaseInsensitiveSource
+                       ? filter.CaseSensitive
+                            ? stringFilterValue
+                            : stringFilterValue?.ToLowerInvariant()
+                       : stringFilterValue?.ToLowerInvariant())
                     : null;
             }
 
@@ -503,28 +503,28 @@ namespace DynamicQueryBuilder
                 case FilterOperation.GreaterThan:
                     if (parentMember.Type == typeof(string))
                     {
-                        return BuildStringComparatorQuery(parentMember, FilterOperation.GreaterThan, constant, usesCaseSensitiveSource && filter.CaseSensitive);
+                        return BuildStringComparatorQuery(parentMember, FilterOperation.GreaterThan, constant, usesCaseInsensitiveSource, filter.CaseSensitive);
                     }
                     return Expression.GreaterThan(parentMember, constant);
 
                 case FilterOperation.GreaterThanOrEqual:
                     if (parentMember.Type == typeof(string))
                     {
-                        return BuildStringComparatorQuery(parentMember, FilterOperation.GreaterThanOrEqual, constant, usesCaseSensitiveSource && filter.CaseSensitive);
+                        return BuildStringComparatorQuery(parentMember, FilterOperation.GreaterThanOrEqual, constant, usesCaseInsensitiveSource, filter.CaseSensitive);
                     }
                     return Expression.GreaterThanOrEqual(parentMember, constant);
 
                 case FilterOperation.LessThan:
                     if (parentMember.Type == typeof(string))
                     {
-                        return BuildStringComparatorQuery(parentMember, FilterOperation.LessThan, constant, usesCaseSensitiveSource && filter.CaseSensitive);
+                        return BuildStringComparatorQuery(parentMember, FilterOperation.LessThan, constant, usesCaseInsensitiveSource, filter.CaseSensitive);
                     }
                     return Expression.LessThan(parentMember, constant);
 
                 case FilterOperation.LessThanOrEqual:
                     if (parentMember.Type == typeof(string))
                     {
-                        return BuildStringComparatorQuery(parentMember, FilterOperation.LessThanOrEqual, constant, usesCaseSensitiveSource && filter.CaseSensitive);
+                        return BuildStringComparatorQuery(parentMember, FilterOperation.LessThanOrEqual, constant, usesCaseInsensitiveSource, filter.CaseSensitive);
                     }
                     return Expression.LessThanOrEqual(parentMember, constant);
 
@@ -545,7 +545,7 @@ namespace DynamicQueryBuilder
                         genericElementTypes: new[] { memberParam.Type },
                         enumerableType: typeof(Enumerable));
 
-                    Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First(), usesCaseSensitiveSource);
+                    Expression builtMemberExpression = BuildFilterExpression(memberParam, (filter.Value as DynamicQueryOptions).Filters.First(), usesCaseInsensitiveSource);
 
                     return Expression.Call(
                         requestedFunction,
@@ -614,9 +614,11 @@ namespace DynamicQueryBuilder
             return new int[] { operations.Length, parameterNames.Length, parameterValues.Length }.Distinct().Count() == 1;
         }
 
-        private static Expression BuildStringComparatorQuery(Expression parentMember, FilterOperation operation, ConstantExpression constant, bool usesCaseSensitiveSource)
+        private static Expression BuildStringComparatorQuery(Expression parentMember, FilterOperation operation, ConstantExpression constant, bool usesCaseInsensitiveSource, bool caseSensitive)
         {
-            var lowerCaseConstant = usesCaseSensitiveSource ? (Expression)constant : Expression.Call(constant, _toLowerInvariantMethod);
+            // Change constant to lower case if source is not case sensitive or if case sensitivity is not desired.
+            var lowerCaseConstant = !usesCaseInsensitiveSource && caseSensitive ? (Expression)constant : Expression.Call(constant, _toLowerInvariantMethod);
+            
             Expression compareToExpression = Expression.Call(parentMember, _compareTo, lowerCaseConstant);
             Expression comparisonConstant = Expression.Constant(0);
 
