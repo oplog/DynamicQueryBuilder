@@ -112,14 +112,15 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                        Value = "testOne",
                        PropertyName = "Name",
                        Operator = FilterOperation.StartsWith,
-                       CaseSensitive = true
+                       CaseSensitive = false
                    }
-                }
+                },
+                UsesCaseInsensitiveSource = true
             };
 
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(filters).AsQueryable();
             string paramName = nameof(TestModel).ToLower();
-            string expectedQuery = $"{paramName} => (({paramName}.Age == 10) AndAlso {paramName}.Name.ToLowerInvariant().StartsWith(\"testone\"))";
+            string expectedQuery = $"{paramName} => (({paramName}.Age == 10) AndAlso {paramName}.Name.ToLowerInvariant().StartsWith(\"testone\".ToLowerInvariant()))";
             var expressionMethodCall = returnedSet.Expression as MethodCallExpression;
             Assert.NotNull(expressionMethodCall);
 
@@ -347,7 +348,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                             }
                         }
                     }
-                }
+                },
+                UsesCaseInsensitiveSource = true
             }).AsQueryable();
 
             return returnedSet;

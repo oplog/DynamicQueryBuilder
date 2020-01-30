@@ -33,25 +33,23 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 XParam, new Filter { Value = "null", PropertyName = "Name", Operator = FilterOperation.Equals, CaseSensitive = true });
         }
 
-        [Fact]
-        public void ShouldConvertInOperationToMultipleEquals()
+        [Theory]
+        [InlineData("(((x.Name == \"Te\") Or (x.Name == \" Test\")) Or (x.Name == \" Testx\"))", true)]
+        [InlineData("(((x.Name.ToLowerInvariant() == \"te\".ToLowerInvariant()) Or (x.Name.ToLowerInvariant() == \" test\".ToLowerInvariant())) Or (x.Name.ToLowerInvariant() == \" testx\".ToLowerInvariant()))", false)]
+        public void ShouldConvertInOperationToMultipleEquals(string expectedResultOfQuery, bool caseSensitive)
         {
-            // Check for case sensitive query.
-            const string resultOfCaseSensitiveQuery = "(((x.Name == \"Te\") Or (x.Name == \" Test\")) Or (x.Name == \" Testx\"))";
-            Expression caseSensitiveResult = ExpressionBuilder.BuildFilterExpression(
-                XParam,
-                new Filter { Value = "Te, Test, Testx", PropertyName = "Name", Operator = FilterOperation.In, CaseSensitive = true });
-            
-            Assert.Equal(caseSensitiveResult.ToString(), resultOfCaseSensitiveQuery);
-
-            // Check for case Insensitive query.
-            const string resultOfCaseInsensitiveQuery = "(((x.Name.ToLowerInvariant() == \"te\") Or (x.Name.ToLowerInvariant() == \" test\")) Or (x.Name.ToLowerInvariant() == \" testx\"))";
-            Expression caseInsensitiveResult = ExpressionBuilder.BuildFilterExpression(
+            Expression result = ExpressionBuilder.BuildFilterExpression(
                     XParam,
-                new Filter { Value = "Te, Test, Testx", PropertyName = "Name", Operator = FilterOperation.In },
-                usesCaseInsensitiveSource: true);
+                new Filter 
+                { 
+                    Value = "Te, Test, Testx", 
+                    PropertyName = "Name", 
+                    Operator = FilterOperation.In,
+                    CaseSensitive = caseSensitive
+                },
+                usesCaseInsensitiveSource: !caseSensitive);
 
-            Assert.Equal(caseInsensitiveResult.ToString(), resultOfCaseInsensitiveQuery);
+            Assert.Equal(result.ToString(), expectedResultOfQuery);
         }
 
         [Fact]
@@ -73,7 +71,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         }
 
         [Fact]
-        public void ShouldReturnRullWhenNotSupportedOperationPassed() // don't know how this would happen tho.
+        public void ShouldReturnNullWhenNotSupportedOperationPassed() // don't know how this would happen tho.
         {
             Expression result = ExpressionBuilder.BuildFilterExpression(
             XParam, new Filter { Value = "test", PropertyName = "Name", Operator = (FilterOperation)999 });

@@ -155,7 +155,8 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                     {
                         Operator = FilterOperation.Equals,
                         PropertyName = "Name",
-                        Value = "Test_1"
+                        Value = "Test_1",
+                        CaseSensitive = true
                     }
                 },
                 IgnorePredefinedOrders = true
@@ -310,7 +311,8 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                                 {
                                     Operator = FilterOperation.Equals,
                                     PropertyName = "ProductName",
-                                    Value = "UniqueName"
+                                    Value = "UniqueName",
+                                    CaseSensitive = true
                                 }
                             }
                         }
@@ -345,7 +347,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                     }
                 },
                 IgnorePredefinedOrders = true,
-                UsesCaseInsensitiveSource = true
+                UsesCaseInsensitiveSource = false
             };
 
             var withResultFilterWithCSDisabled = new DynamicQueryOptions
@@ -356,10 +358,12 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                     {
                         Operator = FilterOperation.Equals,
                         PropertyName = "Name",
-                        Value = "Test_1"
+                        Value = "Test_1",
+                        CaseSensitive = false
                     }
                 },
-                IgnorePredefinedOrders = true
+                IgnorePredefinedOrders = true,
+                UsesCaseInsensitiveSource = true
             };
 
             var noResultFilterWithCSDisabledAndInvalidCase = new DynamicQueryOptions
@@ -408,7 +412,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
             var resultOfnoResultFilterWithCSDisabledAndInvalidCase = queryable.ApplyFilters(noResultFilterWithCSDisabledAndInvalidCase).ToList();
             var stringsComparisonWithCaseSensitivity = queryable.ApplyFilters(stringsComparisonWithCaseSensitivityFilters).ToList();
 
-            Assert.NotEmpty(resultOfwithResultFilterWithCSEnabled);
+            Assert.Empty(resultOfwithResultFilterWithCSEnabled);
             Assert.NotEmpty(resultOfwithResultFilterWithCSDisabled);
             Assert.Empty(resultOfnoResultFilterWithCSDisabledAndInvalidCase);
             Assert.True(stringsComparisonWithCaseSensitivity.Count == 0);
