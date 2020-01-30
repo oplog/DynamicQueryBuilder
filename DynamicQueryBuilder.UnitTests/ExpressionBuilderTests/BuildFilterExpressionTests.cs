@@ -4,6 +4,7 @@
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
+using DynamicQueryBuilder.UnitTests.TestData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,79 +65,11 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Equal(result.ToString(), resultOfQuery);
         }
 
-        [Fact]
-        public void ShouldHandleEveryFilterOperationSupported()
+        [Theory]
+        [MemberData(nameof(FilterTestData.FilterQueryData), MemberType = typeof(FilterTestData))]
+        public void ShouldHandleEveryFilterOperationSupported(string resultQueryString, FilterOperation filterOperation, bool caseSensitive, string value, string propName)
         {
-            const string resultOfEquals = "(x.Name.ToLowerInvariant() == \"test\")";
-            const string resultOfContains = "x.Name.ToLowerInvariant().Contains(\"test\")";
-            const string resultOfNotEquals = "(x.Name.ToLowerInvariant() != \"test\")";
-            const string resultOfEndsWith = "x.Name.ToLowerInvariant().EndsWith(\"test\")";
-            const string resultOfEStartsWith = "x.Name.ToLowerInvariant().StartsWith(\"test\")";
-            const string resultOfGreaterThan = "(x.InnerMember.Age > 3)";
-            const string resultOfLessThan = "(x.InnerMember.Age < 3)";
-            const string resultOfLessThanOrEquals = "(x.InnerMember.Age <= 3)";
-            const string resultOfGreaterThanOrEquals = "(x.InnerMember.Age >= 3)";
-
-            const string resultOfStringLessThanCaseSensitive = "(x.Name.CompareTo(\"testSix\") < 0)";
-            const string resultOfStringLessThanOrEqualsCaseSensitive = "(x.Name.CompareTo(\"testSix\") <= 0)";
-            const string resultOfStringGreaterThanCaseSensitive = "(x.Name.CompareTo(\"testSix\") > 0)";
-            const string resultOfStringGreaterThanOrEqualsCaseSensitive = "(x.Name.CompareTo(\"testSix\") >= 0)";
-
-            const string resultOfStringLessThanCaseInsensitive = "(x.Name.ToLowerInvariant().CompareTo(\"testsix\".ToLowerInvariant()) < 0)";
-            const string resultOfStringLessThanOrEqualsCaseInsensitive = "(x.Name.ToLowerInvariant().CompareTo(\"testsix\".ToLowerInvariant()) <= 0)";
-            const string resultOfStringGreaterThanCaseInsensitive = "(x.Name.ToLowerInvariant().CompareTo(\"testsix\".ToLowerInvariant()) > 0)";
-            const string resultOfStringGreaterThanOrEqualsCaseInsensitive = "(x.Name.ToLowerInvariant().CompareTo(\"testsix\".ToLowerInvariant()) >= 0)";
-
-
-            Expression result = Expression.Empty();
-            List<string> operations = Enum.GetNames(typeof(FilterOperation)).ToList();
-            operations.Remove(nameof(FilterOperation.In)); // We handle this differently
-
-            foreach (string item in operations)
-            {
-                var innerOperation = (FilterOperation)Enum.Parse(typeof(FilterOperation), item);
-                switch (innerOperation)
-                {
-                    case FilterOperation.Equals:
-                        Assert.Equal(resultOfEquals, BuildQuery(FilterOperation.Equals, caseSensitive: false));
-                        break;
-                    case FilterOperation.Contains:
-                        Assert.Equal(resultOfContains, BuildQuery(FilterOperation.Contains, caseSensitive: false));
-                        break;
-                    case FilterOperation.NotEqual:
-                        Assert.Equal(resultOfNotEquals, BuildQuery(FilterOperation.NotEqual, caseSensitive: false));
-                        break;
-                    case FilterOperation.EndsWith:
-                        Assert.Equal(resultOfEndsWith, BuildQuery(FilterOperation.EndsWith, caseSensitive: false));
-                        break;
-                    case FilterOperation.StartsWith:
-                        Assert.Equal(resultOfEStartsWith, BuildQuery(FilterOperation.StartsWith, caseSensitive: false));
-                        break;
-                    case FilterOperation.LessThan:
-                        Assert.Equal(resultOfLessThan, BuildQuery(FilterOperation.LessThan, "3", "InnerMember.Age"));
-                        Assert.Equal(resultOfStringLessThanCaseSensitive, BuildQuery(FilterOperation.LessThan, "testSix", "Name"));
-                        Assert.Equal(resultOfStringLessThanCaseInsensitive, BuildQuery(FilterOperation.LessThan, "testSix", "Name", caseSensitive: false));
-                        break;
-                    case FilterOperation.GreaterThan:
-                        Assert.Equal(resultOfGreaterThan, BuildQuery(FilterOperation.GreaterThan, "3", "InnerMember.Age"));
-                        Assert.Equal(resultOfStringGreaterThanCaseSensitive, BuildQuery(FilterOperation.GreaterThan, "testSix", "Name"));
-                        Assert.Equal(resultOfStringGreaterThanCaseInsensitive, BuildQuery(FilterOperation.GreaterThan, "testSix", "Name", caseSensitive: false));
-                        break;
-                    case FilterOperation.LessThanOrEqual:
-                        Assert.Equal(resultOfLessThanOrEquals, BuildQuery(FilterOperation.LessThanOrEqual, "3", "InnerMember.Age"));
-                        Assert.Equal(resultOfStringLessThanOrEqualsCaseSensitive, BuildQuery(FilterOperation.LessThanOrEqual, "testSix", "Name"));
-                        Assert.Equal(resultOfStringLessThanOrEqualsCaseInsensitive, BuildQuery(FilterOperation.LessThanOrEqual, "testSix", "Name", caseSensitive: false));
-                        break;
-                    case FilterOperation.GreaterThanOrEqual:
-                        Assert.Equal(resultOfGreaterThanOrEquals, BuildQuery(FilterOperation.GreaterThanOrEqual, "3", "InnerMember.Age"));
-                        Assert.Equal(resultOfStringGreaterThanOrEqualsCaseSensitive, BuildQuery(FilterOperation.GreaterThanOrEqual, "testSix", "Name"));
-                        Assert.Equal(resultOfStringGreaterThanOrEqualsCaseInsensitive, BuildQuery(FilterOperation.GreaterThanOrEqual, "testSix", "Name", caseSensitive: false));
-                        break;
-                    default:
-                        Assert.Null(BuildQuery((FilterOperation)999));
-                        break;
-                }
-            }
+            Assert.Equal(resultQueryString, BuildQuery(filterOperation, value: value, propName: propName, caseSensitive: caseSensitive));
         }
 
         [Fact]
@@ -164,11 +97,11 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Equal(result.ToString(), resultOfQuery);
         }
 
-        private string BuildQuery(FilterOperation operation, string value = "test", string propName = "Name", bool caseSensitive = true)
+        private string BuildQuery(FilterOperation operation, string value = "Test", string propName = "Name", bool caseSensitive = true)
         {
             return ExpressionBuilder.BuildFilterExpression(
                         XParam,
-                        new Filter { Value = value, PropertyName = propName, Operator = operation, CaseSensitive = caseSensitive }, caseSensitive)?.ToString();
+                        new Filter { Value = value, PropertyName = propName, Operator = operation, CaseSensitive = caseSensitive }, usesCaseInsensitiveSource: !caseSensitive)?.ToString();
         }
     }
 }

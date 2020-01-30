@@ -494,15 +494,19 @@ namespace DynamicQueryBuilder
             
             Expression compareToExpression = null;
             Expression comparisonConstant = Expression.Constant(0);
-            Expression lowerCaseConstant = null;
 
             // To lower invariant the query parameters if case sensitivity is desired.
-            if (parentMember.Type == typeof(string) && !usesCaseInsensitiveSource && filter.CaseSensitive)
+            if (parentMember.Type == typeof(string) 
+                && usesCaseInsensitiveSource 
+                && !filter.CaseSensitive)
             {
-                lowerCaseConstant = !usesCaseInsensitiveSource && filter.CaseSensitive ? (Expression)constant : Expression.Call(constant, _toLowerInvariantMethod);
+                constant = Expression.Call(constant, _toLowerInvariantMethod);
 
-                compareToExpression = Expression.Call(parentMember, _compareTo, lowerCaseConstant);
-                constant = lowerCaseConstant;
+                compareToExpression = Expression.Call(parentMember, _compareTo, constant);
+            }
+            else if(parentMember.Type == typeof(string))
+            {
+                compareToExpression = Expression.Call(parentMember, _compareTo, constant);
             }
 
             switch (filter.Operator)
@@ -517,7 +521,7 @@ namespace DynamicQueryBuilder
                     return Expression.Call(parentMember, _stringContainsMethod, constant);
 
                 case FilterOperation.GreaterThan:
-                    return parentMember.Type == typeof(string)
+                    return parentMember.Type == typeof(string) 
                         ? Expression.GreaterThan(compareToExpression, comparisonConstant)
                         : Expression.GreaterThan(parentMember, constant);
 
