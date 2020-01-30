@@ -489,6 +489,18 @@ namespace DynamicQueryBuilder
             }
 
             ConstantExpression constant = Expression.Constant(convertedValue);
+            
+            Expression compareToExpression = null;
+            Expression comparisonConstant = Expression.Constant(0);
+
+            // To lower invariant the query parameters if case sensitivity is desired.
+            if (parentMember.Type == typeof(string))
+            {
+                var lowerCaseConstant = !usesCaseInsensitiveSource && filter.CaseSensitive ? (Expression)constant : Expression.Call(constant, _toLowerInvariantMethod);
+
+                compareToExpression = Expression.Call(parentMember, _compareTo, lowerCaseConstant);
+            }
+
             switch (filter.Operator)
             {
                 case FilterOperation.Equals:
@@ -501,32 +513,16 @@ namespace DynamicQueryBuilder
                     return Expression.Call(parentMember, _stringContainsMethod, constant);
 
                 case FilterOperation.GreaterThan:
-                    if (parentMember.Type == typeof(string))
-                    {
-                        return BuildStringComparatorQuery(parentMember, FilterOperation.GreaterThan, constant, usesCaseInsensitiveSource, filter.CaseSensitive);
-                    }
-                    return Expression.GreaterThan(parentMember, constant);
+                    return parentMember.Type != typeof(string) ? Expression.GreaterThan(parentMember, constant) : Expression.GreaterThan(compareToExpression, comparisonConstant);
 
                 case FilterOperation.GreaterThanOrEqual:
-                    if (parentMember.Type == typeof(string))
-                    {
-                        return BuildStringComparatorQuery(parentMember, FilterOperation.GreaterThanOrEqual, constant, usesCaseInsensitiveSource, filter.CaseSensitive);
-                    }
-                    return Expression.GreaterThanOrEqual(parentMember, constant);
+                    return parentMember.Type != typeof(string) ? Expression.GreaterThanOrEqual(parentMember, constant) : Expression.GreaterThanOrEqual(compareToExpression, comparisonConstant);
 
                 case FilterOperation.LessThan:
-                    if (parentMember.Type == typeof(string))
-                    {
-                        return BuildStringComparatorQuery(parentMember, FilterOperation.LessThan, constant, usesCaseInsensitiveSource, filter.CaseSensitive);
-                    }
-                    return Expression.LessThan(parentMember, constant);
+                    return parentMember.Type != typeof(string) ? Expression.LessThan(parentMember, constant) : Expression.LessThan(compareToExpression, comparisonConstant);
 
                 case FilterOperation.LessThanOrEqual:
-                    if (parentMember.Type == typeof(string))
-                    {
-                        return BuildStringComparatorQuery(parentMember, FilterOperation.LessThanOrEqual, constant, usesCaseInsensitiveSource, filter.CaseSensitive);
-                    }
-                    return Expression.LessThanOrEqual(parentMember, constant);
+                    return parentMember.Type != typeof(string) ? Expression.LessThanOrEqual(parentMember, constant) : Expression.LessThanOrEqual(compareToExpression, comparisonConstant);
 
                 case FilterOperation.StartsWith:
                     return Expression.Call(parentMember, _stringStartsWithMethod, constant);
@@ -612,29 +608,6 @@ namespace DynamicQueryBuilder
         private static bool AreCountsMatching(string[] operations, string[] parameterNames, string[] parameterValues)
         {
             return new int[] { operations.Length, parameterNames.Length, parameterValues.Length }.Distinct().Count() == 1;
-        }
-
-        private static Expression BuildStringComparatorQuery(Expression parentMember, FilterOperation operation, ConstantExpression constant, bool usesCaseInsensitiveSource, bool caseSensitive)
-        {
-            // Change constant to lower case if source is not case sensitive or if case sensitivity is not desired.
-            var lowerCaseConstant = !usesCaseInsensitiveSource && caseSensitive ? (Expression)constant : Expression.Call(constant, _toLowerInvariantMethod);
-            
-            Expression compareToExpression = Expression.Call(parentMember, _compareTo, lowerCaseConstant);
-            Expression comparisonConstant = Expression.Constant(0);
-
-            switch (operation)
-            {
-                case FilterOperation.GreaterThan:
-                    return Expression.GreaterThan(compareToExpression, comparisonConstant);
-                case FilterOperation.GreaterThanOrEqual:
-                    return Expression.GreaterThanOrEqual(compareToExpression, comparisonConstant);
-                case FilterOperation.LessThan:
-                    return Expression.LessThan(compareToExpression, comparisonConstant);
-                case FilterOperation.LessThanOrEqual:
-                    return Expression.LessThanOrEqual(compareToExpression, comparisonConstant);
-                default:
-                    return null;
-            }
         }
     }
 }

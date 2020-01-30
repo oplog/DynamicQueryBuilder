@@ -35,12 +35,22 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ShouldConvertInOperationToMultipleEquals()
         {
-            const string resultOfQuery = "(((x.Name.ToLowerInvariant() == \"te\") Or (x.Name.ToLowerInvariant() == \" test\")) Or (x.Name.ToLowerInvariant() == \" testx\"))";
-            Expression result = ExpressionBuilder.BuildFilterExpression(
+            // Check for case sensitive query.
+            const string resultOfCaseSensitiveQuery = "(((x.Name == \"Te\") Or (x.Name == \" Test\")) Or (x.Name == \" Testx\"))";
+            Expression caseSensitiveResult = ExpressionBuilder.BuildFilterExpression(
                 XParam,
-                new Filter { Value = "te, test, testx", PropertyName = "Name", Operator = FilterOperation.In, CaseSensitive = true });
+                new Filter { Value = "Te, Test, Testx", PropertyName = "Name", Operator = FilterOperation.In, CaseSensitive = true });
+            
+            Assert.Equal(caseSensitiveResult.ToString(), resultOfCaseSensitiveQuery);
 
-            Assert.Equal(result.ToString(), resultOfQuery);
+            // Check for case Insensitive query.
+            const string resultOfCaseInsensitiveQuery = "(((x.Name.ToLowerInvariant() == \"te\") Or (x.Name.ToLowerInvariant() == \" test\")) Or (x.Name.ToLowerInvariant() == \" testx\"))";
+            Expression caseInsensitiveResult = ExpressionBuilder.BuildFilterExpression(
+                    XParam,
+                new Filter { Value = "Te, Test, Testx", PropertyName = "Name", Operator = FilterOperation.In },
+                usesCaseInsensitiveSource: true);
+
+            Assert.Equal(caseInsensitiveResult.ToString(), resultOfCaseInsensitiveQuery);
         }
 
         [Fact]
