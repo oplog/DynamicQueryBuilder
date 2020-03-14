@@ -287,3 +287,242 @@ new DynamicQueryBuilderSettings
 #+END_SRC
 
 *Tip*: you can always leave ~decodeFunction~ null if your queries are not encoded.
+
+** HTTP Parameters
+*** ~o~ Parameter
+ - Refers to the ~FilterOperation~ property of ~Filter~ class.
+ - This parameter can be placed anywhere in the querystring.
+ - This parameter **should be forming a triplet with ~p~ and ~v~ parameters.**
+
+*** ~p~ Parameter
+ - Refers to the ~PropertyName~ property of ~Filter~ class.
+ - This parameter **should be placed after the ~o~ parameter.**.
+ - This parameter **should be forming a triplet with ~o~ and ~v~ parameters.**
+
+*** ~v~ Parameter
+ - Refers to the ~PropertyValue~ property of ~Filter~ class.
+ - This parameter **should be placed after the ~p~ parameter.**.
+ - This parameter **should be forming a triplet with ~o~ and ~p~ parameters.**
+
+*** ~s~ Parameter
+ - Refers to the ~SortOption~ class.
+ - This parameter can be placed anywhere in the querystring.
+ - **If this parameter occurs more than once, sorting will be done in the given order.**
+
+*** ~offset~ Parameter
+ - Refers to the ~Offset~ property of ~PaginationOption~ class.
+ - This parameter can be placed anywhere in the querystring.
+ - **If this parameter occurs more than once, the first occurence will be assigned.**
+
+*** ~count~ Parameter
+ - Refers to the ~Count~ property of ~PaginationOption~ class.
+ - This parameter can be placed anywhere in the querystring.
+ - **If this parameter occurs more than once, the first occurence will be assigned.**
+  
+** HTTP Query Examples
+
+- Valid Example: *?o=Equals&p=foo&v=bar*
+
+will be transformed into:
+
+#+BEGIN_SRC csharp
+var filter = new Filter
+{
+    Operator = FilterOperation.Equals,
+    PropertyName = "foo",
+    Value = "bar"
+};
+
+// LINQ Translation: myCollection.Where(x => x.foo == "bar");
+#+END_SRC
+
+or to apply multiple filters
+
+- Valid Example: *?o=Equals&p=foo&v=bar&o=Equals&p=fizz&v=buzz*
+
+will be transformed into:
+
+#+BEGIN_SRC csharp
+var filterOne = new Filter
+{
+    Operator = FilterOperation.Equals,
+    PropertyName = "foo",
+    Value = "bar"
+};
+
+var filterTwo = new Filter
+{
+    Operator = FilterOperation.Equals,
+    PropertyName = "fizz",
+    Value = "buzz"
+};
+
+// LINQ Translation: myCollection.Where(x => x.foo == "bar" && x.fizz == "buzz");
+#+END_SRC
+
+- Valid Example with ascending sort and pagination: *?o=Equals&p=foo&v=bar&s=foo,asc&offset=0&count=10*
+*DynamicQueryOptions* Transform:
+
+#+BEGIN_SRC csharp
+var filter = new Filter
+{
+    Operator = FilterOperation.Equals,
+    PropertyName = "foo",
+    Value = "bar"
+};
+
+var sort = new SortOption
+{
+    PropertyName = "foo",
+    SortingDirection = SortingDirection.Asc
+};
+
+var pagination = new PaginationOption
+{
+    Offset = 0,
+    Count = 10
+};
+
+/* LINQ Translation:
+
+myCollection.Where(x => x.foo == "bar")
+            .OrderBy(ord => ord.foo)
+            .Skip(0)
+            .Take(10);
+
+,*/
+#+END_SRC
+
+- Valid Example of Collection Member Querying *?o=any&p=foo&v=(o=Equals&p=fizz&v=buzz)*
+will be transformed into:
+
+#+BEGIN_SRC csharp
+var filter = new Filter
+{
+    Operator = FilterOperation.Any,
+    PropertyName = "foo",
+    Value = new DynamicQueryOptions
+    {
+        Operator = FilterOperation.Equals,
+        PropertyName = "fizz",
+        Value = "buzz"
+    }
+};
+
+// LINQ Translation: myCollection.Where(x => x.foo.Any(y => y.fizz == "buzz"));
+#+END_SRC
+
+- Valid Example with pagination: *?offset=0&count=10*
+
+- Valid Example with descending sort: *?o=Equals&p=foo&v=bar&s=foo,desc*
+
+- Valid Descending Sort Example without any filters: *?s=foo,desc*
+
+*Tip*: if you do not provide any sorting direction, DynamicQueryBuilder will sort the data in *ascending* order.
+
+- Valid Example with ascending sort without stating the direction: *?o=Equals&p=foo&v=bar&s=foo*
+ 
+** Operation Shortcodes
+DQB has default operation short codes for shorter HTTP queries which are below;
+
+#+BEGIN_SRC csharp
+{ "eq", FilterOperation.Equals },
+{ "lt", FilterOperation.LessThan },
+{ "cts", FilterOperation.Contains },
+{ "ne", FilterOperation.NotEqual },
+{ "ew", FilterOperation.EndsWith },
+{ "sw", FilterOperation.StartsWith },
+{ "gt", FilterOperation.GreaterThan },
+{ "ltoe", FilterOperation.LessThanOrEqual },
+{ "gtoe", FilterOperation.GreaterThanOrEqual }
+{ "any", FilterOperation.Any }
+{ "all", FilterOperation.All }
+#+END_SRC
+
+*** Custom Operation Shortcodes
+You can change any operation shortcode to whatever you want in
+~DynamicQueryBuilderSettings~ object's ~CustomOpCodes~ member like below.
+
+#+BEGIN_SRC csharp
+var mySettings = new DynamicQueryBuilderSettings
+{
+    CustomOpCodes = new CustomOpCodes
+    {
+        { "my_eq", FilterOperation.Equals },
+        { "my_lt", FilterOperation.LessThan },
+        { "my_cts", FilterOperation.Contains },
+        { "my_ne", FilterOperation.NotEqual },
+        { "my_ew", FilterOperation.EndsWith },
+        { "my_sw", FilterOperation.StartsWith },
+        { "my_gt", FilterOperation.GreaterThan },
+        { "my_ltoe", FilterOperation.LessThanOrEqual },
+        { "my_gtoe", FilterOperation.GreaterThanOrEqual },
+        { "my_any", FilterOperation.Any },
+        { "my_all", FilterOperation.All },
+    }
+};
+#+END_SRC
+
+** Web Action Examples
+*DynamicQueryAttribute* is the handler for parsing the querystring into *DynamicQueryOptions* class and has 3 optional parameters.
+
+#+BEGIN_SRC csharp
+DynamicQueryAttribute(
+    // Declares the max page result count for the endpoint.
+int maxCountSize = 100,
+    // Declares the switch for inclusion of total data set count to *PaginationOptions* class.
+bool includeDataSetCountToPagination = true,
+    // Declares the behaviour when the requested page size exceeds the assigned maximum count.
+PaginationBehaviour exceededPaginationCountBehaviour = PaginationBehaviour.GetMax,
+    // Resolves the dynamic query string from the given query parameter value.
+string resolveFromParameter = "")
+#+END_SRC
+
+- The ResolveFromParameter
+ 
+  This argument exists because some API's would want to send their queries
+  inside of a HTTP parameter like below:
+ 
+#+BEGIN_SRC HTTP
+https://foobar.com/results?dqb=%3Fo%3Deq%26p%3Dfoo%26v%3Dbar
+#+END_SRC
+
+    So, you can set this parameter specifically for an endpoint with the
+    ~DynamicQueryAttribute~ or you can set it in ~DynamicQueryBuilderSettings~
+    globally with QueryResolvers. Check out [[*Query Delivery Methods][Query Delivery Methods]].
+   
+- PaginationBehaviour enum
+
+#+BEGIN_SRC csharp
+    public enum PaginationBehaviour
+    {
+        // DynamicQueryBuilder will return maxCountSize of results if the *Count* property exceeds *maxCountSize*.
+        GetMax,
+        // DynamicQueryBuilder will throw MaximumResultSetExceededException if the *Count* property exceeds *maxCountSize*.
+        Throw
+    }
+#+END_SRC
+
+- Example with no pagination specified(default pagination options will be applied).
+
+#+BEGIN_SRC csharp
+[DynamicQuery]
+[HttpGet("getMyDataSet")]
+public IActionResult Get(DynamicQueryOptions filter)
+{
+    IEnumerable<MyObject> myDataSet = _myRepository.GetMyObjectList();
+    return Ok(myDataSet.ApplyFilters(filter));
+}
+#+END_SRC
+
+- Example with default pagination options for the endpoint specified.
+
+#+BEGIN_SRC csharp
+[HttpGet("getMyDataSet")]
+[DynamicQuery(maxCountSize: 101, includeDataSetCountToPagination: true, exceededPaginationCountBehaviour: PaginationBehaviour.GetMax)]
+public IActionResult Get(DynamicQueryOptions filter)
+{
+    IEnumerable<MyObject> myDataSet = _myRepository.GetMyObjectList();
+    return Ok(myDataSet.ApplyFilters(filter));
+}
+#+END_SRC

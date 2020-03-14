@@ -4,7 +4,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2020-03-14 Cts 15:58 -->
+<!-- 2020-03-14 Cts 16:48 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DynamicQueryBuilder</title>
@@ -236,59 +236,76 @@ pre.src:hover:before { display: none; }
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org57a37e5">1. What?</a></li>
-<li><a href="#orgf6bc477">2. Why?</a></li>
-<li><a href="#org396da03">3. Installation</a></li>
-<li><a href="#orgeccd156">4. DynamicQueryOptions</a>
+<li><a href="#orgdcbb3bc">1. What?</a></li>
+<li><a href="#orga45bbd4">2. Why?</a></li>
+<li><a href="#orga1866b3">3. Installation</a></li>
+<li><a href="#org5018300">4. DynamicQueryOptions</a>
 <ul>
-<li><a href="#orgeb14fae">4.1. Basic usage of DQB like below:</a></li>
+<li><a href="#orgb2a255f">4.1. Basic usage of DQB like below:</a></li>
 </ul>
 </li>
-<li><a href="#org2bd2874">5. Filters</a>
+<li><a href="#org49637ec">5. Filters</a>
 <ul>
 <li>
 <ul>
-<li><a href="#orgc8a71fa">5.0.1. Filter Value Conversion</a></li>
+<li><a href="#orgac3d46f">5.0.1. Filter Value Conversion</a></li>
 </ul>
 </li>
-<li><a href="#org4134868">5.1. Supported Filters</a>
+<li><a href="#orgc2131af">5.1. Supported Filters</a>
 <ul>
-<li><a href="#orgf1f9fea">5.1.1. Filter Examples</a></li>
+<li><a href="#org96766b0">5.1.1. Filter Examples</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org90943c2">6. Sorting</a>
+<li><a href="#orgee08ee9">6. Sorting</a>
 <ul>
 <li>
 <ul>
-<li><a href="#org6bb3f68">6.0.1. Sorting Examples</a></li>
+<li><a href="#org5ed66cb">6.0.1. Sorting Examples</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org7ff4ad0">7. Accessing Nested Objects</a></li>
-<li><a href="#org71ec9c7">8. Pagination</a>
+<li><a href="#orgb5d9285">7. Accessing Nested Objects</a></li>
+<li><a href="#orgc36fcf1">8. Pagination</a>
 <ul>
-<li><a href="#orgac82e71">8.1. Pagination Examples:</a>
+<li><a href="#org40d83ea">8.1. Pagination Examples:</a>
 <ul>
-<li><a href="#orgc72ff4f">8.1.1. How to access the filtered count of the query</a></li>
+<li><a href="#orge73f4d3">8.1.1. How to access the filtered count of the query</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orgeed0305">9. Web Development with DQB</a>
+<li><a href="#org2ae0d6a">9. Web Development with DQB</a>
 <ul>
-<li><a href="#org9ff5f0f">9.1. Setting up DynamicQueryBuilderSettings</a></li>
-<li><a href="#org7b1f58e">9.2. Query Delivery Methods</a></li>
+<li><a href="#org7deadaf">9.1. Setting up DynamicQueryBuilderSettings</a></li>
+<li><a href="#orgd9aeb21">9.2. Query Delivery Methods</a></li>
+<li><a href="#orgff83d70">9.3. HTTP Parameters</a>
+<ul>
+<li><a href="#orge609460">9.3.1. <code>o</code> Parameter</a></li>
+<li><a href="#org647870f">9.3.2. <code>p</code> Parameter</a></li>
+<li><a href="#orga312715">9.3.3. <code>v</code> Parameter</a></li>
+<li><a href="#orgb711cbe">9.3.4. <code>s</code> Parameter</a></li>
+<li><a href="#org5e7aaad">9.3.5. <code>offset</code> Parameter</a></li>
+<li><a href="#orgb33ab61">9.3.6. <code>count</code> Parameter</a></li>
+</ul>
+</li>
+<li><a href="#org1904481">9.4. HTTP Query Examples</a></li>
+<li><a href="#org7fa5271">9.5. Operation Shortcodes</a>
+<ul>
+<li><a href="#org722e988">9.5.1. Custom Operation Shortcodes</a></li>
+</ul>
+</li>
+<li><a href="#orgbb1d817">9.6. Web Action Examples</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org57a37e5" class="outline-2">
-<h2 id="org57a37e5"><span class="section-number-2">1</span> What?</h2>
+<div id="outline-container-orgdcbb3bc" class="outline-2">
+<h2 id="orgdcbb3bc"><span class="section-number-2">1</span> What?</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 DynamicQueryBuilder(DQB) is a lightweight LINQ builder library that works dynamically with the given
@@ -297,8 +314,8 @@ collection generic type.
 </div>
 </div>
 
-<div id="outline-container-orgf6bc477" class="outline-2">
-<h2 id="orgf6bc477"><span class="section-number-2">2</span> Why?</h2>
+<div id="outline-container-orga45bbd4" class="outline-2">
+<h2 id="orga45bbd4"><span class="section-number-2">2</span> Why?</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 The motivation behind DQB was to reverse the
@@ -309,8 +326,8 @@ time consuming for non-fullstack development workspaces.
 </div>
 </div>
 
-<div id="outline-container-org396da03" class="outline-2">
-<h2 id="org396da03"><span class="section-number-2">3</span> Installation</h2>
+<div id="outline-container-orga1866b3" class="outline-2">
+<h2 id="orga1866b3"><span class="section-number-2">3</span> Installation</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 You can get DQB from NuGet services with the command below or NuGet UI in visual
@@ -326,8 +343,8 @@ Install-Package DynamicQueryBuilder
 </div>
 </div>
 
-<div id="outline-container-orgeccd156" class="outline-2">
-<h2 id="orgeccd156"><span class="section-number-2">4</span> DynamicQueryOptions</h2>
+<div id="outline-container-org5018300" class="outline-2">
+<h2 id="org5018300"><span class="section-number-2">4</span> DynamicQueryOptions</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 This is the class that holds everything from filters to sorts and pagination 
@@ -337,8 +354,8 @@ this object <a href="https://github.com/oplog/DynamicQueryBuilder/blob/master/Dy
 </p>
 </div>
 
-<div id="outline-container-orgeb14fae" class="outline-3">
-<h3 id="orgeb14fae"><span class="section-number-3">4.1</span> Basic usage of DQB like below:</h3>
+<div id="outline-container-orgb2a255f" class="outline-3">
+<h3 id="orgb2a255f"><span class="section-number-3">4.1</span> Basic usage of DQB like below:</h3>
 <div class="outline-text-3" id="text-4-1">
 <div class="org-src-container">
 <pre class="src src-csharp"><span style="color: #35CDAF;">IQueryable</span><span style="color: #C586C0;">&lt;</span>MyObject<span style="color: #C586C0;">&gt;</span> <span style="color: #85DDFF;">myCollection</span> = GetMyCollectionOfData<span style="color: #C586C0;">()</span>;
@@ -359,8 +376,8 @@ this object <a href="https://github.com/oplog/DynamicQueryBuilder/blob/master/Dy
 </div>
 </div>
 
-<div id="outline-container-org2bd2874" class="outline-2">
-<h2 id="org2bd2874"><span class="section-number-2">5</span> Filters</h2>
+<div id="outline-container-org49637ec" class="outline-2">
+<h2 id="org49637ec"><span class="section-number-2">5</span> Filters</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 Filters are the objects that hold your logical filters. Currently, DQB only
@@ -368,8 +385,8 @@ support <code>AndAlso</code> statements. You can see the object structure <a hre
 </p>
 </div>
 
-<div id="outline-container-orgc8a71fa" class="outline-4">
-<h4 id="orgc8a71fa"><span class="section-number-4">5.0.1</span> Filter Value Conversion</h4>
+<div id="outline-container-orgac3d46f" class="outline-4">
+<h4 id="orgac3d46f"><span class="section-number-4">5.0.1</span> Filter Value Conversion</h4>
 <div class="outline-text-4" id="text-5-0-1">
 <p>
 Since DQB always boxes your data into an <code>object</code> the actual type conversion is
@@ -379,8 +396,8 @@ also can handle <code>null</code> values as well.
 </div>
 </div>
 
-<div id="outline-container-org4134868" class="outline-3">
-<h3 id="org4134868"><span class="section-number-3">5.1</span> Supported Filters</h3>
+<div id="outline-container-orgc2131af" class="outline-3">
+<h3 id="orgc2131af"><span class="section-number-3">5.1</span> Supported Filters</h3>
 <div class="outline-text-3" id="text-5-1">
 <div class="org-src-container">
 <pre class="src src-csharp">In,
@@ -399,8 +416,8 @@ All
 </div>
 </div>
 
-<div id="outline-container-orgf1f9fea" class="outline-4">
-<h4 id="orgf1f9fea"><span class="section-number-4">5.1.1</span> Filter Examples</h4>
+<div id="outline-container-org96766b0" class="outline-4">
+<h4 id="org96766b0"><span class="section-number-4">5.1.1</span> Filter Examples</h4>
 <div class="outline-text-4" id="text-5-1-1">
 <p>
 An example usage of <code>Filter</code> class with a flat object:
@@ -452,8 +469,8 @@ An example usage of <code>Filter</code> class with a collection property:
 </div>
 </div>
 
-<div id="outline-container-org90943c2" class="outline-2">
-<h2 id="org90943c2"><span class="section-number-2">6</span> Sorting</h2>
+<div id="outline-container-orgee08ee9" class="outline-2">
+<h2 id="orgee08ee9"><span class="section-number-2">6</span> Sorting</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 Sorting is extremely easy with DQB. DQB currently does not support for custom
@@ -463,8 +480,8 @@ sorting callbacks and uses default .NET&rsquo;s <code>OrderBy</code>, <code>Orde
 </p>
 </div>
 
-<div id="outline-container-org6bb3f68" class="outline-4">
-<h4 id="org6bb3f68"><span class="section-number-4">6.0.1</span> Sorting Examples</h4>
+<div id="outline-container-org5ed66cb" class="outline-4">
+<h4 id="org5ed66cb"><span class="section-number-4">6.0.1</span> Sorting Examples</h4>
 <div class="outline-text-4" id="text-6-0-1">
 <div class="org-src-container">
 <pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">dqbOpts</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryOptions</span>
@@ -492,8 +509,8 @@ sorting callbacks and uses default .NET&rsquo;s <code>OrderBy</code>, <code>Orde
 </div>
 </div>
 
-<div id="outline-container-org7ff4ad0" class="outline-2">
-<h2 id="org7ff4ad0"><span class="section-number-2">7</span> Accessing Nested Objects</h2>
+<div id="outline-container-orgb5d9285" class="outline-2">
+<h2 id="orgb5d9285"><span class="section-number-2">7</span> Accessing Nested Objects</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 DQB can access nested object with <code>.</code> delimeter like C# LINQ.
@@ -549,8 +566,8 @@ operations like below:
 </div>
 </div>
 
-<div id="outline-container-org71ec9c7" class="outline-2">
-<h2 id="org71ec9c7"><span class="section-number-2">8</span> Pagination</h2>
+<div id="outline-container-orgc36fcf1" class="outline-2">
+<h2 id="orgc36fcf1"><span class="section-number-2">8</span> Pagination</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 Pagination can be done by specifiynig options into the <code>PaginationOptions</code>
@@ -559,8 +576,8 @@ Pagination utilizes LINQ&rsquo;s <code>Skip</code> and <code>Take</code> functio
 </p>
 </div>
 
-<div id="outline-container-orgac82e71" class="outline-3">
-<h3 id="orgac82e71"><span class="section-number-3">8.1</span> Pagination Examples:</h3>
+<div id="outline-container-org40d83ea" class="outline-3">
+<h3 id="org40d83ea"><span class="section-number-3">8.1</span> Pagination Examples:</h3>
 <div class="outline-text-3" id="text-8-1">
 <div class="org-src-container">
 <pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">paginationOption</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">PaginationOption</span>
@@ -575,8 +592,8 @@ Pagination utilizes LINQ&rsquo;s <code>Skip</code> and <code>Take</code> functio
 </div>
 </div>
 
-<div id="outline-container-orgc72ff4f" class="outline-4">
-<h4 id="orgc72ff4f"><span class="section-number-4">8.1.1</span> How to access the filtered count of the query</h4>
+<div id="outline-container-orge73f4d3" class="outline-4">
+<h4 id="orge73f4d3"><span class="section-number-4">8.1.1</span> How to access the filtered count of the query</h4>
 <div class="outline-text-4" id="text-8-1-1">
 <p>
 if its required to access the total query result amount(whole set) you can access it via
@@ -591,8 +608,8 @@ if its required to access the total query result amount(whole set) you can acces
 </div>
 </div>
 
-<div id="outline-container-orgeed0305" class="outline-2">
-<h2 id="orgeed0305"><span class="section-number-2">9</span> Web Development with DQB</h2>
+<div id="outline-container-org2ae0d6a" class="outline-2">
+<h2 id="org2ae0d6a"><span class="section-number-2">9</span> Web Development with DQB</h2>
 <div class="outline-text-2" id="text-9">
 <p>
 Web development is actually where DQB shines the most. DQB comes with an
@@ -600,8 +617,8 @@ Web development is actually where DQB shines the most. DQB comes with an
 </p>
 </div>
 
-<div id="outline-container-org9ff5f0f" class="outline-3">
-<h3 id="org9ff5f0f"><span class="section-number-3">9.1</span> Setting up DynamicQueryBuilderSettings</h3>
+<div id="outline-container-org7deadaf" class="outline-3">
+<h3 id="org7deadaf"><span class="section-number-3">9.1</span> Setting up DynamicQueryBuilderSettings</h3>
 <div class="outline-text-3" id="text-9-1">
 <p>
 This is a singleton object that can hold static configurations for DQB like
@@ -647,8 +664,8 @@ It is usually best to create an instance of this class in your Web Projects
 </div>
 </div>
 
-<div id="outline-container-org7b1f58e" class="outline-3">
-<h3 id="org7b1f58e"><span class="section-number-3">9.2</span> Query Delivery Methods</h3>
+<div id="outline-container-orgd9aeb21" class="outline-3">
+<h3 id="orgd9aeb21"><span class="section-number-3">9.2</span> Query Delivery Methods</h3>
 <div class="outline-text-3" id="text-9-2">
 <p>
 DQB can retrieve your encoded/non-encoded queries via options like below:
@@ -706,11 +723,360 @@ Below, there is an example of configuring DQB to retrieve queries from HTTP Head
 </p>
 </div>
 </div>
+
+<div id="outline-container-orgff83d70" class="outline-3">
+<h3 id="orgff83d70"><span class="section-number-3">9.3</span> HTTP Parameters</h3>
+<div class="outline-text-3" id="text-9-3">
+</div>
+<div id="outline-container-orge609460" class="outline-4">
+<h4 id="orge609460"><span class="section-number-4">9.3.1</span> <code>o</code> Parameter</h4>
+<div class="outline-text-4" id="text-9-3-1">
+<ul class="org-ul">
+<li>Refers to the <code>FilterOperation</code> property of <code>Filter</code> class.</li>
+<li>This parameter can be placed anywhere in the querystring.</li>
+<li>This parameter <b><b>should be forming a triplet with <code>p</code> and <code>v</code> parameters.</b></b></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org647870f" class="outline-4">
+<h4 id="org647870f"><span class="section-number-4">9.3.2</span> <code>p</code> Parameter</h4>
+<div class="outline-text-4" id="text-9-3-2">
+<ul class="org-ul">
+<li>Refers to the <code>PropertyName</code> property of <code>Filter</code> class.</li>
+<li>This parameter <b><b>should be placed after the <code>o</code> parameter.</b></b>.</li>
+<li>This parameter <b><b>should be forming a triplet with <code>o</code> and <code>v</code> parameters.</b></b></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orga312715" class="outline-4">
+<h4 id="orga312715"><span class="section-number-4">9.3.3</span> <code>v</code> Parameter</h4>
+<div class="outline-text-4" id="text-9-3-3">
+<ul class="org-ul">
+<li>Refers to the <code>PropertyValue</code> property of <code>Filter</code> class.</li>
+<li>This parameter <b><b>should be placed after the <code>p</code> parameter.</b></b>.</li>
+<li>This parameter <b><b>should be forming a triplet with <code>o</code> and <code>p</code> parameters.</b></b></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgb711cbe" class="outline-4">
+<h4 id="orgb711cbe"><span class="section-number-4">9.3.4</span> <code>s</code> Parameter</h4>
+<div class="outline-text-4" id="text-9-3-4">
+<ul class="org-ul">
+<li>Refers to the <code>SortOption</code> class.</li>
+<li>This parameter can be placed anywhere in the querystring.</li>
+<li><b><b>If this parameter occurs more than once, sorting will be done in the given order.</b></b></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org5e7aaad" class="outline-4">
+<h4 id="org5e7aaad"><span class="section-number-4">9.3.5</span> <code>offset</code> Parameter</h4>
+<div class="outline-text-4" id="text-9-3-5">
+<ul class="org-ul">
+<li>Refers to the <code>Offset</code> property of <code>PaginationOption</code> class.</li>
+<li>This parameter can be placed anywhere in the querystring.</li>
+<li><b><b>If this parameter occurs more than once, the first occurence will be assigned.</b></b></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgb33ab61" class="outline-4">
+<h4 id="orgb33ab61"><span class="section-number-4">9.3.6</span> <code>count</code> Parameter</h4>
+<div class="outline-text-4" id="text-9-3-6">
+<ul class="org-ul">
+<li>Refers to the <code>Count</code> property of <code>PaginationOption</code> class.</li>
+<li>This parameter can be placed anywhere in the querystring.</li>
+<li><b><b>If this parameter occurs more than once, the first occurence will be assigned.</b></b></li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1904481" class="outline-3">
+<h3 id="org1904481"><span class="section-number-3">9.4</span> HTTP Query Examples</h3>
+<div class="outline-text-3" id="text-9-4">
+<ul class="org-ul">
+<li>Valid Example: <b>?o=Equals&amp;p=foo&amp;v=bar</b></li>
+</ul>
+
+<p>
+will be transformed into:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">filter</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">Filter</span>
+<span style="color: #C586C0;">{</span>
+    Operator = FilterOperation.Equals,
+    PropertyName = <span style="color: #DB8E73;">"foo"</span>,
+    Value = <span style="color: #DB8E73;">"bar"</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">Where</span><span style="color: #579C4C;">(x =&gt; x.foo == "bar");</span>
+</pre>
+</div>
+
+<p>
+or to apply multiple filters
+</p>
+
+<ul class="org-ul">
+<li>Valid Example: <b>?o=Equals&amp;p=foo&amp;v=bar&amp;o=Equals&amp;p=fizz&amp;v=buzz</b></li>
+</ul>
+
+<p>
+will be transformed into:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">filterOne</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">Filter</span>
+<span style="color: #C586C0;">{</span>
+    Operator = FilterOperation.Equals,
+    PropertyName = <span style="color: #DB8E73;">"foo"</span>,
+    Value = <span style="color: #DB8E73;">"bar"</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">filterTwo</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">Filter</span>
+<span style="color: #C586C0;">{</span>
+    Operator = FilterOperation.Equals,
+    PropertyName = <span style="color: #DB8E73;">"fizz"</span>,
+    Value = <span style="color: #DB8E73;">"buzz"</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">Where</span><span style="color: #579C4C;">(x =&gt; x.foo == "bar" &amp;&amp; x.fizz == "buzz");</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Valid Example with ascending sort and pagination: <b>?o=Equals&amp;p=foo&amp;v=bar&amp;s=foo,asc&amp;offset=0&amp;count=10</b></li>
+</ul>
+<p>
+<b>DynamicQueryOptions</b> Transform:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">filter</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">Filter</span>
+<span style="color: #C586C0;">{</span>
+    Operator = FilterOperation.Equals,
+    PropertyName = <span style="color: #DB8E73;">"foo"</span>,
+    Value = <span style="color: #DB8E73;">"bar"</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">sort</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">SortOption</span>
+<span style="color: #C586C0;">{</span>
+    PropertyName = <span style="color: #DB8E73;">"foo"</span>,
+    SortingDirection = SortingDirection.Asc
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">pagination</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">PaginationOption</span>
+<span style="color: #C586C0;">{</span>
+    Offset = <span style="color: #B5CEA8; font-weight: bold;">0</span>,
+    Count = <span style="color: #B5CEA8; font-weight: bold;">10</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">/* </span><span style="color: #579C4C;">LINQ Translation:</span>
+
+<span style="color: #579C4C;">myCollection.</span><span style="color: #D9DAA2;">Where</span><span style="color: #579C4C;">(x =&gt; x.foo == "bar")</span>
+<span style="color: #579C4C;">            .</span><span style="color: #D9DAA2;">OrderBy</span><span style="color: #579C4C;">(ord =&gt; ord.foo)</span>
+<span style="color: #579C4C;">            .</span><span style="color: #D9DAA2;">Skip</span><span style="color: #579C4C;">(0)</span>
+<span style="color: #579C4C;">            .</span><span style="color: #D9DAA2;">Take</span><span style="color: #579C4C;">(10);</span>
+
+<span style="color: #579C4C;">*/</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Valid Example of Collection Member Querying <b>?o=any&amp;p=foo&amp;v=(o=Equals&amp;p=fizz&amp;v=buzz)</b></li>
+</ul>
+<p>
+will be transformed into:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">filter</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">Filter</span>
+<span style="color: #C586C0;">{</span>
+    Operator = FilterOperation.Any,
+    PropertyName = <span style="color: #DB8E73;">"foo"</span>,
+    Value = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryOptions</span>
+    <span style="color: #DB8E73;">{</span>
+        Operator = FilterOperation.Equals,
+        PropertyName = <span style="color: #DB8E73;">"fizz"</span>,
+        Value = <span style="color: #DB8E73;">"buzz"</span>
+    <span style="color: #DB8E73;">}</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">Where</span><span style="color: #579C4C;">(x =&gt; x.foo.</span><span style="color: #D9DAA2;">Any</span><span style="color: #579C4C;">(y =&gt; y.fizz == "buzz"));</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Valid Example with pagination: <b>?offset=0&amp;count=10</b></li>
+
+<li>Valid Example with descending sort: <b>?o=Equals&amp;p=foo&amp;v=bar&amp;s=foo,desc</b></li>
+
+<li>Valid Descending Sort Example without any filters: <b>?s=foo,desc</b></li>
+</ul>
+
+<p>
+<b>Tip</b>: if you do not provide any sorting direction, DynamicQueryBuilder will sort the data in <b>ascending</b> order.
+</p>
+
+<ul class="org-ul">
+<li>Valid Example with ascending sort without stating the direction: <b>?o=Equals&amp;p=foo&amp;v=bar&amp;s=foo</b></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org7fa5271" class="outline-3">
+<h3 id="org7fa5271"><span class="section-number-3">9.5</span> Operation Shortcodes</h3>
+<div class="outline-text-3" id="text-9-5">
+<p>
+DQB has default operation short codes for shorter HTTP queries which are below;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"eq"</span>, FilterOperation.Equals <span style="color: #C586C0;">}</span>,
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"lt"</span>, FilterOperation.LessThan <span style="color: #C586C0;">}</span>,
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"cts"</span>, FilterOperation.Contains <span style="color: #C586C0;">}</span>,
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"ne"</span>, FilterOperation.NotEqual <span style="color: #C586C0;">}</span>,
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"ew"</span>, FilterOperation.EndsWith <span style="color: #C586C0;">}</span>,
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"sw"</span>, FilterOperation.StartsWith <span style="color: #C586C0;">}</span>,
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"gt"</span>, FilterOperation.GreaterThan <span style="color: #C586C0;">}</span>,
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"ltoe"</span>, FilterOperation.LessThanOrEqual <span style="color: #C586C0;">}</span>,
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"gtoe"</span>, FilterOperation.GreaterThanOrEqual <span style="color: #C586C0;">}</span>
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"any"</span>, FilterOperation.Any <span style="color: #C586C0;">}</span>
+<span style="color: #C586C0;">{</span> <span style="color: #DB8E73;">"all"</span>, FilterOperation.All <span style="color: #C586C0;">}</span>
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org722e988" class="outline-4">
+<h4 id="org722e988"><span class="section-number-4">9.5.1</span> Custom Operation Shortcodes</h4>
+<div class="outline-text-4" id="text-9-5-1">
+<p>
+You can change any operation shortcode to whatever you want in
+<code>DynamicQueryBuilderSettings</code> object&rsquo;s <code>CustomOpCodes</code> member like below.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">mySettings</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryBuilderSettings</span>
+<span style="color: #C586C0;">{</span>
+    CustomOpCodes = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">CustomOpCodes</span>
+    <span style="color: #DB8E73;">{</span>
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_eq"</span>, FilterOperation.Equals <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_lt"</span>, FilterOperation.LessThan <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_cts"</span>, FilterOperation.Contains <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_ne"</span>, FilterOperation.NotEqual <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_ew"</span>, FilterOperation.EndsWith <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_sw"</span>, FilterOperation.StartsWith <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_gt"</span>, FilterOperation.GreaterThan <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_ltoe"</span>, FilterOperation.LessThanOrEqual <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_gtoe"</span>, FilterOperation.GreaterThanOrEqual <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_any"</span>, FilterOperation.Any <span style="color: #579C4C;">}</span>,
+        <span style="color: #579C4C;">{</span> <span style="color: #DB8E73;">"my_all"</span>, FilterOperation.All <span style="color: #579C4C;">}</span>,
+    <span style="color: #DB8E73;">}</span>
+<span style="color: #C586C0;">}</span>;
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbb1d817" class="outline-3">
+<h3 id="orgbb1d817"><span class="section-number-3">9.6</span> Web Action Examples</h3>
+<div class="outline-text-3" id="text-9-6">
+<p>
+<b>DynamicQueryAttribute</b> is the handler for parsing the querystring into <b>DynamicQueryOptions</b> class and has 3 optional parameters.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp">DynamicQueryAttribute<span style="color: #C586C0;">(</span>
+    <span style="color: #579C4C;">// </span><span style="color: #579C4C;">Declares the max page result count for the endpoint.</span>
+<span style="color: #35CDAF;">int</span> <span style="color: #85DDFF;">maxCountSize</span> = <span style="color: #B5CEA8; font-weight: bold;">100</span>,
+    <span style="color: #579C4C;">// </span><span style="color: #579C4C;">Declares the switch for inclusion of total data set count to *PaginationOptions* class.</span>
+<span style="color: #35CDAF;">bool</span> <span style="color: #85DDFF;">includeDataSetCountToPagination</span> = <span style="color: #339CDB;">true</span>,
+    <span style="color: #579C4C;">// </span><span style="color: #579C4C;">Declares the behaviour when the requested page size exceeds the assigned maximum count.</span>
+<span style="color: #35CDAF;">PaginationBehaviour</span> <span style="color: #85DDFF;">exceededPaginationCountBehaviour</span> = PaginationBehaviour.GetMax,
+    <span style="color: #579C4C;">// </span><span style="color: #579C4C;">Resolves the dynamic query string from the given query parameter value.</span>
+<span style="color: #35CDAF;">string</span> <span style="color: #85DDFF;">resolveFromParameter</span> = <span style="color: #DB8E73;">""</span><span style="color: #C586C0;">)</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><p>
+The ResolveFromParameter
+</p>
+
+<p>
+This argument exists because some API&rsquo;s would want to send their queries
+inside of a HTTP parameter like below:
+</p></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-HTTP">https://foobar.com/results?dqb=%3Fo%3Deq%26p%3Dfoo%26v%3Dbar
+</pre>
+</div>
+
+<p>
+So, you can set this parameter specifically for an endpoint with the
+<code>DynamicQueryAttribute</code> or you can set it in <code>DynamicQueryBuilderSettings</code>
+globally with QueryResolvers. Check out <a href="#orgd9aeb21">Query Delivery Methods</a>.
+</p>
+
+<ul class="org-ul">
+<li>PaginationBehaviour enum</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-csharp">    <span style="color: #339CDB;">public</span> <span style="color: #339CDB;">enum</span> <span style="color: #35CDAF;">PaginationBehaviour</span>
+    <span style="color: #C586C0;">{</span>
+        <span style="color: #579C4C;">// </span><span style="color: #579C4C;">DynamicQueryBuilder will return maxCountSize of results if the *Count* property exceeds *maxCountSize*.</span>
+        <span style="color: #85DDFF;">GetMax</span>,
+        <span style="color: #579C4C;">// </span><span style="color: #579C4C;">DynamicQueryBuilder will throw MaximumResultSetExceededException if the *Count* property exceeds *maxCountSize*.</span>
+        <span style="color: #85DDFF;">Throw</span>
+    <span style="color: #C586C0;">}</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Example with no pagination specified(default pagination options will be applied).</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #C586C0;">[</span>DynamicQuery<span style="color: #C586C0;">]</span>
+<span style="color: #C586C0;">[</span><span style="color: #35CDAF;">HttpGet</span><span style="color: #DB8E73;">(</span><span style="color: #DB8E73;">"getMyDataSet"</span><span style="color: #DB8E73;">)</span><span style="color: #C586C0;">]</span>
+<span style="color: #339CDB;">public</span> IActionResult Get<span style="color: #C586C0;">(</span><span style="color: #35CDAF;">DynamicQueryOptions</span> <span style="color: #85DDFF;">filter</span><span style="color: #C586C0;">)</span>
+<span style="color: #C586C0;">{</span>
+    <span style="color: #35CDAF;">IEnumerable</span><span style="color: #DB8E73;">&lt;</span>MyObject<span style="color: #DB8E73;">&gt;</span> <span style="color: #85DDFF;">myDataSet</span> = _myRepository.<span style="color: #D9DAA2;">GetMyObjectList</span><span style="color: #DB8E73;">()</span>;
+    <span style="color: #339CDB;">return</span> Ok<span style="color: #DB8E73;">(</span>myDataSet.<span style="color: #D9DAA2;">ApplyFilters</span><span style="color: #579C4C;">(</span>filter<span style="color: #579C4C;">)</span><span style="color: #DB8E73;">)</span>;
+<span style="color: #C586C0;">}</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Example with default pagination options for the endpoint specified.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #C586C0;">[</span>HttpGet<span style="color: #DB8E73;">(</span><span style="color: #DB8E73;">"getMyDataSet"</span><span style="color: #DB8E73;">)</span><span style="color: #C586C0;">]</span>
+<span style="color: #C586C0;">[</span><span style="color: #35CDAF;">DynamicQuery</span><span style="color: #DB8E73;">(</span>maxCountSize: <span style="color: #B5CEA8; font-weight: bold;">101</span>, includeDataSetCountToPagination: <span style="color: #339CDB;">true</span>, exceededPaginationCountBehaviour: PaginationBehaviour.GetMax<span style="color: #DB8E73;">)</span><span style="color: #C586C0;">]</span>
+<span style="color: #339CDB;">public</span> IActionResult Get<span style="color: #C586C0;">(</span><span style="color: #35CDAF;">DynamicQueryOptions</span> <span style="color: #85DDFF;">filter</span><span style="color: #C586C0;">)</span>
+<span style="color: #C586C0;">{</span>
+    <span style="color: #35CDAF;">IEnumerable</span><span style="color: #DB8E73;">&lt;</span>MyObject<span style="color: #DB8E73;">&gt;</span> <span style="color: #85DDFF;">myDataSet</span> = _myRepository.<span style="color: #D9DAA2;">GetMyObjectList</span><span style="color: #DB8E73;">()</span>;
+    <span style="color: #339CDB;">return</span> Ok<span style="color: #DB8E73;">(</span>myDataSet.<span style="color: #D9DAA2;">ApplyFilters</span><span style="color: #579C4C;">(</span>filter<span style="color: #579C4C;">)</span><span style="color: #DB8E73;">)</span>;
+<span style="color: #C586C0;">}</span>
+</pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Cem YILMAZ &lt;cmylmzbm@outlook.com&gt;</p>
-<p class="date">Created: 2020-03-14 Cts 15:58</p>
+<p class="date">Created: 2020-03-14 Cts 16:48</p>
 </div>
 </body>
 </html>
