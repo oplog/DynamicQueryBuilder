@@ -87,7 +87,9 @@ Supported filter operations:
         StartsWith,
         GreaterThan,
         LessThanOrEqual,
-        GreaterThanOrEqual
+        GreaterThanOrEqual,
+        Any,
+        All
     }
 ```
 
@@ -97,9 +99,24 @@ Example `Filter` class usage:
 var filter = new Filter
 {
     Value = "myvalue",
-    Operator = FitlerOperation.Equals,
+    Operator = FilterOperation.Equals,
     PropertyName = "MyProperty"
 };
+```
+
+or for a collection member query;
+```csharp
+var filter = new Filter
+{
+    Value = new DynamicQueryOptions 
+    {
+        Value = "some_value",
+        Operator = FilterOperation.Equals,
+        PropertyName = "myInnerMemberProperty"
+    },
+    Operator = FilterOperation.Any,
+    PropertyName = "myCollectionMemberPropertyName"
+}
 ```
 
 ## Sorting
@@ -346,8 +363,15 @@ var filterTwo = new Filter
 ```
 
 ###### Valid Example with ascending sort and pagination: `?o=Equals&p=myproperty&v=myvalue&s=myproperty,asc&offset=0&count=10`
+LINQ Translation: 
+```csharp
+myCollection.Where(x => x.myproperty == "myvalue")
+            .OrderBy(ord => ord.myproperty)
+            .Skip(0)
+            .Take(10);
+```
 
-will be transformed into: 
+`DynamicQueryOptions` Transform: 
 
 ```csharp
 var filter = new Filter
@@ -367,6 +391,25 @@ var pagination = new PaginationOption
 {
     Offset = 0,
     Count = 10
+};
+```
+
+###### Valid Example of Collection Member Querying `?o=any&p=myproperty&v=(o=Equals&p=secondlevelprop&v=somevalue)`
+LINQ Translation: `myCollection.Where(x => x.MyProperty.Any(y => y.secondlevelprop == "somevalue"));`
+
+will be transformed into: 
+
+```csharp
+var filter = new Filter
+{
+    Operator = FilterOperation.Any,
+    PropertyName = "myproperty",
+    Value = new DynamicQueryOptions 
+    {
+        Operator = FilterOperation.Equals,
+        PropertyName = "myproperty",
+        Value = "somevalue"   
+    }
 };
 ```
 
