@@ -1,0 +1,289 @@
+#+TITLE: DynamicQueryBuilder
+#+Author: Cem YILMAZ <cmylmzbm@outlook.com>
+#+SETUPFILE: ~/org/setup.config
+
+* What?
+
+DynamicQueryBuilder(DQB) is a lightweight LINQ builder library that works dynamically with the given
+collection generic type.
+
+* Why?
+The motivation behind DQB was to reverse the
+development cost of operations such as Filtering, Sorting, Paginating data from
+backend to clients. This allows client development to be more free and less
+time consuming for non-fullstack development workspaces.
+
+* Installation
+You can get DQB from NuGet services with the command below or NuGet UI in visual
+studio.
+
+DQB currently runs with .netstandard2.1
+#+BEGIN_SRC
+Install-Package DynamicQueryBuilder
+#+END_SRC
+
+* DynamicQueryOptions
+
+This is the class that holds everything from filters to sorts and pagination 
+options. DQB's has a function called *~ApplyFilters~* which converts
+this *~DynamicQueryOptions~* class into a LINQ expression. You can check out
+this object [[https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/DynamicQueryOptions.cs][here]].
+
+** Basic usage of DQB like below:
+#+BEGIN_SRC csharp
+IQueryable<MyObject> myCollection = GetMyCollectionOfData();
+var myOpts = new DynamicQueryOptions
+{
+    /*
+      Filters,
+      SortingOptions,
+      Pagination
+    ,*/
+};
+
+IQueryable<MyObject> dqbResults = myCollection.ApplyFilters(myOpts);
+return dqbResults.ToList();
+#+END_SRC
+
+* Filters
+
+Filters are the objects that hold your logical filters. Currently, DQB only
+support ~AndAlso~ statements. You can see the object structure [[https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/Filter.cs][here]].
+
+*** Filter Value Conversion
+Since DQB always boxes your data into an ~object~ the actual type conversion is
+being handled by DQB while transforming your filters into a LINQ expression. DQB
+also can handle ~null~ values as well.
+
+** Supported Filters
+#+BEGIN_SRC csharp
+In,
+Equals,
+LessThan,
+Contains,
+NotEqual,
+EndsWith,
+StartsWith,
+GreaterThan,
+LessThanOrEqual,
+GreaterThanOrEqual,
+Any,
+All
+#+END_SRC
+
+*** Filter Examples
+An example usage of ~Filter~ class with a flat object:
+
+#+BEGIN_SRC csharp
+var dqbOpts = new DynamicQueryOptions
+{
+    Filters = new List<Filter>()
+    {
+        new Filter
+        {
+            Value = "bar",
+            PropertyName = "foo",
+            Operator = FilterOperation.Equals
+        }
+    }
+};
+
+// LINQ Translation: myCollection.Where(x => x.foo == "bar");
+#+END_SRC
+
+An example usage of ~Filter~ class with a collection property:
+
+#+BEGIN_SRC csharp
+var dqbOpts = new DynamicQueryOptions
+{
+    var filter = new Filter
+    {
+        Value = new DynamicQueryOptions
+        {
+            Value = "some_value",
+            Operator = FilterOperation.Equals,
+            PropertyName = "bar"
+        },
+        Operator = FilterOperation.Any,
+        PropertyName = "foo"
+    }
+};
+
+// LINQ Translation: myCollection.Where(x => x.foo.Any(y => y.bar == "some_value"));
+#+END_SRC
+
+* Sorting
+
+Sorting is extremely easy with DQB. DQB currently does not support for custom
+sorting callbacks and uses default .NET's ~OrderBy~, ~OrderByDescending~,
+~ThenBy~ and ~ThenByDescending~ functions. Sorting should be provided via
+~SortOption~ class which you can check out [[https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/SortOption.cs][here]].
+
+*** Sorting Examples
+#+BEGIN_SRC csharp
+var dqbOpts = new DynamicQueryOptions
+{
+    SortOptions = new List<SortOption>()
+    {
+        new SortOption
+        {
+            SortingDirection = SortingDirection.Asc,
+            PropertyName = "Foo"
+        };
+
+        new SortOption
+        {
+            SortingDirection = SortingDirection.Desc,
+            PropertyName = "Bar"
+        };
+    }
+};
+
+// LINQ Translation: myCollection.OrderBy(x => x.Foo).ThenByDescending(x => x.Bar);
+#+END_SRC
+
+* Accessing Nested Objects
+
+DQB can access nested object with ~.~ delimeter like C# LINQ.
+#+BEGIN_SRC csharp
+public class MyNestedClass
+{
+    public int Age { get; set; }
+}
+
+public class MyClassToFilter
+{
+    public MyNestedClass MyNestedProperty { get; set; }
+}
+#+END_SRC
+
+With the object structures above, we could utilize ~Filter~ and ~Sort~
+operations like below:
+
+- *Filter*
+ #+BEGIN_SRC csharp
+new Filter
+{
+    Value = "27",
+    Operator = FilterOperation.Equals,
+    PropertyName = "MyNestedProperty.Age"
+};
+
+// LINQ Translation: myCollection.Where(x => x.MyNestedProperty.Age == 28);
+ #+END_SRC
+
+- *Sort*
+  #+BEGIN_SRC csharp
+new SortOption
+{
+    SortingDirection = SortingDirection.Asc,
+    PropertyName = "MyNestedProperty.Age"
+}
+
+// LINQ Translation: myCollection.OrderBy(x => x.MyNestedProperty.Age);
+  #+END_SRC
+
+* Pagination
+
+Pagination can be done by specifiynig options into the ~PaginationOptions~
+member of ~DynamicQueryOptions~ class. You can check it out [[https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/PaginationOption.cs][here]].
+Pagination utilizes LINQ's ~Skip~ and ~Take~ functions.
+
+** Pagination Examples:
+#+BEGIN_SRC csharp
+var paginationOption = new PaginationOption
+{
+    Count = 10,
+    Offset = 0,
+    AssignDataSetCount = true
+};
+
+// LINQ Translation: myCollection.Skip(0).Take(10);
+#+END_SRC
+
+*** How to access the filtered count of the query
+if its required to access the total query result amount(whole set) you can access it via
+
+#+BEGIN_SRC csharp
+int totalDataSetCount = paginationOption.DataSetCount;
+#+END_SRC
+
+* Web Development with DQB
+Web development is actually where DQB shines the most. DQB comes with an
+~ActionFilter~ that can parse HTTP queries into ~DynamicQueryOptions~ class.
+
+** Setting up DynamicQueryBuilderSettings
+This is a singleton object that can hold static configurations for DQB like
+operation shortcodes, query resolution methods and data source case sensitivity.
+You can check out this object [[https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/DynamicQueryBuilderSettings.cs][here]].
+
+It is usually best to create an instance of this class in your Web Projects
+~Startup.cs~ and inject it as a singleton like below
+
+#+BEGIN_SRC csharp
+    public class Startup
+    {
+        public Startup(ILogger<Startup> logger, IConfiguration configuration)
+        {
+            this.Logger = logger;
+            this.Configuration = configuration;
+        }
+
+        public ILogger<Startup> Logger { get; }
+
+        public IConfiguration Configuration { get; }
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
+            // .. other stuff
+
+            var dqbSettings = new DynamicQueryBuilderSettings
+            {
+                // .. your settings(explained below)
+            };
+
+            services.AddSingleton(dqbSettings);
+
+            // .. other stuff
+        }
+    }
+#+END_SRC
+
+** Query Delivery Methods
+DQB can retrieve your encoded/non-encoded queries via options like below:
+
+- *Request QueryString*
+
+Below, there is an example of configuring DQB to retrieve queries from query string
+
+#+BEGIN_SRC csharp
+string parameterToResolveFrom = "myparamtoresolve";
+Func<string, string> decodeFunction = (encodedQuery) => magicDecode(encodedQuery);
+
+new DynamicQueryBuilderSettings
+{
+    // Other configurations
+    QueryOptionsResolver = new QueryStringResolver(parameterToResolveFrom, decodeFunction)
+}
+#+END_SRC
+
+*Tip*: you can leave ~parameterToResolveFrom~ null to resolve your queries
+directly from the raw querystring.
+
+- *Request HTTP Header*
+ 
+ Below, there is an example of configuring DQB to retrieve queries from HTTP Headers
+
+#+BEGIN_SRC csharp
+string httpHeaderName = "myhttpheadername";
+Func<string, string> decodeFunction = (encodedQuery) => magicDecode(encodedQuery);
+
+new DynamicQueryBuilderSettings
+{
+    // Other configurations
+    QueryOptionsResolver = new HttpHeaderResolver(httpHeaderName, decodeFunction)
+}
+#+END_SRC
+
+*Tip*: you can always leave ~decodeFunction~ null if your queries are not encoded.

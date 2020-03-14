@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2020-03-14 Cts 15:58 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DynamicQueryBuilder</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Cem YILMAZ &lt;cmylmzbm@outlook.com&gt;" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="https://www.pirilampo.org/styles/readtheorg/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://www.pirilampo.org/styles/readtheorg/css/readtheorg.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://www.pirilampo.org/styles/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://www.pirilampo.org/styles/readtheorg/js/readtheorg.js"></script>
+<style type="text/css">
+pre.src:hover:before { display: none; }
+</style>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.cacheClassElem = elem.className;
+         elem.cacheClassTarget = target.className;
+         target.className = "code-highlighted";
+         elem.className   = "code-highlighted";
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(elem.cacheClassElem)
+         elem.className = elem.cacheClassElem;
+       if(elem.cacheClassTarget)
+         target.className = elem.cacheClassTarget;
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">DynamicQueryBuilder</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org57a37e5">1. What?</a></li>
+<li><a href="#orgf6bc477">2. Why?</a></li>
+<li><a href="#org396da03">3. Installation</a></li>
+<li><a href="#orgeccd156">4. DynamicQueryOptions</a>
+<ul>
+<li><a href="#orgeb14fae">4.1. Basic usage of DQB like below:</a></li>
+</ul>
+</li>
+<li><a href="#org2bd2874">5. Filters</a>
+<ul>
+<li>
+<ul>
+<li><a href="#orgc8a71fa">5.0.1. Filter Value Conversion</a></li>
+</ul>
+</li>
+<li><a href="#org4134868">5.1. Supported Filters</a>
+<ul>
+<li><a href="#orgf1f9fea">5.1.1. Filter Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org90943c2">6. Sorting</a>
+<ul>
+<li>
+<ul>
+<li><a href="#org6bb3f68">6.0.1. Sorting Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org7ff4ad0">7. Accessing Nested Objects</a></li>
+<li><a href="#org71ec9c7">8. Pagination</a>
+<ul>
+<li><a href="#orgac82e71">8.1. Pagination Examples:</a>
+<ul>
+<li><a href="#orgc72ff4f">8.1.1. How to access the filtered count of the query</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgeed0305">9. Web Development with DQB</a>
+<ul>
+<li><a href="#org9ff5f0f">9.1. Setting up DynamicQueryBuilderSettings</a></li>
+<li><a href="#org7b1f58e">9.2. Query Delivery Methods</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org57a37e5" class="outline-2">
+<h2 id="org57a37e5"><span class="section-number-2">1</span> What?</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+DynamicQueryBuilder(DQB) is a lightweight LINQ builder library that works dynamically with the given
+collection generic type.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf6bc477" class="outline-2">
+<h2 id="orgf6bc477"><span class="section-number-2">2</span> Why?</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The motivation behind DQB was to reverse the
+development cost of operations such as Filtering, Sorting, Paginating data from
+backend to clients. This allows client development to be more free and less
+time consuming for non-fullstack development workspaces.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org396da03" class="outline-2">
+<h2 id="org396da03"><span class="section-number-2">3</span> Installation</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+You can get DQB from NuGet services with the command below or NuGet UI in visual
+studio.
+</p>
+
+<p>
+DQB currently runs with .netstandard2.1
+</p>
+<pre class="example">
+Install-Package DynamicQueryBuilder
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgeccd156" class="outline-2">
+<h2 id="orgeccd156"><span class="section-number-2">4</span> DynamicQueryOptions</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+This is the class that holds everything from filters to sorts and pagination 
+options. DQB&rsquo;s has a function called <b><code>ApplyFilters</code></b> which converts
+this <b><code>DynamicQueryOptions</code></b> class into a LINQ expression. You can check out
+this object <a href="https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/DynamicQueryOptions.cs">here</a>.
+</p>
+</div>
+
+<div id="outline-container-orgeb14fae" class="outline-3">
+<h3 id="orgeb14fae"><span class="section-number-3">4.1</span> Basic usage of DQB like below:</h3>
+<div class="outline-text-3" id="text-4-1">
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #35CDAF;">IQueryable</span><span style="color: #C586C0;">&lt;</span>MyObject<span style="color: #C586C0;">&gt;</span> <span style="color: #85DDFF;">myCollection</span> = GetMyCollectionOfData<span style="color: #C586C0;">()</span>;
+<span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">myOpts</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryOptions</span>
+<span style="color: #C586C0;">{</span>
+    <span style="color: #579C4C;">/*</span>
+<span style="color: #579C4C;">      Filters,</span>
+<span style="color: #579C4C;">      SortingOptions,</span>
+<span style="color: #579C4C;">      Pagination</span>
+<span style="color: #579C4C;">    */</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #35CDAF;">IQueryable</span><span style="color: #C586C0;">&lt;</span>MyObject<span style="color: #C586C0;">&gt;</span> <span style="color: #85DDFF;">dqbResults</span> = myCollection.<span style="color: #D9DAA2;">ApplyFilters</span><span style="color: #C586C0;">(</span>myOpts<span style="color: #C586C0;">)</span>;
+<span style="color: #339CDB;">return</span> dqbResults.<span style="color: #D9DAA2;">ToList</span><span style="color: #C586C0;">()</span>;
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2bd2874" class="outline-2">
+<h2 id="org2bd2874"><span class="section-number-2">5</span> Filters</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+Filters are the objects that hold your logical filters. Currently, DQB only
+support <code>AndAlso</code> statements. You can see the object structure <a href="https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/Filter.cs">here</a>.
+</p>
+</div>
+
+<div id="outline-container-orgc8a71fa" class="outline-4">
+<h4 id="orgc8a71fa"><span class="section-number-4">5.0.1</span> Filter Value Conversion</h4>
+<div class="outline-text-4" id="text-5-0-1">
+<p>
+Since DQB always boxes your data into an <code>object</code> the actual type conversion is
+being handled by DQB while transforming your filters into a LINQ expression. DQB
+also can handle <code>null</code> values as well.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4134868" class="outline-3">
+<h3 id="org4134868"><span class="section-number-3">5.1</span> Supported Filters</h3>
+<div class="outline-text-3" id="text-5-1">
+<div class="org-src-container">
+<pre class="src src-csharp">In,
+Equals,
+LessThan,
+Contains,
+NotEqual,
+EndsWith,
+StartsWith,
+GreaterThan,
+LessThanOrEqual,
+GreaterThanOrEqual,
+Any,
+All
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgf1f9fea" class="outline-4">
+<h4 id="orgf1f9fea"><span class="section-number-4">5.1.1</span> Filter Examples</h4>
+<div class="outline-text-4" id="text-5-1-1">
+<p>
+An example usage of <code>Filter</code> class with a flat object:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">dqbOpts</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryOptions</span>
+<span style="color: #C586C0;">{</span>
+    Filters = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">List</span><span style="color: #DB8E73;">&lt;</span>Filter<span style="color: #DB8E73;">&gt;()</span>
+    <span style="color: #DB8E73;">{</span>
+        <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">Filter</span>
+        <span style="color: #579C4C;">{</span>
+            Value = <span style="color: #DB8E73;">"bar"</span>,
+            PropertyName = <span style="color: #DB8E73;">"foo"</span>,
+            Operator = FilterOperation.Equals
+        <span style="color: #579C4C;">}</span>
+    <span style="color: #DB8E73;">}</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">Where</span><span style="color: #579C4C;">(x =&gt; x.foo == "bar");</span>
+</pre>
+</div>
+
+<p>
+An example usage of <code>Filter</code> class with a collection property:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">dqbOpts</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryOptions</span>
+<span style="color: #C586C0;">{</span>
+    <span style="color: #339CDB;">var</span> filter = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">Filter</span>
+    <span style="color: #DB8E73;">{</span>
+        Value = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryOptions</span>
+        <span style="color: #579C4C;">{</span>
+            Value = <span style="color: #DB8E73;">"some_value"</span>,
+            Operator = FilterOperation.Equals,
+            PropertyName = <span style="color: #DB8E73;">"bar"</span>
+        <span style="color: #579C4C;">}</span>,
+        Operator = FilterOperation.Any,
+        PropertyName = <span style="color: #DB8E73;">"foo"</span>
+    <span style="color: #DB8E73;">}</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">Where</span><span style="color: #579C4C;">(x =&gt; x.foo.</span><span style="color: #D9DAA2;">Any</span><span style="color: #579C4C;">(y =&gt; y.bar == "some_value"));</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org90943c2" class="outline-2">
+<h2 id="org90943c2"><span class="section-number-2">6</span> Sorting</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+Sorting is extremely easy with DQB. DQB currently does not support for custom
+sorting callbacks and uses default .NET&rsquo;s <code>OrderBy</code>, <code>OrderByDescending</code>,
+<code>ThenBy</code> and <code>ThenByDescending</code> functions. Sorting should be provided via
+<code>SortOption</code> class which you can check out <a href="https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/SortOption.cs">here</a>.
+</p>
+</div>
+
+<div id="outline-container-org6bb3f68" class="outline-4">
+<h4 id="org6bb3f68"><span class="section-number-4">6.0.1</span> Sorting Examples</h4>
+<div class="outline-text-4" id="text-6-0-1">
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">dqbOpts</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryOptions</span>
+<span style="color: #C586C0;">{</span>
+    SortOptions = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">List</span><span style="color: #DB8E73;">&lt;</span>SortOption<span style="color: #DB8E73;">&gt;()</span>
+    <span style="color: #DB8E73;">{</span>
+        <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">SortOption</span>
+        <span style="color: #579C4C;">{</span>
+            SortingDirection = SortingDirection.Asc,
+            PropertyName = <span style="color: #DB8E73;">"Foo"</span>
+        <span style="color: #579C4C;">}</span>;
+
+        <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">SortOption</span>
+        <span style="color: #579C4C;">{</span>
+            SortingDirection = SortingDirection.Desc,
+            PropertyName = <span style="color: #DB8E73;">"Bar"</span>
+        <span style="color: #579C4C;">}</span>;
+    <span style="color: #DB8E73;">}</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">OrderBy</span><span style="color: #579C4C;">(x =&gt; x.Foo).</span><span style="color: #D9DAA2;">ThenByDescending</span><span style="color: #579C4C;">(x =&gt; x.Bar);</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7ff4ad0" class="outline-2">
+<h2 id="org7ff4ad0"><span class="section-number-2">7</span> Accessing Nested Objects</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+DQB can access nested object with <code>.</code> delimeter like C# LINQ.
+</p>
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">public</span> <span style="color: #339CDB;">class</span> <span style="color: #35CDAF;">MyNestedClass</span>
+<span style="color: #C586C0;">{</span>
+    <span style="color: #339CDB;">public</span> <span style="color: #35CDAF;">int</span> <span style="color: #85DDFF;">Age</span> <span style="color: #DB8E73;">{</span> <span style="color: #339CDB;">get</span>; <span style="color: #339CDB;">set</span>; <span style="color: #DB8E73;">}</span>
+<span style="color: #C586C0;">}</span>
+
+<span style="color: #339CDB;">public</span> <span style="color: #339CDB;">class</span> <span style="color: #35CDAF;">MyClassToFilter</span>
+<span style="color: #C586C0;">{</span>
+    <span style="color: #339CDB;">public</span> <span style="color: #35CDAF;">MyNestedClass</span> <span style="color: #85DDFF;">MyNestedProperty</span> <span style="color: #DB8E73;">{</span> <span style="color: #339CDB;">get</span>; <span style="color: #339CDB;">set</span>; <span style="color: #DB8E73;">}</span>
+<span style="color: #C586C0;">}</span>
+</pre>
+</div>
+
+<p>
+With the object structures above, we could utilize <code>Filter</code> and <code>Sort</code>
+operations like below:
+</p>
+
+<ul class="org-ul">
+<li><p>
+<b>Filter</b>
+</p>
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">Filter</span>
+<span style="color: #C586C0;">{</span>
+    Value = <span style="color: #DB8E73;">"27"</span>,
+    Operator = FilterOperation.Equals,
+    PropertyName = <span style="color: #DB8E73;">"MyNestedProperty.Age"</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">Where</span><span style="color: #579C4C;">(x =&gt; x.MyNestedProperty.Age == 28);</span>
+</pre>
+</div></li>
+
+<li><p>
+<b>Sort</b>
+</p>
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">SortOption</span>
+<span style="color: #C586C0;">{</span>
+    SortingDirection = SortingDirection.Asc,
+    PropertyName = <span style="color: #DB8E73;">"MyNestedProperty.Age"</span>
+<span style="color: #C586C0;">}</span>
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">OrderBy</span><span style="color: #579C4C;">(x =&gt; x.MyNestedProperty.Age);</span>
+</pre>
+</div></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org71ec9c7" class="outline-2">
+<h2 id="org71ec9c7"><span class="section-number-2">8</span> Pagination</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+Pagination can be done by specifiynig options into the <code>PaginationOptions</code>
+member of <code>DynamicQueryOptions</code> class. You can check it out <a href="https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/PaginationOption.cs">here</a>.
+Pagination utilizes LINQ&rsquo;s <code>Skip</code> and <code>Take</code> functions.
+</p>
+</div>
+
+<div id="outline-container-orgac82e71" class="outline-3">
+<h3 id="orgac82e71"><span class="section-number-3">8.1</span> Pagination Examples:</h3>
+<div class="outline-text-3" id="text-8-1">
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">paginationOption</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">PaginationOption</span>
+<span style="color: #C586C0;">{</span>
+    Count = <span style="color: #B5CEA8; font-weight: bold;">10</span>,
+    Offset = <span style="color: #B5CEA8; font-weight: bold;">0</span>,
+    AssignDataSetCount = <span style="color: #339CDB;">true</span>
+<span style="color: #C586C0;">}</span>;
+
+<span style="color: #579C4C;">// </span><span style="color: #579C4C;">LINQ Translation: myCollection.</span><span style="color: #D9DAA2;">Skip</span><span style="color: #579C4C;">(0).</span><span style="color: #D9DAA2;">Take</span><span style="color: #579C4C;">(10);</span>
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgc72ff4f" class="outline-4">
+<h4 id="orgc72ff4f"><span class="section-number-4">8.1.1</span> How to access the filtered count of the query</h4>
+<div class="outline-text-4" id="text-8-1-1">
+<p>
+if its required to access the total query result amount(whole set) you can access it via
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #35CDAF;">int</span> <span style="color: #85DDFF;">totalDataSetCount</span> = paginationOption.DataSetCount;
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgeed0305" class="outline-2">
+<h2 id="orgeed0305"><span class="section-number-2">9</span> Web Development with DQB</h2>
+<div class="outline-text-2" id="text-9">
+<p>
+Web development is actually where DQB shines the most. DQB comes with an
+<code>ActionFilter</code> that can parse HTTP queries into <code>DynamicQueryOptions</code> class.
+</p>
+</div>
+
+<div id="outline-container-org9ff5f0f" class="outline-3">
+<h3 id="org9ff5f0f"><span class="section-number-3">9.1</span> Setting up DynamicQueryBuilderSettings</h3>
+<div class="outline-text-3" id="text-9-1">
+<p>
+This is a singleton object that can hold static configurations for DQB like
+operation shortcodes, query resolution methods and data source case sensitivity.
+You can check out this object <a href="https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/DynamicQueryBuilderSettings.cs">here</a>.
+</p>
+
+<p>
+It is usually best to create an instance of this class in your Web Projects
+<code>Startup.cs</code> and inject it as a singleton like below
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp">    <span style="color: #339CDB;">public</span> <span style="color: #339CDB;">class</span> <span style="color: #35CDAF;">Startup</span>
+    <span style="color: #C586C0;">{</span>
+        <span style="color: #339CDB;">public</span> Startup<span style="color: #DB8E73;">(</span><span style="color: #35CDAF;">ILogger</span><span style="color: #579C4C;">&lt;</span><span style="color: #35CDAF;">Startup</span><span style="color: #579C4C;">&gt;</span> <span style="color: #85DDFF;">logger</span>, <span style="color: #35CDAF;">IConfiguration</span> <span style="color: #85DDFF;">configuration</span><span style="color: #DB8E73;">)</span>
+        <span style="color: #DB8E73;">{</span>
+            <span style="color: #339CDB;">this</span>.Logger = logger;
+            <span style="color: #339CDB;">this</span>.Configuration = configuration;
+        <span style="color: #DB8E73;">}</span>
+
+        <span style="color: #339CDB;">public</span> <span style="color: #35CDAF;">ILogger</span><span style="color: #DB8E73;">&lt;</span><span style="color: #35CDAF;">Startup</span><span style="color: #DB8E73;">&gt;</span> <span style="color: #85DDFF;">Logger</span> <span style="color: #DB8E73;">{</span> <span style="color: #339CDB;">get</span>; <span style="color: #DB8E73;">}</span>
+
+        <span style="color: #339CDB;">public</span> <span style="color: #35CDAF;">IConfiguration</span> <span style="color: #85DDFF;">Configuration</span> <span style="color: #DB8E73;">{</span> <span style="color: #339CDB;">get</span>; <span style="color: #DB8E73;">}</span>
+
+        <span style="color: #579C4C;">// </span><span style="color: #579C4C;">This method gets called by the runtime. Use this method to add services to the container.</span>
+        <span style="color: #339CDB;">public</span> <span style="color: #35CDAF;">void</span> <span style="color: #D9DAA2;">ConfigureServices</span><span style="color: #DB8E73;">(</span><span style="color: #35CDAF;">IServiceCollection</span> <span style="color: #85DDFF;">services</span><span style="color: #DB8E73;">)</span>
+        <span style="color: #DB8E73;">{</span>
+            <span style="color: #579C4C;">// </span><span style="color: #579C4C;">.. other stuff</span>
+
+            <span style="color: #339CDB;">var</span> <span style="color: #85DDFF;">dqbSettings</span> = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryBuilderSettings</span>
+            <span style="color: #579C4C;">{</span>
+                <span style="color: #579C4C;">// </span><span style="color: #579C4C;">.. your settings(explained below)</span>
+            <span style="color: #579C4C;">}</span>;
+
+            services.<span style="color: #D9DAA2;">AddSingleton</span><span style="color: #579C4C;">(</span><span style="color: #35CDAF;">dqbSettings</span><span style="color: #579C4C;">)</span>;
+
+            <span style="color: #579C4C;">// </span><span style="color: #579C4C;">.. other stuff</span>
+        <span style="color: #DB8E73;">}</span>
+    <span style="color: #C586C0;">}</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7b1f58e" class="outline-3">
+<h3 id="org7b1f58e"><span class="section-number-3">9.2</span> Query Delivery Methods</h3>
+<div class="outline-text-3" id="text-9-2">
+<p>
+DQB can retrieve your encoded/non-encoded queries via options like below:
+</p>
+
+<ul class="org-ul">
+<li><b>Request QueryString</b></li>
+</ul>
+
+<p>
+Below, there is an example of configuring DQB to retrieve queries from query string
+</p>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #35CDAF;">string</span> <span style="color: #85DDFF;">parameterToResolveFrom</span> = <span style="color: #DB8E73;">"myparamtoresolve"</span>;
+<span style="color: #35CDAF;">Func</span><span style="color: #C586C0;">&lt;</span><span style="color: #35CDAF;">string</span>, <span style="color: #35CDAF;">string</span><span style="color: #C586C0;">&gt;</span> <span style="color: #85DDFF;">decodeFunction</span> = <span style="color: #C586C0;">(</span>encodedQuery<span style="color: #C586C0;">)</span> =&gt; magicDecode<span style="color: #C586C0;">(</span>encodedQuery<span style="color: #C586C0;">)</span>;
+
+<span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryBuilderSettings</span>
+<span style="color: #C586C0;">{</span>
+    <span style="color: #579C4C;">// </span><span style="color: #579C4C;">Other configurations</span>
+    QueryOptionsResolver = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">QueryStringResolver</span><span style="color: #DB8E73;">(</span>parameterToResolveFrom, decodeFunction<span style="color: #DB8E73;">)</span>
+<span style="color: #C586C0;">}</span>
+</pre>
+</div>
+
+<p>
+<b>Tip</b>: you can leave <code>parameterToResolveFrom</code> null to resolve your queries
+directly from the raw querystring.
+</p>
+
+<ul class="org-ul">
+<li><p>
+<b>Request HTTP Header</b>
+</p>
+
+<p>
+Below, there is an example of configuring DQB to retrieve queries from HTTP Headers
+</p></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-csharp"><span style="color: #35CDAF;">string</span> <span style="color: #85DDFF;">httpHeaderName</span> = <span style="color: #DB8E73;">"myhttpheadername"</span>;
+<span style="color: #35CDAF;">Func</span><span style="color: #C586C0;">&lt;</span><span style="color: #35CDAF;">string</span>, <span style="color: #35CDAF;">string</span><span style="color: #C586C0;">&gt;</span> <span style="color: #85DDFF;">decodeFunction</span> = <span style="color: #C586C0;">(</span>encodedQuery<span style="color: #C586C0;">)</span> =&gt; magicDecode<span style="color: #C586C0;">(</span>encodedQuery<span style="color: #C586C0;">)</span>;
+
+<span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">DynamicQueryBuilderSettings</span>
+<span style="color: #C586C0;">{</span>
+    <span style="color: #579C4C;">// </span><span style="color: #579C4C;">Other configurations</span>
+    QueryOptionsResolver = <span style="color: #339CDB;">new</span> <span style="color: #35CDAF;">HttpHeaderResolver</span><span style="color: #DB8E73;">(</span>httpHeaderName, decodeFunction<span style="color: #DB8E73;">)</span>
+<span style="color: #C586C0;">}</span>
+</pre>
+</div>
+
+<p>
+<b>Tip</b>: you can always leave <code>decodeFunction</code> null if your queries are not encoded.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Cem YILMAZ &lt;cmylmzbm@outlook.com&gt;</p>
+<p class="date">Created: 2020-03-14 Cts 15:58</p>
+</div>
+</body>
+</html>
