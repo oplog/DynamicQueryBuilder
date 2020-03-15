@@ -63,6 +63,8 @@ namespace DynamicQueryBuilder
         private static readonly MethodInfo _stringStartsWithMethod = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
 
         private static readonly MethodInfo _toLowerInvariantMethod = typeof(string).GetMethod("ToLowerInvariant");
+
+        private static readonly MethodInfo _compareTo = typeof(string).GetMethod("CompareTo", new[] { typeof(string) });
         #endregion
 
         /// <summary>
@@ -74,7 +76,7 @@ namespace DynamicQueryBuilder
         /// <returns>DynamicQueryOptions applied IEnumerable instance,</returns>
         public static IQueryable<T> ApplyFilters<T>(this IQueryable<T> currentSet, DynamicQueryOptions dynamicQueryOptions)
         {
-            return ApplyFilters((IQueryable)currentSet, dynamicQueryOptions).OfType<T>();
+            return ApplyFilters((IQueryable)currentSet, dynamicQueryOptions).Cast<T>();
         }
 
         /// <summary>
@@ -117,7 +119,7 @@ namespace DynamicQueryBuilder
                     List<OrderOptionDetails> orderLambdas = new List<OrderOptionDetails>();
                     foreach (SortOption so in dynamicQueryOptions.SortOptions)
                     {
-                        Expression paramExpr = ExtractMember(param, so.PropertyName);
+                        Expression paramExpr = ExtractMember(param, so.PropertyName, false);
                         orderLambdas.Add(new OrderOptionDetails
                         {
                             Direction = so.SortingDirection,
@@ -229,7 +231,7 @@ namespace DynamicQueryBuilder
 
                 string[] parameterValues = queryCollection
                     .GetValues(PARAMETER_VALUE_KEY)
-                    .ToArray() ?? defaultArrayValue;
+                    ?.ToArray() ?? defaultArrayValue;
 
                 string[] sortOptions = queryCollection
                     .GetValues(SORT_OPTIONS_PARAMETER_KEY)
@@ -297,7 +299,7 @@ namespace DynamicQueryBuilder
             {
                 for (int i = 0; i < operations.Length; i++)
                 {
-                    FilterOperation foundOperation = default(FilterOperation);
+                    FilterOperation foundOperation;
 
                     // Check if we support this operation.
                     if (Enum.TryParse(operations[i], true, out FilterOperation parsedOperation))
@@ -431,15 +433,15 @@ namespace DynamicQueryBuilder
         /// <returns>Built query expression.</returns>
         internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
         {
-            Expression parentMember = ExtractMember(param, filter.PropertyName);
+            string stringFilterValue = filter.Value?.ToString();
+            Expression parentMember = ExtractMember(param, filter.PropertyName, stringFilterValue == "null");
             if (parentMember.Type == typeof(string)
-                && filter.CaseSensitive
-                && !usesCaseInsensitiveSource)
+                && !filter.CaseSensitive
+                && usesCaseInsensitiveSource)
             {
                 parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
             }
 
-            string stringFilterValue = filter.Value?.ToString();
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
             {
@@ -454,7 +456,9 @@ namespace DynamicQueryBuilder
                 {
                     Operator = FilterOperation.Equals,
                     PropertyName = filter.PropertyName,
-                    Value = splittedValues.First().ToLowerInvariant(),
+                    Value = !usesCaseInsensitiveSource && filter.CaseSensitive
+                        ? splittedValues.First()
+                        : splittedValues.First().ToLowerInvariant(),
                     CaseSensitive = filter.CaseSensitive
                 };
 
@@ -478,15 +482,30 @@ namespace DynamicQueryBuilder
             {
                 convertedValue = stringFilterValue != "null"
                     ? TypeDescriptor.GetConverter(parentMember.Type).ConvertFromInvariantString(
-                       usesCaseInsensitiveSource
-                       ? stringFilterValue
-                        : filter.CaseSensitive
-                            ? stringFilterValue?.ToLowerInvariant()
-                            : stringFilterValue)
+                       !usesCaseInsensitiveSource
+                       ? filter.CaseSensitive
+                            ? stringFilterValue
+                            : stringFilterValue?.ToLowerInvariant()
+                       : stringFilterValue?.ToLowerInvariant())
                     : null;
             }
 
-            ConstantExpression constant = Expression.Constant(convertedValue);
+            Expression constant = Expression.Constant(convertedValue);
+            
+            Expression compareToExpression = null;
+            Expression comparisonConstant = Expression.Constant(0);
+
+            // To lower invariant the query parameters if case sensitivity is desired.
+            if (parentMember.Type == typeof(string) && convertedValue != null)
+            {
+                constant = usesCaseInsensitiveSource
+                    && !filter.CaseSensitive
+                    ? Expression.Call(constant, _toLowerInvariantMethod)
+                    : constant;
+
+                compareToExpression = Expression.Call(parentMember, _compareTo, constant);
+            }
+
             switch (filter.Operator)
             {
                 case FilterOperation.Equals:
@@ -499,16 +518,24 @@ namespace DynamicQueryBuilder
                     return Expression.Call(parentMember, _stringContainsMethod, constant);
 
                 case FilterOperation.GreaterThan:
-                    return Expression.GreaterThan(parentMember, constant);
+                    return parentMember.Type == typeof(string) 
+                        ? Expression.GreaterThan(compareToExpression, comparisonConstant)
+                        : Expression.GreaterThan(parentMember, constant);
 
                 case FilterOperation.GreaterThanOrEqual:
-                    return Expression.GreaterThanOrEqual(parentMember, constant);
+                    return parentMember.Type == typeof(string)
+                        ? Expression.GreaterThanOrEqual(compareToExpression, comparisonConstant)
+                        : Expression.GreaterThanOrEqual(parentMember, constant);
 
                 case FilterOperation.LessThan:
-                    return Expression.LessThan(parentMember, constant);
+                    return parentMember.Type == typeof(string)
+                        ? Expression.LessThan(compareToExpression, comparisonConstant)
+                        : Expression.LessThan(parentMember, constant);
 
                 case FilterOperation.LessThanOrEqual:
-                    return Expression.LessThanOrEqual(parentMember, constant);
+                    return parentMember.Type == typeof(string)
+                        ? Expression.LessThanOrEqual(compareToExpression, comparisonConstant)
+                        : Expression.LessThanOrEqual(parentMember, constant);
 
                 case FilterOperation.StartsWith:
                     return Expression.Call(parentMember, _stringStartsWithMethod, constant);
@@ -544,15 +571,22 @@ namespace DynamicQueryBuilder
         /// </summary>
         /// <param name="param">Current parameter body.</param>
         /// <param name="propertyName">Parameter name to construct.</param>
+        /// <param name="isValueNull">Shows if the value that the query is looking for a null.</param>
         /// <returns>Constructed parameter name.</returns>
-        internal static Expression ExtractMember(ParameterExpression param, string propertyName)
+        internal static Expression ExtractMember(ParameterExpression param, string propertyName, bool isValueNull = false)
         {
             if (param == null || string.IsNullOrEmpty(propertyName))
             {
                 throw new DynamicQueryException("Both parameter expression and propertyname are required");
             }
 
+            if (propertyName == "_")
+            {
+                return param;
+            }
+
             Expression parentMember = param;
+
             // If the property name is refering to a nested object property, we should iterate through every nested type to get to the final property target.
             if (propertyName.Contains('.'))
             {
@@ -569,7 +603,16 @@ namespace DynamicQueryBuilder
             // Nullable Type
             if (Nullable.GetUnderlyingType(parentMember.Type) != null)
             {
-                parentMember = Expression.PropertyOrField(parentMember, "Value");
+                parentMember = isValueNull
+                    ? parentMember
+                    : Expression.PropertyOrField(parentMember, "Value");
+            }
+            else
+            {
+                if (isValueNull && parentMember.Type != typeof(string))
+                {
+                    throw new InvalidDynamicQueryException($"Type of property {propertyName} is not nullable but query value was received null");
+                }
             }
 
             return parentMember;

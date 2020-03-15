@@ -4,11 +4,14 @@
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
+
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
+
 using System.Collections.Specialized;
 using System.Linq;
 using System.Web;
+
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 namespace DynamicQueryBuilder
@@ -51,7 +54,7 @@ namespace DynamicQueryBuilder
                 .HttpContext
                 .RequestServices?
                 .GetService(typeof(DynamicQueryBuilderSettings)) as DynamicQueryBuilderSettings
-                ?? new DynamicQueryBuilderSettings();
+                    ?? new DynamicQueryBuilderSettings();
 
             if (dynamicQueryParameter != null)
             {
@@ -60,15 +63,19 @@ namespace DynamicQueryBuilder
                 {
                     if (dqbSettings.QueryOptionsResolver is QueryStringResolver qsResolver)
                     {
-                        NameValueCollection resolveParameterValues = HttpUtility.ParseQueryString(context.HttpContext.Request.QueryString.Value);
-                        string[] values = resolveParameterValues.GetValues(qsResolver.ResolveFrom);
-                        if (values == null || values.Length == 0)
+                        string[] values;
+                        if (!string.IsNullOrEmpty(qsResolver.ResolveFrom))
                         {
-                            throw new DynamicQueryException($"Couldn't resolve query from querystring parameter {qsResolver.ResolveFrom}");
+                            NameValueCollection resolveParameterValues = HttpUtility.ParseQueryString(context.HttpContext.Request.QueryString.Value);
+                            values = resolveParameterValues.GetValues(qsResolver.ResolveFrom) ?? new string[] { string.Empty };
+                        }
+                        else
+                        {
+                            values = new string[] { queryValue };
                         }
 
                         queryValue = HttpUtility.UrlDecode(
-                            qsResolver.DecodeFunction != null 
+                            qsResolver.DecodeFunction != null
                             ? qsResolver.DecodeFunction(values[0])
                             : values[0]);
                     }

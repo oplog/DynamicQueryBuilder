@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <DebugType>full</DebugType>
     <Authors>Oplog</Authors>
     <Company>Oplog</Company>
     <Description>Lightweight LINQ query builder</Description>
-    <PackageLicenseUrl>https://github.com/oplog/DynamicQueryBuilder/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/oplog/DynamicQueryBuilder</PackageProjectUrl>
     <RepositoryUrl>https://github.com/oplog/DynamicQueryBuilder</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
@@ -15,17 +15,16 @@
     <SignAssembly>false</SignAssembly>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>1.0.2</Version>
-    <AssemblyVersion>1.0.0.2</AssemblyVersion>
-    <FileVersion>1.0.0.2</FileVersion>
-    <PackageReleaseNotes>Added settings model for Web projects
-Added case sensitivity default option flag
-Added smart ordering</PackageReleaseNotes>
+    <Version>1.0.3</Version>
+    <AssemblyVersion>1.0.0.3</AssemblyVersion>
+    <FileVersion>1.0.0.3</FileVersion>
+    <PackageReleaseNotes>Enable dataset null search operations</PackageReleaseNotes>
+    <PackageLicenseExpression></PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc">
-      <Version>2.0.2</Version>
+      <Version>2.2.0</Version>
     </PackageReference>
   </ItemGroup>
 

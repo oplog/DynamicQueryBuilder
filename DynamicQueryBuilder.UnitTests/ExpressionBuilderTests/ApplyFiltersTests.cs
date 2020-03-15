@@ -4,12 +4,16 @@
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
+
 using Moq;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+
 using Xunit;
+
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
@@ -20,7 +24,11 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         {
             public int Age { get; set; }
 
+            public int? AgeN { get; set; }
+
             public string Name { get; set; }
+
+            public ICollection<string> InnerPrimitiveList { get; set; }
 
             public ICollection<InnerTestModel> InnerTestModels { get; set; }
         }
@@ -36,7 +44,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             IQueryable<TestModel> currentSet = CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(null).AsQueryable();
 
-            currentSet = currentSet.OfType<TestModel>();
+            currentSet = currentSet.Cast<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
         }
 
@@ -67,7 +75,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 SortOptions = null
             }).AsQueryable();
 
-            currentSet = currentSet.OfType<TestModel>();
+            currentSet = currentSet.Cast<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
         }
 
@@ -81,7 +89,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 Filters = new List<Filter>()
             }).AsQueryable();
 
-            currentSet = currentSet.OfType<TestModel>();
+            currentSet = currentSet.Cast<TestModel>();
             Assert.Equal(returnedSet.Expression.ToString(), currentSet.Expression.ToString());
         }
 
@@ -104,14 +112,15 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                        Value = "testOne",
                        PropertyName = "Name",
                        Operator = FilterOperation.StartsWith,
-                       CaseSensitive = true
+                       CaseSensitive = false
                    }
-                }
+                },
+                UsesCaseInsensitiveSource = true
             };
 
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(filters).AsQueryable();
             string paramName = nameof(TestModel).ToLower();
-            string expectedQuery = $"{paramName} => (({paramName}.Age == 10) AndAlso {paramName}.Name.ToLowerInvariant().StartsWith(\"testone\"))";
+            string expectedQuery = $"{paramName} => (({paramName}.Age == 10) AndAlso {paramName}.Name.ToLowerInvariant().StartsWith(\"testone\".ToLowerInvariant()))";
             var expressionMethodCall = returnedSet.Expression as MethodCallExpression;
             Assert.NotNull(expressionMethodCall);
 
@@ -230,6 +239,91 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Contains($".Skip({allQueryTypes.PaginationOption.Offset}).Take({allQueryTypes.PaginationOption.Offset})", expressionString);
         }
 
+        [Fact]
+        public void ApplyFiltersShouldHandleComparisonsDifferentlyForStrings()
+        {
+            IQueryable<TestModel> currentSet = CreateSampleSet();
+            var caseSensitiveFilters = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                   new Filter
+                   {
+                       Value = "testSix",
+                       PropertyName = nameof(TestModel.Name),
+                       Operator = FilterOperation.GreaterThan,
+                       CaseSensitive = true
+                   }
+                }
+            };
+
+            List<TestModel> result = currentSet.ApplyFilters(caseSensitiveFilters).ToList();
+            Assert.NotEmpty(result);
+            Assert.Equal(currentSet.ElementAtOrDefault(1), result[0]);
+            Assert.Equal(currentSet.ElementAtOrDefault(2), result[1]);
+
+            var caseInsensitiveFilters = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                   new Filter
+                   {
+                       Value = "testSix",
+                       PropertyName = nameof(TestModel.Name),
+                       Operator = FilterOperation.GreaterThan,
+                       CaseSensitive = false
+                   }
+                }
+            };
+
+            result = currentSet.ApplyFilters(caseInsensitiveFilters).ToList();
+            Assert.NotEmpty(result);
+            Assert.Equal(currentSet.ElementAtOrDefault(1), result[0]);
+            Assert.Equal(currentSet.ElementAtOrDefault(2), result[1]);
+        }
+
+        [Fact]
+        public void ApplyFiltersShouldHandlePrimitiveCollectionTypes()
+        {
+            IQueryable<TestModel> currentSet = CreateSampleSet();
+            var filters = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                   new Filter
+                   {
+                       Value = new DynamicQueryOptions
+                       {
+                           Filters = new List<Filter>
+                           {
+                               new Filter
+                               {
+                                   Operator = FilterOperation.Equals,
+                                   PropertyName = "_",
+                                   Value = "3"
+                               }
+                           }
+                       },
+                       PropertyName = nameof(TestModel.InnerPrimitiveList),
+                       Operator = FilterOperation.Any
+                   }
+                },
+                SortOptions = new List<SortOption>
+                {
+                    new SortOption
+                    {
+                        PropertyName = nameof(TestModel.Age)
+                    }
+                }
+            };
+
+            List<TestModel> result = currentSet.ApplyFilters(filters).ToList();
+            Assert.NotEmpty(result);
+            Assert.Equal(2, result.Count);
+            Assert.Equal(currentSet.ElementAtOrDefault(0), result[0]);
+            Assert.Equal(currentSet.ElementAtOrDefault(1), result[1]);
+        }
+
         private IQueryable<TestModel> PrepareForMemberQuery(FilterOperation operation)
         {
             IQueryable<TestModel> currentSet = CreateSampleSet();
@@ -254,7 +348,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                             }
                         }
                     }
-                }
+                },
+                UsesCaseInsensitiveSource = true
             }).AsQueryable();
 
             return returnedSet;
@@ -278,6 +373,12 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                         {
                             Role = "User"
                         }
+                    },
+                    InnerPrimitiveList = new List<string>
+                    {
+                        "1",
+                        "2",
+                        "3"
                     }
                 },
                 new TestModel
@@ -294,6 +395,12 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                         {
                             Role = "User"
                         }
+                    },
+                    InnerPrimitiveList = new List<string>
+                    {
+                        "3",
+                        "4",
+                        "5"
                     }
                 },
                 new TestModel
@@ -310,6 +417,12 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                         {
                             Role = "Admin"
                         }
+                    },
+                    InnerPrimitiveList = new List<string>
+                    {
+                        "7",
+                        "7",
+                        "7"
                     }
                 }
             }.AsQueryable();
