@@ -424,14 +424,7 @@ namespace DynamicQueryBuilder
             }
         }
 
-        /// <summary>
-        /// Builds a runtime generic dynamic query with the given filters.
-        /// </summary>
-        /// <param name="param">Created parameter instance or current expression body.</param>
-        /// <param name="filter">Filter instance to build.</param>
-        /// <param name="usesCaseInsensitiveSource">Flag to detect if the query is going to run on a SQL database.</param>
-        /// <returns>Built query expression.</returns>
-        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
+        internal static Expression BuildParentMember(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
         {
             string stringFilterValue = filter.Value?.ToString();
             Expression parentMember = ExtractMember(param, filter.PropertyName, stringFilterValue == "null");
@@ -442,39 +435,34 @@ namespace DynamicQueryBuilder
                 parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
             }
 
-            // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
-            if (filter.Operator == FilterOperation.In)
-            {
-                if (filter.Value == null)
-                {
-                    throw new DynamicQueryException("You can't pass type null to In. Pass null as a string instead.");
-                }
+            return parentMember;
+        }
 
-                // Split all data into a list
-                List<string> splittedValues = stringFilterValue.Split(PARAMETER_OPTION_DELIMITER).ToList();
-                var equalsFilter = new Filter
-                {
-                    Operator = FilterOperation.Equals,
-                    PropertyName = filter.PropertyName,
-                    Value = !usesCaseInsensitiveSource && filter.CaseSensitive
-                        ? splittedValues.First()
-                        : splittedValues.First().ToLowerInvariant(),
-                    CaseSensitive = filter.CaseSensitive
-                };
+        internal static object ConvertAndBox(string stringFilterValue,
+                                             Type parentType,
+                                             bool isFilterCaseSensitive,
+                                             bool usesCaseInsensitiveSource = false)
+        {
+            return stringFilterValue != "null"
+                ? TypeDescriptor.GetConverter(parentType).ConvertFromInvariantString(
+                   !usesCaseInsensitiveSource
+                   ? isFilterCaseSensitive
+                        ? stringFilterValue
+                        : stringFilterValue?.ToLowerInvariant()
+                   : stringFilterValue?.ToLowerInvariant())
+                : null;
+        }
 
-                // Create the expression with the first value.
-                Expression builtInExpression = BuildFilterExpression(param, equalsFilter, usesCaseInsensitiveSource);
-                splittedValues.RemoveAt(0); // Remove the first value
-
-                // Create query for every splitted value and append them.
-                foreach (var item in splittedValues)
-                {
-                    equalsFilter.Value = item;
-                    builtInExpression = Expression.Or(builtInExpression, BuildFilterExpression(param, equalsFilter, usesCaseInsensitiveSource));
-                }
-
-                return builtInExpression;
-            }
+        /// <summary>
+        /// Builds a runtime generic dynamic query with the given filters.
+        /// </summary>
+        /// <param name="param">Created parameter instance or current expression body.</param>
+        /// <param name="filter">Filter instance to build.</param>
+        /// <param name="usesCaseInsensitiveSource">Flag to detect if the query is going to run on a SQL database.</param>
+        /// <returns>Built query expression.</returns>
+        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
+        {
+            Expression parentMember = BuildParentMember(param, filter, usesCaseInsensitiveSource);
 
             // We should convert the data into its own type before we do any query building.
             object convertedValue = null;
@@ -491,7 +479,7 @@ namespace DynamicQueryBuilder
             }
 
             Expression constant = Expression.Constant(convertedValue);
-            
+
             Expression compareToExpression = null;
             Expression comparisonConstant = Expression.Constant(0);
 
@@ -508,17 +496,15 @@ namespace DynamicQueryBuilder
 
             switch (filter.Operator)
             {
-                case FilterOperation.Equals:
-                    return Expression.Equal(parentMember, constant);
-
-                case FilterOperation.NotEqual:
-                    return Expression.NotEqual(parentMember, constant);
+                /*
+                    Handled operators: Equals, NotEquals
+                */
 
                 case FilterOperation.Contains:
                     return Expression.Call(parentMember, _stringContainsMethod, constant);
 
                 case FilterOperation.GreaterThan:
-                    return parentMember.Type == typeof(string) 
+                    return parentMember.Type == typeof(string)
                         ? Expression.GreaterThan(compareToExpression, comparisonConstant)
                         : Expression.GreaterThan(parentMember, constant);
 
@@ -563,6 +549,9 @@ namespace DynamicQueryBuilder
                 default:
                     return null;
             }
+
+            var ctx = new OperatorContext.OperationContext();
+            return ctx.GetExpression(param, filter, usesCaseInsensitiveSource);
         }
 
         /// <summary>

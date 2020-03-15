@@ -1,13 +1,9 @@
-﻿// <copyright file="BuildFilterExpressionTests.cs" company="Oplog">
-// Copyright (c) Oplog. All rights reserved.
+﻿// Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
 using DynamicQueryBuilder.UnitTests.TestData;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using Xunit;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
