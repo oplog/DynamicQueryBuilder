@@ -2,12 +2,6 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
-using DynamicQueryBuilder.Models;
-using DynamicQueryBuilder.Models.Enums;
-using DynamicQueryBuilder.Utils;
-using DynamicQueryBuilder.Utils.Extensions;
-using DynamicQueryBuilder.Visitors;
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -17,6 +11,12 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Web;
+
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
+using DynamicQueryBuilder.Utils;
+using DynamicQueryBuilder.Utils.Extensions;
+using DynamicQueryBuilder.Visitors;
 
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
@@ -96,27 +96,46 @@ namespace DynamicQueryBuilder
 
                 Expression exp = null;
 
-                // Create the query parameter
+                // Create the query parameter (x =>)
                 ParameterExpression param = Expression.Parameter(currentSet.ElementType, currentSet.ElementType.Name.ToLower());
+
+                // Check if we have any filters
                 if (dynamicQueryOptions.Filters != null && dynamicQueryOptions.Filters.Count > 0)
                 {
-                    // Copy the array since we need to mutate it, we should avoid mutating the real list.
-                    List<Filter> dqbFilters = dynamicQueryOptions.Filters.ToList();
+                    exp = BuildFilterExpression(param,
+                                                dynamicQueryOptions.Filters.First(),
+                                                dynamicQueryOptions.UsesCaseInsensitiveSource);
 
-                    // Since the expression is null at this point, we should create it with our first filter.
-                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault(), dynamicQueryOptions.UsesCaseInsensitiveSource);
-                    dqbFilters.RemoveAt(0); // Remove the first since it was added already.
-
-                    // Append the rest
-                    foreach (Filter item in dqbFilters)
+                    for (int i = 1; i < dynamicQueryOptions.Filters.Count; ++i)
                     {
-                        exp = Expression.AndAlso(exp, BuildFilterExpression(param, item, dynamicQueryOptions.UsesCaseInsensitiveSource));
+                        // Get the previous filter to retrieve the logical operator between the current and the next filters
+                        Filter previousFilter = dynamicQueryOptions.Filters.ElementAtOrDefault(i - 1);
+
+                        // Check to see if we have a previous filter. If yes, retrieve the logical operator
+                        LogicalOperator logicalOperator = previousFilter != null
+                                ? previousFilter.LogicalOperator
+                                : LogicalOperator.None;
+
+                        // Build the current expression
+                        Expression builtExpression = BuildFilterExpression(param,
+                                                                           dynamicQueryOptions.Filters[i],
+                                                                           dynamicQueryOptions.UsesCaseInsensitiveSource);
+
+                        // Join filters in between with the logical operators
+                        if (logicalOperator == LogicalOperator.And)
+                        {
+                            exp = Expression.AndAlso(exp, builtExpression);
+                        }
+                        else if (logicalOperator == LogicalOperator.Or)
+                        {
+                            exp = Expression.OrElse(exp, builtExpression);
+                        }
                     }
                 }
 
                 if (dynamicQueryOptions.SortOptions != null && dynamicQueryOptions.SortOptions.Count > 0)
                 {
-                    List<OrderOptionDetails> orderLambdas = new List<OrderOptionDetails>();
+                    var orderLambdas = new List<OrderOptionDetails>();
                     foreach (SortOption so in dynamicQueryOptions.SortOptions)
                     {
                         Expression paramExpr = ExtractMember(param, so.PropertyName, false);

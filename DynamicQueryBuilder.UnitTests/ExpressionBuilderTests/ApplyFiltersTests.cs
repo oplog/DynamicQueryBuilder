@@ -105,7 +105,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                    {
                        Value = "10",
                        PropertyName = "Age",
-                       Operator = FilterOperation.Equals
+                       Operator = FilterOperation.Equals,
+                       LogicalOperator = LogicalOperator.And
                    },
                    new Filter
                    {
