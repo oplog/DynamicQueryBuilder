@@ -5,6 +5,4 @@
 [![Travis](https://travis-ci.org/oplog/DynamicQueryBuilder.svg?branch=master)](https://travis-ci.org/oplog/DynamicQueryBuilder)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/oplog/DynamicQueryBuilder/blob/master/LICENSE)
 
-# Please refer to documentation below for further info
-
-# TODO Add Docs URL
+# Please refer to documentation [here](https://oplog.github.io/DynamicQueryBuilder/dqb.html) for further information
