@@ -122,13 +122,25 @@ namespace DynamicQueryBuilder
                                                                            dynamicQueryOptions.UsesCaseInsensitiveSource);
 
                         // Join filters in between with the logical operators
-                        if (logicalOperator == LogicalOperator.And)
+                        if (logicalOperator == LogicalOperator.AndAlso)
                         {
                             exp = Expression.AndAlso(exp, builtExpression);
                         }
-                        else if (logicalOperator == LogicalOperator.Or)
+                        else if (logicalOperator == LogicalOperator.OrElse)
                         {
                             exp = Expression.OrElse(exp, builtExpression);
+                        }
+                        else if (logicalOperator == LogicalOperator.And)
+                        {
+                            exp = Expression.And(exp, builtExpression);
+                        }
+                        else if (logicalOperator == LogicalOperator.Or)
+                        {
+                            exp = Expression.Or(exp, builtExpression);
+                        }
+                        else if (logicalOperator == LogicalOperator.Xor)
+                        {
+                            exp = Expression.ExclusiveOr(exp, builtExpression);
                         }
                     }
                 }
@@ -267,6 +279,16 @@ namespace DynamicQueryBuilder
                     ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
+                string[] orLogicalOperators = queryCollection
+                    .GetValues("or")
+                    ?.Select(x => x.ClearSpaces())
+                    .ToArray() ?? defaultArrayValue;
+
+                string[] andLogicalOperators = queryCollection
+                    .GetValues("and")
+                    ?.Select(x => x.ClearSpaces())
+                    .ToArray() ?? defaultArrayValue;
+
                 PopulateDynamicQueryOptions(
                     dynamicQueryOptions,
                     operations,
@@ -319,21 +341,28 @@ namespace DynamicQueryBuilder
                 for (int i = 0; i < operations.Length; i++)
                 {
                     FilterOperation foundOperation;
+                    string[] ops = operations[i].Split('|');
+
+                    string logicalOpRaw = ops.ElementAtOrDefault(1) ?? LogicalOperator.AndAlso.ToString();
+                    if (!Enum.TryParse(logicalOpRaw, true, out LogicalOperator logicalOperator))
+                    {
+                        throw new DynamicQueryException($"Invalid logical operator formation with value of: {logicalOpRaw}");
+                    }
 
                     // Check if we support this operation.
-                    if (Enum.TryParse(operations[i], true, out FilterOperation parsedOperation))
+                    if (Enum.TryParse(ops[0], true, out FilterOperation parsedOperation))
                     {
                         foundOperation = parsedOperation;
                     }
                     else if (opShortCodes != null
                         && opShortCodes.Count > 0
-                        && opShortCodes.TryGetValue(operations[i], out FilterOperation shortCodeOperation)) // Whoop maybe its a short code ?
+                        && opShortCodes.TryGetValue(ops[0], out FilterOperation shortCodeOperation)) // Whoop maybe its a short code ?
                     {
                         foundOperation = shortCodeOperation;
                     }
                     else
                     {
-                        throw new OperationNotSupportedException($"Invalid operation {operations[i]}");
+                        throw new OperationNotSupportedException($"Invalid operation {ops[0]}");
                     }
 
                     string[] splittedParameterName = parameterNames[i].Split(PARAMETER_OPTION_DELIMITER);
@@ -350,12 +379,12 @@ namespace DynamicQueryBuilder
                         }
                     }
 
-
                     var composedFilter = new Filter
                     {
                         Operator = foundOperation,
                         PropertyName = splittedParameterName[0],
-                        CaseSensitive = isCaseSensitive
+                        CaseSensitive = isCaseSensitive,
+                        LogicalOperator = logicalOperator
                     };
 
                     if (foundOperation >= FilterOperation.Any)
@@ -510,7 +539,7 @@ namespace DynamicQueryBuilder
             }
 
             Expression constant = Expression.Constant(convertedValue);
-            
+
             Expression compareToExpression = null;
             Expression comparisonConstant = Expression.Constant(0);
 
@@ -537,7 +566,7 @@ namespace DynamicQueryBuilder
                     return Expression.Call(parentMember, _stringContainsMethod, constant);
 
                 case FilterOperation.GreaterThan:
-                    return parentMember.Type == typeof(string) 
+                    return parentMember.Type == typeof(string)
                         ? Expression.GreaterThan(compareToExpression, comparisonConstant)
                         : Expression.GreaterThan(parentMember, constant);
 
