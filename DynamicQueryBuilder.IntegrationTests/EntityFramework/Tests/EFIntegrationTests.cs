@@ -420,7 +420,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
             Assert.True(stringsComparisonWithCaseSensitivity.Count == 0);
         }
 
-        [Fact(DisplayName = "EF_LogicalOperatorsShouldShould")]
+        [Fact(DisplayName = "EF_LogicalOperatorsShouldWork")]
         public void LogicalOperatorsShouldWork()
         {
             var result = _ctx.Users
