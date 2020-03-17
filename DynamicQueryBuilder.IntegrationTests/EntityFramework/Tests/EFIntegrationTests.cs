@@ -1,8 +1,10 @@
-﻿using DynamicQueryBuilder.IntegrationTests.EntityFramework.SampleModels;
+﻿using System.Collections.Generic;
+using System.Linq;
+
+using DynamicQueryBuilder.IntegrationTests.EntityFramework.SampleModels;
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
-using System.Collections.Generic;
-using System.Linq;
+
 using Xunit;
 
 namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
@@ -162,7 +164,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 IgnorePredefinedOrders = true
             }).ToList();
 
-            var resultOfStringsComparisonTest = queryable.ApplyFilters(new DynamicQueryOptions 
+            var resultOfStringsComparisonTest = queryable.ApplyFilters(new DynamicQueryOptions
             {
                 Filters = new List<Filter>
                 {
@@ -330,7 +332,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
             Assert.Equal("Test_4", resultOfMemberAllQuantity[2].Name);
         }
 
-        [Fact]
+        [Fact(DisplayName = "EF_CaseSensitivityShouldWork")]
         public void CaseSensitivityShouldWork()
         {
             var queryable = _ctx.Users.AsQueryable();
@@ -416,6 +418,48 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
             Assert.NotEmpty(resultOfwithResultFilterWithCSDisabled);
             Assert.Empty(resultOfnoResultFilterWithCSDisabledAndInvalidCase);
             Assert.True(stringsComparisonWithCaseSensitivity.Count == 0);
+        }
+
+        [Fact(DisplayName = "EF_LogicalOperatorsShouldShould")]
+        public void LogicalOperatorsShouldWork()
+        {
+            var result = _ctx.Users
+                .AsQueryable()
+                .ApplyFilters(new DynamicQueryOptions
+                {
+                    Filters = new List<Filter> // should return Test_2, Test_3, Test_4
+                {
+                    new Filter
+                    {
+                        LogicalOperator = LogicalOperator.OrElse,
+                        PropertyName = nameof(User.Name),
+                        Operator = FilterOperation.Equals,
+                        Value = "Test_1"
+                    },
+                    new Filter
+                    {
+                        PropertyName = nameof(User.Orders),
+                        Operator = FilterOperation.Any,
+                        Value = new DynamicQueryOptions
+                        {
+                            Filters = new List<Filter>
+                            {
+                                new Filter
+                                {
+                                    Operator = FilterOperation.Equals,
+                                    PropertyName = nameof(Order.OrderRef),
+                                    Value = "REF_8"
+                                }
+                            }
+                        }
+                    }
+                },
+                    UsesCaseInsensitiveSource = true
+                }).ToList();
+
+            Assert.True(result.Count == 2);
+            Assert.Equal("Test_1", result[0].Name);
+            Assert.Equal("Test_3", result[1].Name);
         }
     }
 }

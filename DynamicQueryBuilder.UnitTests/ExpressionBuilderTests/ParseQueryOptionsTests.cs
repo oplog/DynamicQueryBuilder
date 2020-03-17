@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
-using Newtonsoft.Json;
+
 using Xunit;
 
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
@@ -251,7 +251,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             DynamicQueryOptions expectedResult = new DynamicQueryOptions
             {
                 Filters = new List<Filter>()
-                { 
+                {
                     new Filter
                     {
                         LogicalOperator = LogicalOperator.OrElse,

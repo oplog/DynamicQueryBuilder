@@ -2,11 +2,14 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
-using DynamicQueryBuilder.Models;
-using DynamicQueryBuilder.Models.Enums;
 using System;
 using System.Collections.Generic;
+
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
+
 using Xunit;
+
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
@@ -26,6 +29,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
         public PopulateDynamicQueryOptionsTests()
         {
+            Array.Fill(_arrayOfOne, string.Empty);
+            Array.Fill(_arrayOfTwo, string.Empty);
             _validOperations = new string[] { "Equals", "Contains" };
             _validParameterNames = new string[] { "Name", "Name" };
             _validParameterValues = new string[] { "Test", "Te" };
@@ -156,6 +161,34 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             Assert.True(AreObjectPropertiesMatching(optsWithoutSorting, _reflectedObjectWithValidParameters));
             Assert.True(AreObjectPropertiesMatching(optsWithSorting, _reflectedObjectWithValidParametersAndSorted));
+        }
+
+        [Fact]
+        public void ShouldPopulateWithLogicalOperators()
+        {
+            var opts = new DynamicQueryOptions();
+            ExpressionBuilder.PopulateDynamicQueryOptions(opts,
+                                                          operations: new string[]
+                                                          {
+                                                              $"{FilterOperation.Equals}|{LogicalOperator.OrElse}",
+                                                              $"{FilterOperation.Equals}"
+                                                          },
+                                                          parameterNames: _validParameterNames,
+                                                          parameterValues: _validParameterValues,
+                                                          sortOptions: _emptyArray,
+                                                          offsetOptions: _emptyArray,
+                                                          countOptions: _emptyArray);
+            Assert.NotNull(opts.Filters);
+            Assert.NotEmpty(opts.Filters);
+            Assert.Equal(FilterOperation.Equals, opts.Filters[0].Operator);
+            Assert.Equal(LogicalOperator.OrElse, opts.Filters[0].LogicalOperator);
+            Assert.Equal(_validParameterNames[0], opts.Filters[0].PropertyName);
+            Assert.Equal(_validParameterValues[0], opts.Filters[0].Value);
+
+            Assert.Equal(FilterOperation.Equals, opts.Filters[1].Operator);
+            Assert.Equal(LogicalOperator.AndAlso, opts.Filters[1].LogicalOperator);
+            Assert.Equal(_validParameterNames[1], opts.Filters[1].PropertyName);
+            Assert.Equal(_validParameterValues[1], opts.Filters[1].Value);
         }
     }
 }

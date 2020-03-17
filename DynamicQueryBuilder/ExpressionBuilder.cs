@@ -279,16 +279,6 @@ namespace DynamicQueryBuilder
                     ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
-                string[] orLogicalOperators = queryCollection
-                    .GetValues("or")
-                    ?.Select(x => x.ClearSpaces())
-                    .ToArray() ?? defaultArrayValue;
-
-                string[] andLogicalOperators = queryCollection
-                    .GetValues("and")
-                    ?.Select(x => x.ClearSpaces())
-                    .ToArray() ?? defaultArrayValue;
-
                 PopulateDynamicQueryOptions(
                     dynamicQueryOptions,
                     operations,
@@ -341,7 +331,11 @@ namespace DynamicQueryBuilder
                 for (int i = 0; i < operations.Length; i++)
                 {
                     FilterOperation foundOperation;
-                    string[] ops = operations[i].Split('|');
+                    string[] ops = operations[i]?.Split('|');
+                    if (ops == null)
+                    {
+                        throw new OperationNotSupportedException($"Invalid operation {ops[0]}");
+                    }
 
                     string logicalOpRaw = ops.ElementAtOrDefault(1) ?? LogicalOperator.AndAlso.ToString();
                     if (!Enum.TryParse(logicalOpRaw, true, out LogicalOperator logicalOperator))
