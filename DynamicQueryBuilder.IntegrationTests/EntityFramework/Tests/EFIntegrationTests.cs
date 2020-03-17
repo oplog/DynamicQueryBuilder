@@ -427,7 +427,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 .AsQueryable()
                 .ApplyFilters(new DynamicQueryOptions
                 {
-                    Filters = new List<Filter> // should return Test_2, Test_3, Test_4
+                    Filters = new List<Filter>
                 {
                     new Filter
                     {

@@ -102,43 +102,40 @@ namespace DynamicQueryBuilder
                 // Check if we have any filters
                 if (dynamicQueryOptions.Filters != null && dynamicQueryOptions.Filters.Count > 0)
                 {
+                    // Lets build the first expression and then iterate the rest and append them to this one
                     exp = BuildFilterExpression(param,
                                                 dynamicQueryOptions.Filters.First(),
                                                 dynamicQueryOptions.UsesCaseInsensitiveSource);
 
+                    // We start to iterate with the second element here because we have just built the first expression up above
                     for (int i = 1; i < dynamicQueryOptions.Filters.Count; ++i)
                     {
-                        // Get the previous filter to retrieve the logical operator between the current and the next filters
-                        Filter previousFilter = dynamicQueryOptions.Filters.ElementAtOrDefault(i - 1);
-
-                        // Check to see if we have a previous filter. If yes, retrieve the logical operator
-                        LogicalOperator logicalOperator = previousFilter != null
-                                ? previousFilter.LogicalOperator
-                                : LogicalOperator.None;
-
                         // Build the current expression
                         Expression builtExpression = BuildFilterExpression(param,
                                                                            dynamicQueryOptions.Filters[i],
                                                                            dynamicQueryOptions.UsesCaseInsensitiveSource);
 
+                        // Get the previous filter to retrieve the logical operator between the current and the next filter
+                        Filter previousFilter = dynamicQueryOptions.Filters.ElementAtOrDefault(i - 1);
+
                         // Join filters in between with the logical operators
-                        if (logicalOperator == LogicalOperator.AndAlso)
+                        if (previousFilter.LogicalOperator == LogicalOperator.AndAlso)
                         {
                             exp = Expression.AndAlso(exp, builtExpression);
                         }
-                        else if (logicalOperator == LogicalOperator.OrElse)
+                        else if (previousFilter.LogicalOperator == LogicalOperator.OrElse)
                         {
                             exp = Expression.OrElse(exp, builtExpression);
                         }
-                        else if (logicalOperator == LogicalOperator.And)
+                        else if (previousFilter.LogicalOperator == LogicalOperator.And)
                         {
                             exp = Expression.And(exp, builtExpression);
                         }
-                        else if (logicalOperator == LogicalOperator.Or)
+                        else if (previousFilter.LogicalOperator == LogicalOperator.Or)
                         {
                             exp = Expression.Or(exp, builtExpression);
                         }
-                        else if (logicalOperator == LogicalOperator.Xor)
+                        else if (previousFilter.LogicalOperator == LogicalOperator.Xor)
                         {
                             exp = Expression.ExclusiveOr(exp, builtExpression);
                         }
@@ -334,17 +331,17 @@ namespace DynamicQueryBuilder
                     string[] ops = operations[i]?.Split('|');
                     if (ops == null)
                     {
-                        throw new OperationNotSupportedException($"Invalid operation {ops[0]}");
+                        throw new OperationNotSupportedException("Invalid operation. Operation value is null.");
                     }
 
                     string logicalOpRaw = ops.ElementAtOrDefault(1) ?? LogicalOperator.AndAlso.ToString();
-                    if (!Enum.TryParse(logicalOpRaw, true, out LogicalOperator logicalOperator))
+                    if (!Enum.TryParse(logicalOpRaw, ignoreCase: true, out LogicalOperator logicalOperator))
                     {
                         throw new DynamicQueryException($"Invalid logical operator formation with value of: {logicalOpRaw}");
                     }
 
                     // Check if we support this operation.
-                    if (Enum.TryParse(ops[0], true, out FilterOperation parsedOperation))
+                    if (Enum.TryParse(ops[0], ignoreCase: true, out FilterOperation parsedOperation))
                     {
                         foundOperation = parsedOperation;
                     }

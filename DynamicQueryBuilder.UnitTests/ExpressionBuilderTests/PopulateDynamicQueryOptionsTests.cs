@@ -180,6 +180,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                                                           countOptions: _emptyArray);
             Assert.NotNull(opts.Filters);
             Assert.NotEmpty(opts.Filters);
+
             Assert.Equal(FilterOperation.Equals, opts.Filters[0].Operator);
             Assert.Equal(LogicalOperator.OrElse, opts.Filters[0].LogicalOperator);
             Assert.Equal(_validParameterNames[0], opts.Filters[0].PropertyName);
