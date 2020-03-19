@@ -6,6 +6,7 @@
         Equals,
         LessThan,
         Contains,
+        NotIn,
         NotEqual,
         EndsWith,
         StartsWith,
