@@ -519,8 +519,9 @@ namespace DynamicQueryBuilder
                     return Expression.Call(parentMember, _stringContainsMethod, constant);
 
                 case FilterOperation.NotIn:
-                    var containsExpression = Expression.Call(parentMember, _stringContainsMethod, constant);
-                    return Expression.Not(containsExpression);
+                    return parentMember.Type == typeof(string)
+                        ? Expression.Not(Expression.Call(parentMember, _stringContainsMethod, constant))
+                        : Expression.Not(Expression.Call(compareToExpression, _stringContainsMethod, constant));
 
                 case FilterOperation.GreaterThan:
                     return parentMember.Type == typeof(string) 

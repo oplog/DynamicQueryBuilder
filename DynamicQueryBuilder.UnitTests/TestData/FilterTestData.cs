@@ -23,6 +23,10 @@ namespace DynamicQueryBuilder.UnitTests.TestData
                 yield return new object[] { "x.Name.Contains(\"Test\")", FilterOperation.Contains, true, "Test", "Name" };
                 yield return new object[] { "x.Name.ToLowerInvariant().Contains(\"test\".ToLowerInvariant())", FilterOperation.Contains, false, "Test", "Name" };
 
+                // NotIn
+                yield return new object[] { "Not(x.Name.Contains(\"Test\"))", FilterOperation.NotIn, true, "Test", "Name" };
+                yield return new object[] { "Not(x.Name.ToLowerInvariant().Contains(\"test\".ToLowerInvariant()))", FilterOperation.NotIn, false, "Test", "Name" };
+
                 // NotEquals
                 // For checking strings
                 yield return new object[] { "(x.Name != \"Test\")", FilterOperation.NotEqual, true, "Test", "Name" };
