@@ -162,7 +162,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 IgnorePredefinedOrders = true
             }).ToList();
 
-            var resultOfStringsComparisonTest = queryable.ApplyFilters(new DynamicQueryOptions 
+            var resultOfStringsComparisonTest = queryable.ApplyFilters(new DynamicQueryOptions
             {
                 Filters = new List<Filter>
                 {
@@ -417,5 +417,32 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
             Assert.Empty(resultOfnoResultFilterWithCSDisabledAndInvalidCase);
             Assert.True(stringsComparisonWithCaseSensitivity.Count == 0);
         }
+
+        [Fact]
+        public void ShouldApplyNotInFilter()
+        {
+            var queryable = _ctx.Users.AsQueryable();
+
+            var notInFilter = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Operator = FilterOperation.NotIn,
+                        PropertyName = "Name",
+                        Value = "_1",
+                        CaseSensitive = false
+                    }
+                },
+                IgnorePredefinedOrders = true
+            };
+
+            var result = queryable.ApplyFilters(notInFilter).ToList();
+            Assert.NotEmpty(result);
+            Assert.Equal("Test_2", result[0].Name);
+            Assert.Equal(queryable.Count()-1, result.Count());
+        }
     }
+        
 }

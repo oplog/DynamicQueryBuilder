@@ -39,6 +39,7 @@ namespace DynamicQueryBuilder
             { "eq", FilterOperation.Equals },
             { "lt", FilterOperation.LessThan },
             { "cts", FilterOperation.Contains },
+            { "nin", FilterOperation.NotIn },
             { "ne", FilterOperation.NotEqual },
             { "ew", FilterOperation.EndsWith },
             { "sw", FilterOperation.StartsWith },
@@ -516,6 +517,11 @@ namespace DynamicQueryBuilder
 
                 case FilterOperation.Contains:
                     return Expression.Call(parentMember, _stringContainsMethod, constant);
+
+                case FilterOperation.NotIn:
+                    return parentMember.Type == typeof(string)
+                        ? Expression.Not(Expression.Call(parentMember, _stringContainsMethod, constant))
+                        : Expression.Not(Expression.Call(compareToExpression, _stringContainsMethod, constant));
 
                 case FilterOperation.GreaterThan:
                     return parentMember.Type == typeof(string) 
