@@ -22,6 +22,7 @@ namespace DynamicQueryBuilder.UnitTests
             { "eq", FilterOperation.Equals },
             { "lt", FilterOperation.LessThan },
             { "cts", FilterOperation.Contains },
+            { "nin", FilterOperation.NotIn },
             { "ne", FilterOperation.NotEqual },
             { "ew", FilterOperation.EndsWith },
             { "sw", FilterOperation.StartsWith },
