@@ -212,6 +212,8 @@ int totalDataSetCount = paginationOption.DataSetCount;
 Web development is actually where DQB shines the most. DQB comes with an
 ~ActionFilter~ that can parse HTTP queries into ~DynamicQueryOptions~ class.
 
+If you want change global config for ~ActionFilter~, this can be use ~DynamicQueryAttributeGlobalConfig~.
+
 ** Setting up DynamicQueryBuilderSettings
 This is a singleton object that can hold static configurations for DQB like
 operation shortcodes, query resolution methods and data source case sensitivity.
