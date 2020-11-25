@@ -24,6 +24,12 @@ namespace DynamicQueryBuilder.Models
         public bool IgnorePredefinedOrders { get; set; }
 
         /// <summary>
+        /// Boolean flag to specify if null value should be used as string or sql null keyword.
+        /// If set true, DQB will use null value as string. If left false, DQB will use null value as sql keyword.
+        /// </summary>
+        public bool IsNullValueString { get; set; } = false;
+
+        /// <summary>
         /// Query options resolver to specify where DQB should be getting query options from.
         /// If left null, DQB will try to resolve options from the querystring.
         /// </summary>

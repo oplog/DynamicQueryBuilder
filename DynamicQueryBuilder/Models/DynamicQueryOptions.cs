@@ -12,6 +12,8 @@ namespace DynamicQueryBuilder.Models
 
         public bool UsesCaseInsensitiveSource { get; set; }
 
+        public bool IsNullValueString { get; set; }
+
         public bool IgnorePredefinedOrders { get; set; }
     }
 }

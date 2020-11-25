@@ -58,7 +58,20 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             const string resultOfQuery = "(x.Name == \"\")";
             Expression result = ExpressionBuilder.BuildFilterExpression(
                 XParam,
-                new Filter { Value = null, PropertyName = "Name", Operator = FilterOperation.Equals });
+                new Filter { Value = null, PropertyName = "Name", Operator = FilterOperation.Equals },
+                isNullValueString: false);
+
+            Assert.Equal(result.ToString(), resultOfQuery);
+        }
+
+        [Fact]
+        public void ShouldHandleNullAsString()
+        {
+            const string resultOfQuery = "(x.Name == \"null\")";
+            Expression result = ExpressionBuilder.BuildFilterExpression(
+                XParam,
+                new Filter { Value = "null", PropertyName = "Name", Operator = FilterOperation.Equals },
+                isNullValueString: true);
 
             Assert.Equal(result.ToString(), resultOfQuery);
         }

@@ -100,6 +100,7 @@ namespace DynamicQueryBuilder
 
                 parsedOptions.UsesCaseInsensitiveSource = dqbSettings.UsesCaseInsensitiveSource;
                 parsedOptions.IgnorePredefinedOrders = dqbSettings.IgnorePredefinedOrders;
+                parsedOptions.IsNullValueString = dqbSettings.IsNullValueString;
                 if (parsedOptions.PaginationOption != null)
                 {
                     parsedOptions.PaginationOption.AssignDataSetCount = _includeDataSetCountToPagination;

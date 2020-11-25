@@ -104,7 +104,7 @@ namespace DynamicQueryBuilder
                     List<Filter> dqbFilters = dynamicQueryOptions.Filters.ToList();
 
                     // Since the expression is null at this point, we should create it with our first filter.
-                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault(), dynamicQueryOptions.UsesCaseInsensitiveSource);
+                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault(), dynamicQueryOptions.UsesCaseInsensitiveSource, dynamicQueryOptions.IsNullValueString);
                     dqbFilters.RemoveAt(0); // Remove the first since it was added already.
 
                     // Append the rest
@@ -431,7 +431,7 @@ namespace DynamicQueryBuilder
         /// <param name="filter">Filter instance to build.</param>
         /// <param name="usesCaseInsensitiveSource">Flag to detect if the query is going to run on a SQL database.</param>
         /// <returns>Built query expression.</returns>
-        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false)
+        internal static Expression BuildFilterExpression(ParameterExpression param, Filter filter, bool usesCaseInsensitiveSource = false, bool isNullValueString = false)
         {
             string stringFilterValue = filter.Value?.ToString();
             Expression parentMember = ExtractMember(param, filter.PropertyName, stringFilterValue == "null");
@@ -487,7 +487,9 @@ namespace DynamicQueryBuilder
                             ? stringFilterValue
                             : stringFilterValue?.ToLowerInvariant()
                        : stringFilterValue?.ToLowerInvariant())
-                    : null;
+                    : isNullValueString
+                        ? "null"
+                        : null;
             }
 
             Expression constant = Expression.Constant(convertedValue);
