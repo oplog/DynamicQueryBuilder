@@ -52,8 +52,11 @@ support ~AndAlso~ statements. You can see the object structure [[https://github.
 
 *** Filter Value Conversion
 Since DQB always boxes your data into an ~object~ the actual type conversion is
-being handled by DQB while transforming your filters into a LINQ expression. DQB
-also can handle ~null~ values as well.
+being handled by DQB while transforming your filters into a LINQ expression. 
+
+DQB also can handle ~null~ values as well. DQB can handle both filtering by sql 
+~null~ keyword and and "null" string value. In order to select between these 
+choices IsNullValueString property of DynamicQueryOptions.
 
 ** Supported Filters
 #+BEGIN_SRC csharp
@@ -110,6 +113,26 @@ var dqbOpts = new DynamicQueryOptions
 };
 
 // LINQ Translation: myCollection.Where(x => x.foo.Any(y => y.bar == "some_value"));
+#+END_SRC
+
+An example usage of ~Filter~ using ~null~ as string: 
+
+#+BEGIN_SRC csharp
+var dqbOpts = new DynamicQueryOptions
+{
+    Filters = new List<Filter>()
+    {
+        new Filter
+        {
+            Value = "null",
+            PropertyName = "name",
+            Operator = FilterOperation.Equals
+        }
+    },
+    IsNullValueString = true
+};
+
+//  LINQ Translation: myCollection.Where(x => x.name == "null");
 #+END_SRC
 
 * Sorting

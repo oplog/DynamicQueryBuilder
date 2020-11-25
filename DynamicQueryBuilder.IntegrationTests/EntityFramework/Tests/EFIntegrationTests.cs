@@ -20,6 +20,32 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 {
                     new User
                     {
+                        Age = 0,
+                        Name = "null",
+                        Orders = new Order[]
+                        {
+                            new Order
+                            {
+                                OrderRef = "REF_12",
+                                ProductName = "GoodProd",
+                                Quantity = 157
+                            },
+                            new Order
+                            {
+                                OrderRef = "REF_13",
+                                ProductName = "BetterProd",
+                                Quantity = 90
+                            },
+                            new Order
+                            {
+                                OrderRef = "REF_14",
+                                ProductName = "AREUNUTZ?",
+                                Quantity = 48
+                            }
+                        }
+                    },
+                    new User
+                    {
                         Age = 1,
                         Name = "Test_1",
                         Orders = new Order[]
@@ -186,10 +212,27 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 }
             }).ToList();
 
+            var resultOfNameNullAsString = queryable.ApplyFilters(new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Operator = FilterOperation.Equals,
+                        PropertyName = "Name",
+                        Value = "null"
+                    }
+                },
+                IgnorePredefinedOrders = true,
+                IsNullValueString = true
+            }).ToList();
+
             Assert.True(resultOfAgeTwo.Count == 3);
             Assert.True(resultOfNameTestOne.Count == 1);
             Assert.True(resultOfStringsComparisonTest.Count == 1);
             Assert.Equal("Test_4", resultOfStringsComparisonTest[0].Name);
+            Assert.True(resultOfNameNullAsString.Count == 1);
+            Assert.Equal("null", resultOfNameNullAsString[0].Name);
         }
 
         [Fact(DisplayName = "EF_PaginationShouldWork")]
@@ -200,7 +243,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 PaginationOption = new PaginationOption
                 {
                     Count = 1,
-                    Offset = 2
+                    Offset = 3
                 },
                 UsesCaseInsensitiveSource = true,
                 IgnorePredefinedOrders = true
