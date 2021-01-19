@@ -2,10 +2,10 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
-
-using System.Collections.Generic;
 
 using Xunit;
 
@@ -243,6 +243,39 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.NotNull(result.Filters);
             Assert.NotEmpty(result.Filters);
             Assert.Equal(result.Filters[0].Value, finalParameterValue);
+        }
+
+        [Fact]
+        public void ParseQueryOptionsShouldHandleLogicalOperators()
+        {
+            DynamicQueryOptions expectedResult = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>()
+                {
+                    new Filter
+                    {
+                        LogicalOperator = LogicalOperator.OrElse,
+                        Operator = FilterOperation.Equals,
+                        PropertyName = "Fizz",
+                        Value = "Buzz"
+                    },
+                    new Filter
+                    {
+                        LogicalOperator = LogicalOperator.AndAlso,
+                        Operator = FilterOperation.Equals,
+                        PropertyName = "Fizz",
+                        Value = "NotBuzz"
+                    }
+                }
+            };
+
+            DynamicQueryOptions result =
+                ExpressionBuilder.ParseQueryOptions("o=eq|orelse&p=Fizz&v=Buzz&o=eq&p=Fizz&v=NotBuzz");
+
+            Assert.NotNull(result.Filters);
+            Assert.NotEmpty(result.Filters);
+            Assert.Equal(result.Filters[0].ToHTTPQueryString(), expectedResult.Filters[0].ToHTTPQueryString());
+            Assert.Equal(result.Filters[1].ToHTTPQueryString(), expectedResult.Filters[1].ToHTTPQueryString());
         }
     }
 }

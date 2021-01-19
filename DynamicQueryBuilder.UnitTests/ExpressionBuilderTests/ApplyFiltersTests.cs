@@ -2,15 +2,15 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
-using DynamicQueryBuilder.Models;
-using DynamicQueryBuilder.Models.Enums;
-
-using Moq;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
+
+using Moq;
 
 using Xunit;
 
@@ -105,7 +105,8 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                    {
                        Value = "10",
                        PropertyName = "Age",
-                       Operator = FilterOperation.Equals
+                       Operator = FilterOperation.Equals,
+                       LogicalOperator = LogicalOperator.AndAlso
                    },
                    new Filter
                    {

@@ -47,15 +47,14 @@ return dqbResults.ToList();
 
 * Filters
 
-Filters are the objects that hold your logical filters. Currently, DQB only
-support ~AndAlso~ statements. You can see the object structure [[https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/Filter.cs][here]].
+Filters are the objects that hold your logical filters. You can see the object structure [[https://github.com/oplog/DynamicQueryBuilder/blob/master/DynamicQueryBuilder/Models/Filter.cs][here]].
 
 *** Filter Value Conversion
 Since DQB always boxes your data into an ~object~ the actual type conversion is
 being handled by DQB while transforming your filters into a LINQ expression. DQB
 also can handle ~null~ values as well.
 
-** Supported Filters
+*** Supported Filters
 #+BEGIN_SRC csharp
 In,
 Equals,
@@ -70,6 +69,10 @@ GreaterThanOrEqual,
 Any,
 All
 #+END_SRC
+*** Supported Logical Operators
+All logical operators are supported from Conditional to Bitwise. If you do not
+define a logical operator to a ~Filter~, DQB will choose ~AndAlso~ as default
+Logical Operator.
 
 *** Filter Examples
 An example usage of ~Filter~ class with a flat object:
@@ -96,20 +99,50 @@ An example usage of ~Filter~ class with a collection property:
 #+BEGIN_SRC csharp
 var dqbOpts = new DynamicQueryOptions
 {
-    var filter = new Filter
+    Filters = new List<Filter>
     {
-        Value = new DynamicQueryOptions
+        new Filter
         {
-            Value = "some_value",
-            Operator = FilterOperation.Equals,
-            PropertyName = "bar"
-        },
-        Operator = FilterOperation.Any,
-        PropertyName = "foo"
+            Value = new DynamicQueryOptions
+            {
+                Value = "some_value",
+                Operator = FilterOperation.Equals,
+                PropertyName = "bar"
+            },
+            Operator = FilterOperation.Any,
+            PropertyName = "foo"
+        }
     }
 };
 
 // LINQ Translation: myCollection.Where(x => x.foo.Any(y => y.bar == "some_value"));
+#+END_SRC
+
+
+An example usage of ~Filter~ class with a logical operator, combining two filters:
+
+#+BEGIN_SRC csharp
+var dqbOpts = new DynamicQueryOptions
+{
+    Filters = new List<Filter>
+    {
+        new Filter
+        {
+            Value = "123",
+            PropertyName = "Fizz",
+            Operator = FilterOperation.Equals,
+            LogicalOperator = LogicalOperator.OrElse,
+        },
+        new Filter
+        {
+            Value = "321",
+            PropertyName = "Fizz",
+            Operator = FilterOperation.Equals,
+        }
+    }
+};
+
+// LINQ Translation: myCollection.Where(x => x.Fizz == "123" || x.Fizz == "321");
 #+END_SRC
 
 * Sorting
@@ -290,7 +323,10 @@ new DynamicQueryBuilderSettings
 
 ** HTTP Parameters
 *** ~o~ Parameter
- - Refers to the ~FilterOperation~ property of ~Filter~ class.
+ - Refers to ~FilterOperation~ and ~LogicalOperator~ properties of ~Filter~
+   class.
+ - Parameter formation should be ~FilterOperation|LogicalOperator~ using ~|~ as
+   a delimeter between properties.
  - This parameter can be placed anywhere in the querystring.
  - This parameter **should be forming a triplet with ~p~ and ~v~ parameters.**
 
@@ -339,6 +375,8 @@ var filter = new Filter
 or to apply multiple filters
 
 - Valid Example: *?o=Equals&p=foo&v=bar&o=Equals&p=fizz&v=buzz*
+  Since this query does not provide a logical operator, parser will choose
+  ~AndAlso~ which is the default logical operator.
 
 will be transformed into:
 
@@ -358,6 +396,29 @@ var filterTwo = new Filter
 };
 
 // LINQ Translation: myCollection.Where(x => x.foo == "bar" && x.fizz == "buzz");
+#+END_SRC
+
+- Valid Example: *?o=Equals|OrElse&p=foo&v=bar&o=Equals&p=fizz&v=buzz*
+
+will be transformed into:
+
+#+BEGIN_SRC csharp
+var filterOne = new Filter
+{
+    LogicalOperator = LogicalOperation.OrElse,
+    Operator = FilterOperation.Equals,
+    PropertyName = "foo",
+    Value = "bar"
+};
+
+var filterTwo = new Filter
+{
+    Operator = FilterOperation.Equals,
+    PropertyName = "fizz",
+    Value = "buzz"
+};
+
+// LINQ Translation: myCollection.Where(x => x.foo == "bar" || x.fizz == "buzz");
 #+END_SRC
 
 - Valid Example with ascending sort and pagination: *?o=Equals&p=foo&v=bar&s=foo,asc&offset=0&count=10*

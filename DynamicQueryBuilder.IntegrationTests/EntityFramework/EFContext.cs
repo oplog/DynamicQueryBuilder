@@ -1,4 +1,5 @@
 ﻿using DynamicQueryBuilder.IntegrationTests.EntityFramework.SampleModels;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicQueryBuilder.IntegrationTests.EntityFramework

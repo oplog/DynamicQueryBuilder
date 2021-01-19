@@ -2,12 +2,6 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
-using DynamicQueryBuilder.Models;
-using DynamicQueryBuilder.Models.Enums;
-using DynamicQueryBuilder.Utils;
-using DynamicQueryBuilder.Utils.Extensions;
-using DynamicQueryBuilder.Visitors;
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -17,6 +11,12 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Web;
+
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
+using DynamicQueryBuilder.Utils;
+using DynamicQueryBuilder.Utils.Extensions;
+using DynamicQueryBuilder.Visitors;
 
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
@@ -96,27 +96,55 @@ namespace DynamicQueryBuilder
 
                 Expression exp = null;
 
-                // Create the query parameter
+                // Create the query parameter (x =>)
                 ParameterExpression param = Expression.Parameter(currentSet.ElementType, currentSet.ElementType.Name.ToLower());
+
+                // Check if we have any filters
                 if (dynamicQueryOptions.Filters != null && dynamicQueryOptions.Filters.Count > 0)
                 {
-                    // Copy the array since we need to mutate it, we should avoid mutating the real list.
-                    List<Filter> dqbFilters = dynamicQueryOptions.Filters.ToList();
+                    // Lets build the first expression and then iterate the rest and append them to this one
+                    exp = BuildFilterExpression(param,
+                                                dynamicQueryOptions.Filters.First(),
+                                                dynamicQueryOptions.UsesCaseInsensitiveSource);
 
-                    // Since the expression is null at this point, we should create it with our first filter.
-                    exp = BuildFilterExpression(param, dqbFilters.FirstOrDefault(), dynamicQueryOptions.UsesCaseInsensitiveSource);
-                    dqbFilters.RemoveAt(0); // Remove the first since it was added already.
-
-                    // Append the rest
-                    foreach (Filter item in dqbFilters)
+                    // We start to iterate with the second element here because we have just built the first expression up above
+                    for (int i = 1; i < dynamicQueryOptions.Filters.Count; ++i)
                     {
-                        exp = Expression.AndAlso(exp, BuildFilterExpression(param, item, dynamicQueryOptions.UsesCaseInsensitiveSource));
+                        // Build the current expression
+                        Expression builtExpression = BuildFilterExpression(param,
+                                                                           dynamicQueryOptions.Filters[i],
+                                                                           dynamicQueryOptions.UsesCaseInsensitiveSource);
+
+                        // Get the previous filter to retrieve the logical operator between the current and the next filter
+                        Filter previousFilter = dynamicQueryOptions.Filters.ElementAtOrDefault(i - 1);
+
+                        // Join filters in between with the logical operators
+                        if (previousFilter.LogicalOperator == LogicalOperator.AndAlso)
+                        {
+                            exp = Expression.AndAlso(exp, builtExpression);
+                        }
+                        else if (previousFilter.LogicalOperator == LogicalOperator.OrElse)
+                        {
+                            exp = Expression.OrElse(exp, builtExpression);
+                        }
+                        else if (previousFilter.LogicalOperator == LogicalOperator.And)
+                        {
+                            exp = Expression.And(exp, builtExpression);
+                        }
+                        else if (previousFilter.LogicalOperator == LogicalOperator.Or)
+                        {
+                            exp = Expression.Or(exp, builtExpression);
+                        }
+                        else if (previousFilter.LogicalOperator == LogicalOperator.Xor)
+                        {
+                            exp = Expression.ExclusiveOr(exp, builtExpression);
+                        }
                     }
                 }
 
                 if (dynamicQueryOptions.SortOptions != null && dynamicQueryOptions.SortOptions.Count > 0)
                 {
-                    List<OrderOptionDetails> orderLambdas = new List<OrderOptionDetails>();
+                    var orderLambdas = new List<OrderOptionDetails>();
                     foreach (SortOption so in dynamicQueryOptions.SortOptions)
                     {
                         Expression paramExpr = ExtractMember(param, so.PropertyName, false);
@@ -300,21 +328,32 @@ namespace DynamicQueryBuilder
                 for (int i = 0; i < operations.Length; i++)
                 {
                     FilterOperation foundOperation;
+                    string[] ops = operations[i]?.Split('|');
+                    if (ops == null)
+                    {
+                        throw new OperationNotSupportedException("Invalid operation. Operation value is null.");
+                    }
+
+                    string logicalOpRaw = ops.ElementAtOrDefault(1) ?? LogicalOperator.AndAlso.ToString();
+                    if (!Enum.TryParse(logicalOpRaw, ignoreCase: true, out LogicalOperator logicalOperator))
+                    {
+                        throw new DynamicQueryException($"Invalid logical operator formation with value of: {logicalOpRaw}");
+                    }
 
                     // Check if we support this operation.
-                    if (Enum.TryParse(operations[i], true, out FilterOperation parsedOperation))
+                    if (Enum.TryParse(ops[0], ignoreCase: true, out FilterOperation parsedOperation))
                     {
                         foundOperation = parsedOperation;
                     }
                     else if (opShortCodes != null
                         && opShortCodes.Count > 0
-                        && opShortCodes.TryGetValue(operations[i], out FilterOperation shortCodeOperation)) // Whoop maybe its a short code ?
+                        && opShortCodes.TryGetValue(ops[0], out FilterOperation shortCodeOperation)) // Whoop maybe its a short code ?
                     {
                         foundOperation = shortCodeOperation;
                     }
                     else
                     {
-                        throw new OperationNotSupportedException($"Invalid operation {operations[i]}");
+                        throw new OperationNotSupportedException($"Invalid operation {ops[0]}");
                     }
 
                     string[] splittedParameterName = parameterNames[i].Split(PARAMETER_OPTION_DELIMITER);
@@ -331,12 +370,12 @@ namespace DynamicQueryBuilder
                         }
                     }
 
-
                     var composedFilter = new Filter
                     {
                         Operator = foundOperation,
                         PropertyName = splittedParameterName[0],
-                        CaseSensitive = isCaseSensitive
+                        CaseSensitive = isCaseSensitive,
+                        LogicalOperator = logicalOperator
                     };
 
                     if (foundOperation >= FilterOperation.Any)
@@ -491,7 +530,7 @@ namespace DynamicQueryBuilder
             }
 
             Expression constant = Expression.Constant(convertedValue);
-            
+
             Expression compareToExpression = null;
             Expression comparisonConstant = Expression.Constant(0);
 
@@ -518,7 +557,7 @@ namespace DynamicQueryBuilder
                     return Expression.Call(parentMember, _stringContainsMethod, constant);
 
                 case FilterOperation.GreaterThan:
-                    return parentMember.Type == typeof(string) 
+                    return parentMember.Type == typeof(string)
                         ? Expression.GreaterThan(compareToExpression, comparisonConstant)
                         : Expression.GreaterThan(parentMember, constant);
 
