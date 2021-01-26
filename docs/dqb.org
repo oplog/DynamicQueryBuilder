@@ -1,6 +1,6 @@
 #+TITLE: DynamicQueryBuilder
 #+Author: Cem YILMAZ <cmylmzbm@outlook.com>
-#+SETUPFILE: ~/org/setup.config
+#+SETUPFILE: rtdocstheme/theme-readtheorg-local.setup
 
 * What?
 
