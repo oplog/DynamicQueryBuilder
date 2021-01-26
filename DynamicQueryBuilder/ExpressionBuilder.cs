@@ -84,7 +84,7 @@ namespace DynamicQueryBuilder
         /// </summary>
         /// <param name="currentSet">Existing IEnumerable instance.</param>
         /// <param name="dynamicQueryOptions">Query options to apply.</param>
-        /// <returns>DynamicQueryOptions applied IEnumerable instance,</returns>
+        /// <returns>DynamicQueryOptions applied IEnumerable instance.</returns>
         public static IQueryable ApplyFilters(this IQueryable currentSet, DynamicQueryOptions dynamicQueryOptions)
         {
             try
@@ -97,10 +97,11 @@ namespace DynamicQueryBuilder
                 Expression exp = null;
 
                 // Create the query parameter (x =>)
-                ParameterExpression param = Expression.Parameter(currentSet.ElementType, currentSet.ElementType.Name.ToLower());
+                ParameterExpression param = Expression.Parameter(
+                    currentSet.ElementType, currentSet.ElementType.Name.ToLower());
 
                 // Check if we have any filters
-                if (dynamicQueryOptions.Filters != null && dynamicQueryOptions.Filters.Count > 0)
+                if (dynamicQueryOptions.HasFilters())
                 {
                     // Lets build the first expression and then iterate the rest and append them to this one
                     exp = BuildFilterExpression(param,
@@ -110,7 +111,7 @@ namespace DynamicQueryBuilder
                     // We start to iterate with the second element here because we have just built the first expression up above
                     for (int i = 1; i < dynamicQueryOptions.Filters.Count; ++i)
                     {
-                        // Build the current expression
+                        // Build (i)th expression
                         Expression builtExpression = BuildFilterExpression(param,
                                                                            dynamicQueryOptions.Filters[i],
                                                                            dynamicQueryOptions.UsesCaseInsensitiveSource);
@@ -119,6 +120,12 @@ namespace DynamicQueryBuilder
                         Filter previousFilter = dynamicQueryOptions.Filters.ElementAtOrDefault(i - 1);
 
                         // Join filters in between with the logical operators
+                        #region RF_MAKE_STRAT_PATTERN
+                        /* 
+                        Example cleaner code:
+                        exp = _logicalOperatorContext.JoinExpressionsByLogicalOperator(
+                            exp, builtExpression, logicalOperator);
+                        */
                         if (previousFilter.LogicalOperator == LogicalOperator.AndAlso)
                         {
                             exp = Expression.AndAlso(exp, builtExpression);
@@ -139,10 +146,11 @@ namespace DynamicQueryBuilder
                         {
                             exp = Expression.ExclusiveOr(exp, builtExpression);
                         }
+                        #endregion
                     }
                 }
 
-                if (dynamicQueryOptions.SortOptions != null && dynamicQueryOptions.SortOptions.Count > 0)
+                if (dynamicQueryOptions.HasSortOptions())
                 {
                     var orderLambdas = new List<OrderOptionDetails>();
                     foreach (SortOption so in dynamicQueryOptions.SortOptions)
@@ -180,7 +188,7 @@ namespace DynamicQueryBuilder
                     currentSet = currentSet.Provider.CreateQuery(whereFilter);
                 }
 
-                if (dynamicQueryOptions.PaginationOption != null)
+                if (dynamicQueryOptions.HasPaginationOption())
                 {
                     if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)
                     {
@@ -545,6 +553,7 @@ namespace DynamicQueryBuilder
                 compareToExpression = Expression.Call(parentMember, _compareTo, constant);
             }
 
+            #region RF_TO_SMART_ENUM
             switch (filter.Operator)
             {
                 case FilterOperation.Equals:
@@ -602,6 +611,7 @@ namespace DynamicQueryBuilder
                 default:
                     return null;
             }
+            #endregion
         }
 
         /// <summary>
