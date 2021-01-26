@@ -252,9 +252,15 @@ namespace DynamicQueryBuilder
                     decodedQuery = decodedQuery.Replace(innerQuery, string.Empty);
                 }
 
-                string[] defaultArrayValue = new string[0];
+                string[] defaultArrayValue = Array.Empty<string>();
                 NameValueCollection queryCollection = HttpUtility.ParseQueryString(decodedQuery);
 
+                #region RF_QUERYCOLLECTION_GET_TRIMMED_EXTENSION
+                /*
+                    Suggestion: 
+                    Lets make a struct here that holds these arrays instead of calling them line by line,
+                    we could just call one function that returns all of these in a struct.
+                */
                 string[] operations = queryCollection
                     .GetValues(OPERATION_PARAMETER_KEY)
                     ?.Select(x => x.ClearSpaces())
@@ -283,6 +289,7 @@ namespace DynamicQueryBuilder
                     .GetValues(COUNT_PARAMETER_KEY)
                     ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
+                #endregion
 
                 PopulateDynamicQueryOptions(
                     dynamicQueryOptions,
@@ -316,7 +323,7 @@ namespace DynamicQueryBuilder
         /// <param name="opShortCodes">CustomOpCodes instance.</param>
         internal static void PopulateDynamicQueryOptions(
             DynamicQueryOptions dynamicQueryOptions,
-            string[] operations,
+            string[] operations, // Refactor here according to the suggestion above.
             string[] parameterNames,
             string[] parameterValues,
             string[] sortOptions,
