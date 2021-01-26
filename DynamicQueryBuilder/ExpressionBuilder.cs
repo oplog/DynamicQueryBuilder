@@ -332,6 +332,7 @@ namespace DynamicQueryBuilder
             CustomOpCodes opShortCodes = null,
             DynamicQueryOptions memberQueryOptions = null)
         {
+            // Refactor, this function is hideous. We should be able to do the operations in here safer and cleaner.
             if (dynamicQueryOptions == null)
             {
                 throw new DynamicQueryException("DynamicQueryOptions should not be null");
@@ -340,10 +341,10 @@ namespace DynamicQueryBuilder
             // Check the counts for every operation, since they work in tuples they should be the same.
             if (AreCountsMatching(operations, parameterNames, parameterValues))
             {
-                for (int i = 0; i < operations.Length; i++)
+                for (int i = 0; i < operations.Length; ++i)
                 {
                     FilterOperation foundOperation;
-                    string[] ops = operations[i]?.Split('|');
+                    string[] ops = operations[i]?.Split('|'); // Make this parametric.
                     if (ops == null)
                     {
                         throw new OperationNotSupportedException("Invalid operation. Operation value is null.");
