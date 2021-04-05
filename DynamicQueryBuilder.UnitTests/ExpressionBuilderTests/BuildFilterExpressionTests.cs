@@ -35,7 +35,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
         [Theory]
         [InlineData("(((x.Name == \"Te\") Or (x.Name == \" Test\")) Or (x.Name == \" Testx\"))", true)]
-        [InlineData("(((x.Name.ToLowerInvariant() == \"te\".ToLowerInvariant()) Or (x.Name.ToLowerInvariant() == \" test\".ToLowerInvariant())) Or (x.Name.ToLowerInvariant() == \" testx\".ToLowerInvariant()))", false)]
+        [InlineData("(((x.Name.ToLower() == \"te\".ToLower()) Or (x.Name.ToLower() == \" test\".ToLower())) Or (x.Name.ToLower() == \" testx\".ToLower()))", false)]
         public void ShouldConvertInOperationToMultipleEquals(string expectedResultOfQuery, bool caseSensitive)
         {
             Expression result = ExpressionBuilder.BuildFilterExpression(

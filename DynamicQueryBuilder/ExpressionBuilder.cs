@@ -62,8 +62,8 @@ namespace DynamicQueryBuilder
 
         private static readonly MethodInfo _stringStartsWithMethod = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
 
-        private static readonly MethodInfo _toLowerInvariantMethod = typeof(string).GetMethod("ToLowerInvariant");
-
+        private static readonly MethodInfo _toLowerMethod = typeof(string).GetMethod("ToLower", Array.Empty<Type>());
+        
         private static readonly MethodInfo _compareTo = typeof(string).GetMethod("CompareTo", new[] { typeof(string) });
         #endregion
 
@@ -284,8 +284,8 @@ namespace DynamicQueryBuilder
                     sortOptions,
                     offsetOptions,
                     countOptions,
-                    opShortCodes ?? DefaultOpShortCodes,
-                    innerQueryOptions);
+                    opShortCodes: opShortCodes ?? DefaultOpShortCodes,
+                    memberQueryOptions: innerQueryOptions);
 
                 return dynamicQueryOptions;
             }
@@ -478,7 +478,7 @@ namespace DynamicQueryBuilder
                 && !filter.CaseSensitive
                 && usesCaseInsensitiveSource)
             {
-                parentMember = Expression.Call(parentMember, _toLowerInvariantMethod);
+                parentMember = Expression.Call(parentMember, _toLowerMethod);
             }
 
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
@@ -539,7 +539,7 @@ namespace DynamicQueryBuilder
             {
                 constant = usesCaseInsensitiveSource
                     && !filter.CaseSensitive
-                    ? Expression.Call(constant, _toLowerInvariantMethod)
+                    ? Expression.Call(constant, _toLowerMethod)
                     : constant;
 
                 compareToExpression = Expression.Call(parentMember, _compareTo, constant);
