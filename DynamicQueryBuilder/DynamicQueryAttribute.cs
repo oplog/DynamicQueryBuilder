@@ -21,22 +21,22 @@ namespace DynamicQueryBuilder
     /// </summary>
     public sealed class DynamicQueryAttribute : ActionFilterAttribute
     {
-        internal readonly int _maxCountSize = 0;
-        internal readonly bool _includeDataSetCountToPagination;
-        internal readonly PaginationBehaviour _exceededPaginationCountBehaviour;
+        internal readonly int? _maxCountSize;
+        internal readonly bool? _includeDataSetCountToPagination;
+        internal readonly PaginationBehaviour? _exceededPaginationCountBehaviour;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DynamicQueryAttribute"/> class.
+        /// DynamicQueryAttributeGlobalConfig definations is used for parameters with a null value.
         /// Also, Finds and constructs DynamicQueryOptions class in the parameters.
         /// </summary>
         /// <param name="maxCountSize">Max data set count for the result set.</param>
         /// <param name="includeDataSetCountToPagination">Includes the total data set count to the options class.</param>
         /// <param name="exceededPaginationCountBehaviour">Behaviour when the requested data set count greater than max count size.</param>
-        /// <param name="resolveFromParameter">Resolves the dynamic query string from the given query parameter value.</param>
         public DynamicQueryAttribute(
-            int maxCountSize = 100,
-            bool includeDataSetCountToPagination = true,
-            PaginationBehaviour exceededPaginationCountBehaviour = PaginationBehaviour.GetMax)
+            int? maxCountSize = null,
+            bool? includeDataSetCountToPagination = null,
+            PaginationBehaviour? exceededPaginationCountBehaviour = null)
         {
             _maxCountSize = maxCountSize;
             _includeDataSetCountToPagination = includeDataSetCountToPagination;
@@ -100,18 +100,23 @@ namespace DynamicQueryBuilder
 
                 parsedOptions.UsesCaseInsensitiveSource = dqbSettings.UsesCaseInsensitiveSource;
                 parsedOptions.IgnorePredefinedOrders = dqbSettings.IgnorePredefinedOrders;
+
+                bool includeDataSetCountToPagination = _includeDataSetCountToPagination == null ? DynamicQueryAttributeGlobalConfig.IncludeDataSetCountToPagination : _includeDataSetCountToPagination.GetValueOrDefault();
                 if (parsedOptions.PaginationOption != null)
                 {
-                    parsedOptions.PaginationOption.AssignDataSetCount = _includeDataSetCountToPagination;
-                    if (parsedOptions.PaginationOption.Count > _maxCountSize)
+                    parsedOptions.PaginationOption.AssignDataSetCount = includeDataSetCountToPagination;
+
+                    int maxCountSize = _maxCountSize == null ? DynamicQueryAttributeGlobalConfig.MaxCountSize : _maxCountSize.GetValueOrDefault();
+                    if (parsedOptions.PaginationOption.Count > maxCountSize)
                     {
-                        if (_exceededPaginationCountBehaviour == PaginationBehaviour.GetMax)
+                        PaginationBehaviour exceededPaginationCountBehaviour = _exceededPaginationCountBehaviour == null ? DynamicQueryAttributeGlobalConfig.ExceededPaginationCountBehaviour : _exceededPaginationCountBehaviour.GetValueOrDefault();
+                        if (exceededPaginationCountBehaviour == PaginationBehaviour.GetMax)
                         {
-                            parsedOptions.PaginationOption.Count = _maxCountSize;
+                            parsedOptions.PaginationOption.Count = maxCountSize;
                         }
                         else
                         {
-                            throw new MaximumResultSetExceededException($"Given count {parsedOptions.PaginationOption.Count} exceeds the maximum amount");
+                            throw new MaximumResultSetExceededException($"Given count {parsedOptions.PaginationOption.Count} exceeds the maximum amount of {maxCountSize}");
                         }
                     }
                     else if (parsedOptions.PaginationOption.Count <= 0)
@@ -124,7 +129,7 @@ namespace DynamicQueryBuilder
                         parsedOptions.PaginationOption.Offset = 0;
                     }
                 }
-                else if (_includeDataSetCountToPagination && parsedOptions.PaginationOption == null)
+                else if (includeDataSetCountToPagination && parsedOptions.PaginationOption == null)
                 {
                     parsedOptions.PaginationOption = new PaginationOption
                     {

@@ -26,10 +26,6 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
 {
     public class OnActionExecutingTests : TestBase
     {
-        private const int _defaultMaxCountSize = 100;
-        private const bool _defaultIncludeDataSetCount = true;
-        private const PaginationBehaviour _defaultPaginationBehaviour = PaginationBehaviour.GetMax;
-
         [Fact]
         public void OnActionExecutingShouldModifyDynamicQueryOptionsActionParameterWhenItsPresent()
         {
@@ -53,9 +49,9 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
             var parameterlessInstance = new DynamicQueryAttribute();
             var parameteredInstance = new DynamicQueryAttribute(200, false, PaginationBehaviour.Throw);
 
-            Assert.Equal(parameterlessInstance._maxCountSize, _defaultMaxCountSize);
-            Assert.Equal(parameterlessInstance._includeDataSetCountToPagination, _defaultIncludeDataSetCount);
-            Assert.Equal(parameterlessInstance._exceededPaginationCountBehaviour, _defaultPaginationBehaviour);
+            Assert.Equal(parameterlessInstance._maxCountSize, null);
+            Assert.Equal(parameterlessInstance._includeDataSetCountToPagination, null);
+            Assert.Equal(parameterlessInstance._exceededPaginationCountBehaviour, null);
 
             Assert.Equal(parameteredInstance._maxCountSize, changedMaxCountSize);
             Assert.Equal(parameteredInstance._includeDataSetCountToPagination, changedIncludedataSetCount);
@@ -63,9 +59,22 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
         }
 
         [Fact]
+        public void ShouldNotSetCTorValuesWhenApplyGlobalFilter()
+        {
+            var defaultInstance = new DynamicQueryAttribute();
+            string queryExceedingMaxCount = DYNAMIC_QUERY_STRING.Replace("count=10", $"count={DynamicQueryAttributeGlobalConfig.MaxCountSize + 1}");
+            DynamicQueryOptions executedOptions = ExecuteAction(defaultInstance, queryExceedingMaxCount);
+
+            Assert.Equal(DynamicQueryAttributeGlobalConfig.IncludeDataSetCountToPagination, executedOptions.PaginationOption.AssignDataSetCount);
+            Assert.Equal(DynamicQueryAttributeGlobalConfig.MaxCountSize, executedOptions.PaginationOption.Count);
+        }
+
+        [Fact]
         public void ShouldSetGivenAssignDataSetCountWhenOptionsNotNull()
         {
-            bool changedIncludeDataSetCount = !_defaultIncludeDataSetCount;
+            DynamicQueryAttributeGlobalConfig.LoadDefaultConfigs();
+
+            bool changedIncludeDataSetCount = !DynamicQueryAttributeGlobalConfig.IncludeDataSetCountToPagination;
             var parameterlessInstance = new DynamicQueryAttribute(includeDataSetCountToPagination: changedIncludeDataSetCount);
             DynamicQueryOptions executedOptions = ExecuteAction(parameterlessInstance);
             Assert.Equal(executedOptions.PaginationOption.AssignDataSetCount, changedIncludeDataSetCount);
@@ -74,22 +83,26 @@ namespace DynamicQueryBuilder.UnitTests.DynamicQueryAttributeTests
         [Fact]
         public void ShouldSetCountToMaxWhenCountExceedsAndOptionsWereSetToGetMaxOrDefault()
         {
-            var behaviourSetInstance = new DynamicQueryAttribute(exceededPaginationCountBehaviour: PaginationBehaviour.GetMax);
+            int maxCountSizeDefination = 10;
+
+            var behaviourSetInstance = new DynamicQueryAttribute(exceededPaginationCountBehaviour: PaginationBehaviour.GetMax, maxCountSize: maxCountSizeDefination);
             var defaultBehaviourInstance = new DynamicQueryAttribute();
-            string queryExceedingMaxCount = DYNAMIC_QUERY_STRING.Replace("count=10", $"count={_defaultMaxCountSize + 1}");
+            string queryExceedingMaxCount = DYNAMIC_QUERY_STRING.Replace("count=10", $"count={maxCountSizeDefination + 1}");
 
             DynamicQueryOptions executedOptionsWithSetOptions = ExecuteAction(behaviourSetInstance, queryExceedingMaxCount);
             DynamicQueryOptions executedOptionsWithDefaultOptions = ExecuteAction(defaultBehaviourInstance, queryExceedingMaxCount);
 
-            Assert.Equal(executedOptionsWithSetOptions.PaginationOption.Count, _defaultMaxCountSize);
-            Assert.Equal(executedOptionsWithDefaultOptions.PaginationOption.Count, _defaultMaxCountSize);
+            Assert.Equal(executedOptionsWithSetOptions.PaginationOption.Count, maxCountSizeDefination);
+            Assert.Equal(executedOptionsWithDefaultOptions.PaginationOption.Count, maxCountSizeDefination + 1);
         }
 
         [Fact]
         public void ShouldSetCountToMaxWhenCountExceedsAndOptionsWereSetToThrow()
         {
-            var behaviourSetInstance = new DynamicQueryAttribute(exceededPaginationCountBehaviour: PaginationBehaviour.Throw);
-            string queryExceedingMaxCount = DYNAMIC_QUERY_STRING.Replace("count=10", $"count={_defaultMaxCountSize + 1}");
+            int maxCountSizeDefination = 10;
+
+            var behaviourSetInstance = new DynamicQueryAttribute(exceededPaginationCountBehaviour: PaginationBehaviour.Throw, maxCountSize: maxCountSizeDefination);
+            string queryExceedingMaxCount = DYNAMIC_QUERY_STRING.Replace("count=10", $"count={maxCountSizeDefination + 1}");
             Assert.Throws<MaximumResultSetExceededException>(() => { ExecuteAction(behaviourSetInstance, queryExceedingMaxCount); });
         }
 
