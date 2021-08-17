@@ -10,3 +10,4 @@ dotnet: 3.1
 solution: DynamicQueryBuilder.sln
 script:
 - scripts/test.sh
+deploy:
