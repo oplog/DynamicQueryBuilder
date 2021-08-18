@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicQueryBuilder", "DynamicQueryBuilder\DynamicQueryBuilder.csproj", "{44702373-E5F7-434B-9376-27536C34FE81}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicQueryBuilder.UnitTests", "DynamicQueryBuilder.UnitTests\DynamicQueryBuilder.UnitTests.csproj", "{FFDB1B44-5047-4C46-AA93-EA864370AFCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicQueryBuilder.IntegrationTests", "DynamicQueryBuilder.IntegrationTests\DynamicQueryBuilder.IntegrationTests.csproj", "{4E42803F-E979-4923-9287-B258FE3D9CDD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicQueryBuilder.IntegrationTests", "DynamicQueryBuilder.IntegrationTests\DynamicQueryBuilder.IntegrationTests.csproj", "{4E42803F-E979-4923-9287-B258FE3D9CDD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

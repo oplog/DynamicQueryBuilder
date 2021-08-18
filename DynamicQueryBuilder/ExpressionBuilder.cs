@@ -10,6 +10,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Web;
 
 using DynamicQueryBuilder.Models;
@@ -17,7 +18,8 @@ using DynamicQueryBuilder.Models.Enums;
 using DynamicQueryBuilder.Utils;
 using DynamicQueryBuilder.Utils.Extensions;
 using DynamicQueryBuilder.Visitors;
-
+using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 [assembly: InternalsVisibleTo("DynamicQueryBuilder.UnitTests")]
@@ -33,6 +35,7 @@ namespace DynamicQueryBuilder
         internal const string OFFSET_PARAMETER_KEY = "offset";
         internal const string COUNT_PARAMETER_KEY = "count";
         internal const char PARAMETER_OPTION_DELIMITER = ',';
+        private const char PLUS_CHARACTER = '+';
 
         public static readonly CustomOpCodes DefaultOpShortCodes = new CustomOpCodes
         {
@@ -232,20 +235,34 @@ namespace DynamicQueryBuilder
                     return dynamicQueryOptions;
                 }
 
-                string decodedQuery = HttpUtility.UrlDecode(query);
+                ////+ character issue
+                ////https://docs.microsoft.com/en-us/dotnet/api/system.web.httputility.urlencode?redirectedfrom=MSDN&view=net-5.0#System_Web_HttpUtility_UrlEncode_System_String_
+                if (QueryStringParser.IsQueryStringEncoded(query))
+                {
+                    query = HttpUtility.UrlDecode(query);
+                }
+
                 DynamicQueryOptions innerQueryOptions = null;
                 const string innerMemberKey = "v=(";
-                int indexOfInnerMemberKey = decodedQuery.IndexOf(innerMemberKey);
+                int indexOfInnerMemberKey = query.IndexOf(innerMemberKey, StringComparison.Ordinal);
                 if (indexOfInnerMemberKey != -1)
                 {
                     indexOfInnerMemberKey += innerMemberKey.Length;
-                    string innerQuery = decodedQuery.Substring(indexOfInnerMemberKey, decodedQuery.LastIndexOf(')') - indexOfInnerMemberKey);
+                    string innerQuery = query.Substring(indexOfInnerMemberKey, query.LastIndexOf(')') - indexOfInnerMemberKey);
                     innerQueryOptions = ParseQueryOptions(innerQuery, opShortCodes);
-                    decodedQuery = decodedQuery.Replace(innerQuery, string.Empty);
+                    query = query.Replace(innerQuery, string.Empty);
                 }
 
                 string[] defaultArrayValue = new string[0];
-                NameValueCollection queryCollection = HttpUtility.ParseQueryString(decodedQuery);
+                NameValueCollection queryCollection = HttpUtility.ParseQueryString(query);
+
+                IEnumerable<QueryStringParserResult> queryStringParserResults = QueryStringParser
+                                                                                    .GetAllParameterWithValue(query)
+                                                                                    .Where(e => !string.IsNullOrEmpty(e.Value) && e.Value.Contains(PLUS_CHARACTER)).ToList();
+                if (queryStringParserResults.Any())
+                {
+                    QueryStringParser.ReplaceNameValueCollection(queryStringParserResults, queryCollection, PARAMETER_VALUE_KEY);
+                }
 
                 string[] operations = queryCollection
                     .GetValues(OPERATION_PARAMETER_KEY)
