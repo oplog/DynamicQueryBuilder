@@ -22,5 +22,7 @@ namespace DynamicQueryBuilder.Extensions
         public static readonly MethodInfo ToLowerMethod = typeof(string).GetMethod("ToLower", Array.Empty<Type>());
 
         public static readonly MethodInfo CompareTo = typeof(string).GetMethod("CompareTo", new[] { typeof(string) });
+
+        public static readonly MethodInfo EnumCompareTo = typeof(Enum).GetMethod("CompareTo", new[] { typeof(Enum) });
     }
 }

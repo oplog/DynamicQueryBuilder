@@ -4,7 +4,7 @@ using System.Linq;
 using DynamicQueryBuilder.IntegrationTests.EntityFramework.SampleModels;
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
-
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
@@ -30,19 +30,22 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                             {
                                 OrderRef = "REF_1",
                                 ProductName = "GoodProd",
-                                Quantity = 3
+                                Quantity = 3,
+                                Month = Months.April
                             },
                             new Order
                             {
                                 OrderRef = "REF_2",
                                 ProductName = "BetterProd",
-                                Quantity = 5
+                                Quantity = 5,
+                                Month = Months.February
                             },
                             new Order
                             {
                                 OrderRef = "REF_1",
                                 ProductName = "AREUNUTZ?",
-                                Quantity = 7
+                                Quantity = 7,
+                                Month = Months.December
                             }
                         }
                     },
@@ -56,19 +59,22 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                             {
                                 OrderRef = "REF_3",
                                 ProductName = "GoodProd",
-                                Quantity = 1
+                                Quantity = 1,
+                                Month = Months.January
                             },
                             new Order
                             {
                                 OrderRef = "REF_4",
                                 ProductName = "BetterProd",
-                                Quantity = 2
+                                Quantity = 2,
+                                Month = Months.May
                             },
                             new Order
                             {
                                 OrderRef = "REF_5",
                                 ProductName = "AREUNUTZ?",
-                                Quantity = 11
+                                Quantity = 11,
+                                Month = Months.September
                             }
                         }
                     },
@@ -82,19 +88,22 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                             {
                                 OrderRef = "REF_6",
                                 ProductName = "GoodProd",
-                                Quantity = 10
+                                Quantity = 10,
+                                Month = Months.January
                             },
                             new Order
                             {
                                 OrderRef = "REF_7",
                                 ProductName = "BetterProd",
-                                Quantity = 150
+                                Quantity = 150,
+                                Month = Months.April
                             },
                             new Order
                             {
                                 OrderRef = "REF_8",
                                 ProductName = "AREUNUTZ?",
-                                Quantity = 8
+                                Quantity = 8,
+                                Month = Months.April
                             }
                         }
                     },
@@ -108,19 +117,22 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                             {
                                 OrderRef = "REF_9",
                                 ProductName = "GoodProd",
-                                Quantity = 12
+                                Quantity = 12,
+                                Month = Months.June
                             },
                             new Order
                             {
                                 OrderRef = "REF_10",
                                 ProductName = "BetterProd",
-                                Quantity = 15
+                                Quantity = 15,
+                                Month = Months.April
                             },
                             new Order
                             {
                                 OrderRef = "REF_11",
                                 ProductName = "UniqueName",
-                                Quantity = 22
+                                Quantity = 22,
+                                Month = Months.April
                             }
                         }
                     }
@@ -133,8 +145,9 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
         [Fact(DisplayName = "EF_FiltersShouldWork")]
         public void FiltersShouldWork()
         {
-            var queryable = _ctx.Users.AsQueryable();
-            var resultOfAgeTwo = queryable.ApplyFilters(new DynamicQueryOptions
+            var usersQueryable = _ctx.Users.AsQueryable();
+            var ordersQueryable = _ctx.Orders.AsQueryable();
+            var resultOfAgeTwo = usersQueryable.ApplyFilters(new DynamicQueryOptions
             {
                 Filters = new List<Filter>
                 {
@@ -149,7 +162,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 IgnorePredefinedOrders = true
             }).ToList();
 
-            var resultOfNameTestOne = queryable.ApplyFilters(new DynamicQueryOptions
+            var resultOfNameTestOne = usersQueryable.ApplyFilters(new DynamicQueryOptions
             {
                 Filters = new List<Filter>
                 {
@@ -164,7 +177,7 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 IgnorePredefinedOrders = true
             }).ToList();
 
-            var resultOfStringsComparisonTest = queryable.ApplyFilters(new DynamicQueryOptions
+            var resultOfStringsComparisonTest = usersQueryable.ApplyFilters(new DynamicQueryOptions
             {
                 Filters = new List<Filter>
                 {
@@ -188,10 +201,24 @@ namespace DynamicQueryBuilder.IntegrationTests.EntityFramework.Tests
                 }
             }).ToList();
 
+            var resultOfEnumsComparisonTest = ordersQueryable.ApplyFilters(new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Operator = FilterOperation.GreaterThanOrEqual,
+                        PropertyName = "Month",
+                        Value = Months.April.ToString()
+                    }
+                }
+            }).ToList();
+
             Assert.True(resultOfAgeTwo.Count == 3);
             Assert.True(resultOfNameTestOne.Count == 1);
             Assert.True(resultOfStringsComparisonTest.Count == 1);
             Assert.Equal("Test_4", resultOfStringsComparisonTest[0].Name);
+            Assert.Equal(9, resultOfEnumsComparisonTest.Count);
         }
 
         [Fact(DisplayName = "EF_PaginationShouldWork")]

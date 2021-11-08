@@ -9,7 +9,8 @@ using System.Linq.Expressions;
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
-
+using DynamicQueryBuilder.UnitTests.TestData;
+using DynamicQueryBuilder.UnitTests.TestModels;
 using Moq;
 
 using Xunit;
@@ -20,28 +21,10 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 {
     public class ApplyFiltersTests
     {
-        internal class TestModel
-        {
-            public int Age { get; set; }
-
-            public int? AgeN { get; set; }
-
-            public string Name { get; set; }
-
-            public ICollection<string> InnerPrimitiveList { get; set; }
-
-            public ICollection<InnerTestModel> InnerTestModels { get; set; }
-        }
-
-        internal class InnerTestModel
-        {
-            public string Role { get; set; }
-        }
-
         [Fact]
         public void ApplyFiltersShouldReturnGivenSetWhenOptionsAreNull()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(null).AsQueryable();
 
             currentSet = currentSet.Cast<TestModel>();
@@ -68,7 +51,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ApplyFiltersShouldReturnGivenSetWhenOptionsAndFiltersAreNull()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
             {
                 Filters = null,
@@ -82,7 +65,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ApplyFiltersShouldReturnGivenSetWhenOptionsAndFiltersAreEmpty()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
             {
                 SortOptions = new List<SortOption>(),
@@ -96,7 +79,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ApplyFiltersShouldAppendGivenFiltersToTheGivenSet()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             var filters = new DynamicQueryOptions
             {
                 Filters = new List<Filter>
@@ -134,7 +117,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void Apply_filters_should_append_sorting_options_to_the_given_query()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             var ascendingSortingOptions = new DynamicQueryOptions();
             ascendingSortingOptions.SortOptions.Add(new SortOption
             {
@@ -180,7 +163,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                 Filters = mockFilterList.Object.ToList()
             };
 
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             var thrownException = Assert.Throws<DynamicQueryException>(() => { currentSet.ApplyFilters(mockOptions); });
             Assert.Equal(typeof(NullReferenceException), thrownException.InnerException.GetType());
         }
@@ -188,7 +171,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ApplyFiltersShouldPaginateWhenPaginationOptionsIsPresent()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             var optionsWithPagination = new DynamicQueryOptions
             {
                 PaginationOption = new PaginationOption
@@ -206,7 +189,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ApplyFiltersShouldApplyAllGivenQueryTypes()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             var allQueryTypes = new DynamicQueryOptions
             {
                 PaginationOption = new PaginationOption
@@ -243,7 +226,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ApplyFiltersShouldHandleComparisonsDifferentlyForStrings()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             var caseSensitiveFilters = new DynamicQueryOptions
             {
                 Filters = new List<Filter>
@@ -286,7 +269,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         [Fact]
         public void ApplyFiltersShouldHandlePrimitiveCollectionTypes()
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             var filters = new DynamicQueryOptions
             {
                 Filters = new List<Filter>
@@ -325,9 +308,35 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Equal(currentSet.ElementAtOrDefault(1), result[1]);
         }
 
+        [Theory]
+        [MemberData(nameof(EnumApplyFiltersTestData.Data), MemberType = typeof(EnumApplyFiltersTestData))]
+        public void ApplyFiltersShouldHandleEnums(Months month, FilterOperation filterOperation, List<Months> expectedMonths)
+        {
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
+            var filters = new DynamicQueryOptions
+            {
+                Filters = {
+                    new Filter
+                    {
+                        Value = month.ToString(),
+                        PropertyName = "Month",
+                        Operator = filterOperation,
+                        LogicalOperator = LogicalOperator.AndAlso
+                    }
+                }
+            };
+
+            List<TestModel> result = currentSet.ApplyFilters(filters).ToList();
+            Assert.Equal(expectedMonths.Count(), result.Count());
+
+            foreach (Months resultMonth in result.Select(x => x.Month))
+            {
+                Assert.Contains(expectedMonths, m => m == resultMonth);
+            }
+        }
         private IQueryable<TestModel> PrepareForMemberQuery(FilterOperation operation)
         {
-            IQueryable<TestModel> currentSet = CreateSampleSet();
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(new DynamicQueryOptions
             {
                 Filters = new List<Filter>
@@ -354,79 +363,6 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             }).AsQueryable();
 
             return returnedSet;
-        }
-
-        private IQueryable<TestModel> CreateSampleSet()
-        {
-            return new List<TestModel>
-            {
-                new TestModel
-                {
-                    Age = 10,
-                    Name = "testOne",
-                    InnerTestModels = new List<InnerTestModel>
-                    {
-                        new InnerTestModel
-                        {
-                            Role = "Admin"
-                        },
-                        new InnerTestModel
-                        {
-                            Role = "User"
-                        }
-                    },
-                    InnerPrimitiveList = new List<string>
-                    {
-                        "1",
-                        "2",
-                        "3"
-                    }
-                },
-                new TestModel
-                {
-                    Age = 12,
-                    Name = "testThree",
-                    InnerTestModels = new List<InnerTestModel>
-                    {
-                        new InnerTestModel
-                        {
-                            Role = "User"
-                        },
-                        new InnerTestModel
-                        {
-                            Role = "User"
-                        }
-                    },
-                    InnerPrimitiveList = new List<string>
-                    {
-                        "3",
-                        "4",
-                        "5"
-                    }
-                },
-                new TestModel
-                {
-                    Age = 11,
-                    Name = "testTwo",
-                    InnerTestModels = new List<InnerTestModel>
-                    {
-                        new InnerTestModel
-                        {
-                            Role = "Admin"
-                        },
-                        new InnerTestModel
-                        {
-                            Role = "Admin"
-                        }
-                    },
-                    InnerPrimitiveList = new List<string>
-                    {
-                        "7",
-                        "7",
-                        "7"
-                    }
-                }
-            }.AsQueryable();
         }
     }
 }
