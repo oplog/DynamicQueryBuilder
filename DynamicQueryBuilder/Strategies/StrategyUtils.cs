@@ -1,4 +1,5 @@
 ﻿using DynamicQueryBuilder.Constants;
+using DynamicQueryBuilder.Extensions;
 using DynamicQueryBuilder.Models.Enums;
 using System;
 using System.Collections.Generic;
@@ -38,6 +39,20 @@ namespace DynamicQueryBuilder.Strategies
             return _filterOperatorToExpressionMap.ContainsKey(filterOperation)
                 ? _filterOperatorToExpressionMap[filterOperation](compareToResult)
                 : null;
+        }
+
+        public static Expression CompareStrings(FilterOperation filterOperation, Expression parentMember, Expression constant)
+        {
+            Expression compareToExpression = Expression.Call(parentMember, ExtensionMethods.StringCompareTo, constant);
+
+            return _filterOperatorToExpressionMap.ContainsKey(filterOperation)
+                ? _filterOperatorToExpressionMap[filterOperation](compareToExpression)
+                : null;
+        }
+
+        public static Expression ToLowerIfCaseInsensitive(Expression exp, bool usesCaseInsensitiveComparison)
+        {
+            return usesCaseInsensitiveComparison ? Expression.Call(exp, ExtensionMethods.ToLowerMethod) : exp;
         }
     }
 }

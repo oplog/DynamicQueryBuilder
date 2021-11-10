@@ -426,13 +426,7 @@ namespace DynamicQueryBuilder
         {
             string stringFilterValue = filter.Value?.ToString();
             Expression parentMember = ExtractMember(param, filter.PropertyName, stringFilterValue == "null");
-            if (parentMember.Type == typeof(string)
-                && !filter.CaseSensitive
-                && usesCaseInsensitiveSource)
-            {
-                parentMember = Expression.Call(parentMember, ExtensionMethods.ToLowerMethod);
-            }
-
+            
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
             {
@@ -483,20 +477,6 @@ namespace DynamicQueryBuilder
 
             Expression constant = Expression.Constant(convertedValue);
 
-            Expression compareToExpression = null;
-            Expression comparisonConstant = Expression.Constant(0);
-
-            // To lower invariant the query parameters if case sensitivity is desired.
-            if (parentMember.Type == typeof(string) && convertedValue != null)
-            {
-                constant = usesCaseInsensitiveSource
-                    && !filter.CaseSensitive
-                    ? Expression.Call(constant, ExtensionMethods.ToLowerMethod)
-                    : constant;
-
-                compareToExpression = Expression.Call(parentMember, ExtensionMethods.CompareTo, constant);
-            }
-
             switch (filter.Operator)
             {
                 case FilterOperation.Any:
@@ -520,8 +500,7 @@ namespace DynamicQueryBuilder
                     return LINQUtils.BuildLINQFilterExpression(filter,
                         parentMember,
                         constant,
-                        compareToExpression,
-                        comparisonConstant);
+                        useCaseInsensitiveComparison: usesCaseInsensitiveSource && !filter.CaseSensitive);
             }
         }
 

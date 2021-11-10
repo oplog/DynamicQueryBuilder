@@ -18,8 +18,14 @@ namespace DynamicQueryBuilder.Strategies
             this._strategy = strategy;
         }
 
-        public Expression Build(Expression parentMember, Expression constant)
+        public Expression Build(Expression parentMember, Expression constant, bool useCaseInsensitiveComparison)
         {
+            if (parentMember.Type == typeof(string) && useCaseInsensitiveComparison)
+            {
+                parentMember = StrategyUtils.ToLowerIfCaseInsensitive(parentMember, useCaseInsensitiveComparison);
+                constant = StrategyUtils.ToLowerIfCaseInsensitive(constant, useCaseInsensitiveComparison);
+            }
+
             return _strategy.Build(parentMember, constant);
         }
     }

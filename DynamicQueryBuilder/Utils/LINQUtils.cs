@@ -33,14 +33,6 @@ namespace DynamicQueryBuilder.Utils
             { FilterOperation.EndsWith, new EndsWithBuilderStrategy() },
         };
 
-        private static List<FilterOperation> _stringOperations = new List<FilterOperation>()
-        {
-            FilterOperation.GreaterThan,
-            FilterOperation.GreaterThanOrEqual,
-            FilterOperation.LessThan,
-            FilterOperation.LessThanOrEqual,
-        };
-
         public static MethodInfo BuildLINQExtensionMethod(
             string functionName,
             int numberOfParameters = 2,
@@ -64,19 +56,12 @@ namespace DynamicQueryBuilder.Utils
             Filter filter,
             Expression parentMember,
             Expression constant,
-            Expression compareToExpression,
-            Expression comparisonConstant)
+            bool useCaseInsensitiveComparison)
         {
             if (_filterOperatorToExpressionMap.ContainsKey(filter.Operator))
             {
-                if (_stringOperations.Contains(filter.Operator) && parentMember.Type == typeof(string))
-                {
-                    parentMember = compareToExpression;
-                    constant = comparisonConstant;
-                }
-
                 FilterBuilderContext builderContext = new FilterBuilderContext(_filterOperatorToExpressionMap[filter.Operator]);
-                return builderContext.Build(parentMember, constant);
+                return builderContext.Build(parentMember, constant, useCaseInsensitiveComparison);
             }
 
             return null;

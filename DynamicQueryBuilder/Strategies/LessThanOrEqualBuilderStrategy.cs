@@ -11,6 +11,10 @@ namespace DynamicQueryBuilder.Strategies
             {
                 return StrategyUtils.CompareEnums(FilterOperation.LessThanOrEqual, parentMember, constant);
             }
+            else if (parentMember.Type == typeof(string))
+            {
+                return StrategyUtils.CompareStrings(FilterOperation.LessThanOrEqual, parentMember, constant);
+            }
 
             return Expression.LessThanOrEqual(parentMember, constant);
         }
