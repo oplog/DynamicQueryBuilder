@@ -5,9 +5,6 @@
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
 using DynamicQueryBuilder.UnitTests.TestData;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using Xunit;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
@@ -40,10 +37,10 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         {
             Expression result = ExpressionBuilder.BuildFilterExpression(
                     XParam,
-                new Filter 
-                { 
-                    Value = "Te, Test, Testx", 
-                    PropertyName = "Name", 
+                new Filter
+                {
+                    Value = "Te, Test, Testx",
+                    PropertyName = "Name",
                     Operator = FilterOperation.In,
                     CaseSensitive = caseSensitive
                 },

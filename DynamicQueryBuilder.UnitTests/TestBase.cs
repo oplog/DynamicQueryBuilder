@@ -3,6 +3,7 @@
 // </copyright>
 
 using DynamicQueryBuilder.Models.Enums;
+using DynamicQueryBuilder.UnitTests.TestModels;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -46,6 +47,8 @@ namespace DynamicQueryBuilder.UnitTests
             public string Name { get; set; }
 
             public int? NullableMember { get; set; }
+
+            public WeekDays WeekDay { get; set; }
         }
 
         protected ParameterExpression XParam
