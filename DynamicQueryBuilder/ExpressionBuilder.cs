@@ -2,6 +2,13 @@
 // Copyright (c) Oplog. All rights reserved.
 // </copyright>
 
+using DynamicQueryBuilder.Constants;
+using DynamicQueryBuilder.Extensions;
+using DynamicQueryBuilder.Models;
+using DynamicQueryBuilder.Models.Enums;
+using DynamicQueryBuilder.Utils;
+using DynamicQueryBuilder.Utils.Extensions;
+using DynamicQueryBuilder.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -10,16 +17,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Web;
-
-using DynamicQueryBuilder.Models;
-using DynamicQueryBuilder.Models.Enums;
-using DynamicQueryBuilder.Utils;
-using DynamicQueryBuilder.Utils.Extensions;
-using DynamicQueryBuilder.Visitors;
-using Microsoft.Extensions.Logging.Abstractions;
-using Newtonsoft.Json;
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
 
 [assembly: InternalsVisibleTo("DynamicQueryBuilder.UnitTests")]
@@ -27,49 +25,6 @@ namespace DynamicQueryBuilder
 {
     public static class ExpressionBuilder
     {
-        internal const string OPERATION_PARAMETER_KEY = "o";
-        internal const string PARAMETER_NAME_KEY = "p";
-        internal const string PARAMETER_VALUE_KEY = "v";
-        internal const string CASE_SENSITIVITY_PARAMETER_OPTION = "cs";
-        internal const string SORT_OPTIONS_PARAMETER_KEY = "s";
-        internal const string OFFSET_PARAMETER_KEY = "offset";
-        internal const string COUNT_PARAMETER_KEY = "count";
-        internal const char PARAMETER_OPTION_DELIMITER = ',';
-        private const char PLUS_CHARACTER = '+';
-
-        public static readonly CustomOpCodes DefaultOpShortCodes = new CustomOpCodes
-        {
-            { "eq", FilterOperation.Equals },
-            { "lt", FilterOperation.LessThan },
-            { "cts", FilterOperation.Contains },
-            { "ne", FilterOperation.NotEqual },
-            { "ew", FilterOperation.EndsWith },
-            { "sw", FilterOperation.StartsWith },
-            { "gt", FilterOperation.GreaterThan },
-            { "ltoe", FilterOperation.LessThanOrEqual },
-            { "gtoe", FilterOperation.GreaterThanOrEqual },
-            { "any", FilterOperation.Any },
-            { "all", FilterOperation.All }
-        };
-
-        #region ExtensionsMethods
-        private static readonly MethodInfo _countFunction = LINQUtils.BuildLINQExtensionMethod(nameof(Enumerable.Count), numberOfParameters: 1);
-
-        private static readonly MethodInfo _skipFunction = LINQUtils.BuildLINQExtensionMethod(nameof(Enumerable.Skip));
-
-        private static readonly MethodInfo _takeFunction = LINQUtils.BuildLINQExtensionMethod(nameof(Enumerable.Take));
-
-        private static readonly MethodInfo _stringContainsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-
-        private static readonly MethodInfo _stringEndsWithMethod = typeof(string).GetMethod("EndsWith", new[] { typeof(string) });
-
-        private static readonly MethodInfo _stringStartsWithMethod = typeof(string).GetMethod("StartsWith", new[] { typeof(string) });
-
-        private static readonly MethodInfo _toLowerMethod = typeof(string).GetMethod("ToLower", Array.Empty<Type>());
-        
-        private static readonly MethodInfo _compareTo = typeof(string).GetMethod("CompareTo", new[] { typeof(string) });
-        #endregion
-
         /// <summary>
         /// Applies the given DynamicQueryOptions to the IEnumerable instace.
         /// </summary>
@@ -121,27 +76,7 @@ namespace DynamicQueryBuilder
                         // Get the previous filter to retrieve the logical operator between the current and the next filter
                         Filter previousFilter = dynamicQueryOptions.Filters.ElementAtOrDefault(i - 1);
 
-                        // Join filters in between with the logical operators
-                        if (previousFilter.LogicalOperator == LogicalOperator.AndAlso)
-                        {
-                            exp = Expression.AndAlso(exp, builtExpression);
-                        }
-                        else if (previousFilter.LogicalOperator == LogicalOperator.OrElse)
-                        {
-                            exp = Expression.OrElse(exp, builtExpression);
-                        }
-                        else if (previousFilter.LogicalOperator == LogicalOperator.And)
-                        {
-                            exp = Expression.And(exp, builtExpression);
-                        }
-                        else if (previousFilter.LogicalOperator == LogicalOperator.Or)
-                        {
-                            exp = Expression.Or(exp, builtExpression);
-                        }
-                        else if (previousFilter.LogicalOperator == LogicalOperator.Xor)
-                        {
-                            exp = Expression.ExclusiveOr(exp, builtExpression);
-                        }
+                        exp = LINQUtils.BuildLINQLogicalOperatorExpression(previousFilter, exp, builtExpression);
                     }
                 }
 
@@ -187,13 +122,13 @@ namespace DynamicQueryBuilder
                 {
                     if (dynamicQueryOptions.PaginationOption.AssignDataSetCount)
                     {
-                        dynamicQueryOptions.PaginationOption.DataSetCount = (int)_countFunction.Invoke(null, new[] { currentSet });
+                        dynamicQueryOptions.PaginationOption.DataSetCount = (int)ExtensionMethods.CountFunction.Invoke(null, new[] { currentSet });
                     }
 
                     if (dynamicQueryOptions.PaginationOption.Offset > 0)
                     {
                         MethodCallExpression skip = Expression.Call(
-                        _skipFunction,
+                        ExtensionMethods.SkipFunction,
                         currentSet.Expression,
                         Expression.Constant(dynamicQueryOptions.PaginationOption.Offset));
 
@@ -203,7 +138,7 @@ namespace DynamicQueryBuilder
                     if (dynamicQueryOptions.PaginationOption.Count > 0)
                     {
                         MethodCallExpression take = Expression.Call(
-                            _takeFunction,
+                            ExtensionMethods.TakeFunction,
                             currentSet.Expression,
                             Expression.Constant(dynamicQueryOptions.PaginationOption.Count));
 
@@ -258,38 +193,38 @@ namespace DynamicQueryBuilder
 
                 IEnumerable<QueryStringParserResult> queryStringParserResults = QueryStringParser
                                                                                     .GetAllParameterWithValue(query)
-                                                                                    .Where(e => !string.IsNullOrEmpty(e.Value) && e.Value.Contains(PLUS_CHARACTER)).ToList();
+                                                                                    .Where(e => !string.IsNullOrEmpty(e.Value) && e.Value.Contains(InternalConstants.PLUS_CHARACTER)).ToList();
                 if (queryStringParserResults.Any())
                 {
-                    QueryStringParser.ReplaceNameValueCollection(queryStringParserResults, queryCollection, PARAMETER_VALUE_KEY);
+                    QueryStringParser.ReplaceNameValueCollection(queryStringParserResults, queryCollection, InternalConstants.PARAMETER_VALUE_KEY);
                 }
 
                 string[] operations = queryCollection
-                    .GetValues(OPERATION_PARAMETER_KEY)
+                    .GetValues(InternalConstants.OPERATION_PARAMETER_KEY)
                     ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
                 string[] parameterNames = queryCollection
-                    .GetValues(PARAMETER_NAME_KEY)
+                    .GetValues(InternalConstants.PARAMETER_NAME_KEY)
                     ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
                 string[] parameterValues = queryCollection
-                    .GetValues(PARAMETER_VALUE_KEY)
+                    .GetValues(InternalConstants.PARAMETER_VALUE_KEY)
                     ?.ToArray() ?? defaultArrayValue;
 
                 string[] sortOptions = queryCollection
-                    .GetValues(SORT_OPTIONS_PARAMETER_KEY)
+                    .GetValues(InternalConstants.SORT_OPTIONS_PARAMETER_KEY)
                     ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
                 string[] offsetOptions = queryCollection
-                    .GetValues(OFFSET_PARAMETER_KEY)
+                    .GetValues(InternalConstants.OFFSET_PARAMETER_KEY)
                     ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
                 string[] countOptions = queryCollection
-                    .GetValues(COUNT_PARAMETER_KEY)
+                    .GetValues(InternalConstants.COUNT_PARAMETER_KEY)
                     ?.Select(x => x.ClearSpaces())
                     .ToArray() ?? defaultArrayValue;
 
@@ -301,7 +236,7 @@ namespace DynamicQueryBuilder
                     sortOptions,
                     offsetOptions,
                     countOptions,
-                    opShortCodes: opShortCodes ?? DefaultOpShortCodes,
+                    opShortCodes: opShortCodes ?? Defaults.DefaultOpShortCodes,
                     memberQueryOptions: innerQueryOptions);
 
                 return dynamicQueryOptions;
@@ -373,11 +308,11 @@ namespace DynamicQueryBuilder
                         throw new OperationNotSupportedException($"Invalid operation {ops[0]}");
                     }
 
-                    string[] splittedParameterName = parameterNames[i].Split(PARAMETER_OPTION_DELIMITER);
+                    string[] splittedParameterName = parameterNames[i].Split(InternalConstants.PARAMETER_OPTION_DELIMITER);
                     bool isCaseSensitive = false;
                     if (splittedParameterName.Length > 1)
                     {
-                        if (splittedParameterName[1].ToLower() == CASE_SENSITIVITY_PARAMETER_OPTION)
+                        if (splittedParameterName[1].ToLower() == InternalConstants.CASE_SENSITIVITY_PARAMETER_OPTION)
                         {
                             isCaseSensitive = true;
                         }
@@ -419,7 +354,7 @@ namespace DynamicQueryBuilder
                     if (!string.IsNullOrEmpty(sortOption))
                     {
                         // Split the property name to sort and the direction.
-                        string[] splittedParam = sortOption.Split(PARAMETER_OPTION_DELIMITER);
+                        string[] splittedParam = sortOption.Split(InternalConstants.PARAMETER_OPTION_DELIMITER);
 
                         bool isCaseSensitive = false;
                         SortingDirection direction = SortingDirection.Asc;
@@ -433,7 +368,7 @@ namespace DynamicQueryBuilder
                         }
                         else if (splittedParam.Length == 3)
                         {
-                            if (splittedParam[2].ToLower() == CASE_SENSITIVITY_PARAMETER_OPTION)
+                            if (splittedParam[2].ToLower() == InternalConstants.CASE_SENSITIVITY_PARAMETER_OPTION)
                             {
                                 isCaseSensitive = true;
                             }
@@ -491,13 +426,7 @@ namespace DynamicQueryBuilder
         {
             string stringFilterValue = filter.Value?.ToString();
             Expression parentMember = ExtractMember(param, filter.PropertyName, stringFilterValue == "null");
-            if (parentMember.Type == typeof(string)
-                && !filter.CaseSensitive
-                && usesCaseInsensitiveSource)
-            {
-                parentMember = Expression.Call(parentMember, _toLowerMethod);
-            }
-
+            
             // We are handling In operations seperately which are basically a list of OR=EQUALS operation. We recursively handle this operation.
             if (filter.Operator == FilterOperation.In)
             {
@@ -507,7 +436,7 @@ namespace DynamicQueryBuilder
                 }
 
                 // Split all data into a list
-                List<string> splittedValues = stringFilterValue.Split(PARAMETER_OPTION_DELIMITER).ToList();
+                List<string> splittedValues = stringFilterValue.Split(InternalConstants.PARAMETER_OPTION_DELIMITER).ToList();
                 var equalsFilter = new Filter
                 {
                     Operator = FilterOperation.Equals,
@@ -548,57 +477,8 @@ namespace DynamicQueryBuilder
 
             Expression constant = Expression.Constant(convertedValue);
 
-            Expression compareToExpression = null;
-            Expression comparisonConstant = Expression.Constant(0);
-
-            // To lower invariant the query parameters if case sensitivity is desired.
-            if (parentMember.Type == typeof(string) && convertedValue != null)
-            {
-                constant = usesCaseInsensitiveSource
-                    && !filter.CaseSensitive
-                    ? Expression.Call(constant, _toLowerMethod)
-                    : constant;
-
-                compareToExpression = Expression.Call(parentMember, _compareTo, constant);
-            }
-
             switch (filter.Operator)
             {
-                case FilterOperation.Equals:
-                    return Expression.Equal(parentMember, constant);
-
-                case FilterOperation.NotEqual:
-                    return Expression.NotEqual(parentMember, constant);
-
-                case FilterOperation.Contains:
-                    return Expression.Call(parentMember, _stringContainsMethod, constant);
-
-                case FilterOperation.GreaterThan:
-                    return parentMember.Type == typeof(string)
-                        ? Expression.GreaterThan(compareToExpression, comparisonConstant)
-                        : Expression.GreaterThan(parentMember, constant);
-
-                case FilterOperation.GreaterThanOrEqual:
-                    return parentMember.Type == typeof(string)
-                        ? Expression.GreaterThanOrEqual(compareToExpression, comparisonConstant)
-                        : Expression.GreaterThanOrEqual(parentMember, constant);
-
-                case FilterOperation.LessThan:
-                    return parentMember.Type == typeof(string)
-                        ? Expression.LessThan(compareToExpression, comparisonConstant)
-                        : Expression.LessThan(parentMember, constant);
-
-                case FilterOperation.LessThanOrEqual:
-                    return parentMember.Type == typeof(string)
-                        ? Expression.LessThanOrEqual(compareToExpression, comparisonConstant)
-                        : Expression.LessThanOrEqual(parentMember, constant);
-
-                case FilterOperation.StartsWith:
-                    return Expression.Call(parentMember, _stringStartsWithMethod, constant);
-
-                case FilterOperation.EndsWith:
-                    return Expression.Call(parentMember, _stringEndsWithMethod, constant);
-
                 case FilterOperation.Any:
                 case FilterOperation.All:
                     ParameterExpression memberParam = Expression.Parameter(
@@ -617,7 +497,10 @@ namespace DynamicQueryBuilder
                         Expression.PropertyOrField(param, filter.PropertyName),
                         Expression.Lambda(builtMemberExpression, memberParam));
                 default:
-                    return null;
+                    return LINQUtils.BuildLINQFilterExpression(filter,
+                        parentMember,
+                        constant,
+                        useCaseInsensitiveComparison: usesCaseInsensitiveSource && !filter.CaseSensitive);
             }
         }
 

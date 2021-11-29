@@ -9,5 +9,23 @@
         public int Quantity { get; set; }
 
         public int UserId { get; set; }
+
+        public Months Month { get; set; }
+    }
+
+    public enum Months : long
+    {
+        January,
+        February,
+        March,
+        April,
+        May,
+        June,
+        July,
+        August,
+        September,
+        October,
+        November,
+        December
     }
 }

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using DynamicQueryBuilder.Models;
 using DynamicQueryBuilder.Models.Enums;
-
+using DynamicQueryBuilder.UnitTests.TestModels;
 using Xunit;
 
 using static DynamicQueryBuilder.DynamicQueryBuilderExceptions;
@@ -200,7 +200,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                                 }
                             }
                         },
-                        PropertyName = nameof(ApplyFiltersTests.TestModel.InnerPrimitiveList),
+                        PropertyName = nameof(TestModel.InnerPrimitiveList),
                         Operator = FilterOperation.Any
                     }
                 }
