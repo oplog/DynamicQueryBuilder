@@ -20,7 +20,7 @@ namespace DynamicQueryBuilder.Strategies
 
         public Expression Build(Expression parentMember, Expression constant, bool useCaseInsensitiveComparison)
         {
-            if (parentMember.Type == typeof(string) && useCaseInsensitiveComparison)
+            if (parentMember.Type == typeof(string) && useCaseInsensitiveComparison && ((ConstantExpression)constant).Value != null)
             {
                 parentMember = StrategyUtils.ToLowerIfCaseInsensitive(parentMember, useCaseInsensitiveComparison);
                 constant = StrategyUtils.ToLowerIfCaseInsensitive(constant, useCaseInsensitiveComparison);

@@ -35,6 +35,29 @@ namespace DynamicQueryBuilder.UnitTests.TestData
                 },
                 new TestModel
                 {
+                    Age = 123,
+                    Name = null,
+                    Month = Months.February,
+                    InnerTestModels = new List<InnerTestModel>
+                    {
+                        new InnerTestModel
+                        {
+                            Role = "Admin"
+                        },
+                        new InnerTestModel
+                        {
+                            Role = "User"
+                        }
+                    },
+                    InnerPrimitiveList = new List<string>
+                    {
+                        "1",
+                        "2",
+                        "3"
+                    }
+                },
+                new TestModel
+                {
                     Age = 12,
                     Name = "testThree",
                     Month = Months.April,

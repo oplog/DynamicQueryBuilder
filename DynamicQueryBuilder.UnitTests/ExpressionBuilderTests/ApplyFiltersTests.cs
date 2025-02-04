@@ -113,6 +113,44 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
              */
             Assert.Equal(expectedQuery, ((MethodCallExpression)expressionMethodCall.Arguments[0]).Arguments[1].ToString());
         }
+        
+        [Fact]
+        public void ApplyFiltersShouldAppendGivenFiltersToTheGivenSet2()
+        {
+            IQueryable<TestModel> currentSet = TestDataGenerator.CreateSampleSet();
+            var filters = new DynamicQueryOptions
+            {
+                Filters = new List<Filter>
+                {
+                    new Filter
+                    {
+                        Value = "null",
+                        PropertyName = "Name",
+                        Operator = FilterOperation.Equals,
+                        LogicalOperator = LogicalOperator.AndAlso
+                    },
+                    new Filter
+                    {
+                        Value = "null",
+                        PropertyName = "AgeN",
+                        Operator = FilterOperation.Equals,
+                        CaseSensitive = false
+                    }
+                },
+                UsesCaseInsensitiveSource = true
+            };
+
+            IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(filters).AsQueryable();
+            string paramName = nameof(TestModel).ToLower();
+            string expectedQuery = $"{paramName} => (({paramName}.Name == null) AndAlso ({paramName}.AgeN == null))";
+            var expressionMethodCall = returnedSet.Expression as MethodCallExpression;
+            Assert.NotNull(expressionMethodCall);
+            /* First member of the MethodCallExpression.Arguments is always the type that the expression was written for
+             * and the second parameter is the actual expression string.
+             */
+            Assert.Equal(expectedQuery, ((MethodCallExpression)expressionMethodCall.Arguments[0]).Arguments[1].ToString());
+            Assert.Equal(123, returnedSet.ElementAt(0).Age);
+        }
 
         [Fact]
         public void Apply_filters_should_append_sorting_options_to_the_given_query()
