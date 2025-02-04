@@ -480,6 +480,11 @@ namespace DynamicQueryBuilder
                 convertedValue = DateTime.SpecifyKind(dateTimeValue, DateTimeKind.Utc).ToUniversalTime();
             }
 
+            if (convertedValue is DateTime dateTimeValue)
+            {
+                convertedValue = DateTime.SpecifyKind(dateTimeValue, DateTimeKind.Utc).ToUniversalTime();
+            }
+
             Expression constant = Expression.Constant(convertedValue);
 
             switch (filter.Operator)
