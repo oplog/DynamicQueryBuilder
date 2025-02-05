@@ -52,7 +52,7 @@ namespace DynamicQueryBuilder.Strategies
 
         public static Expression ToLowerIfCaseInsensitive(Expression exp, bool usesCaseInsensitiveComparison)
         {
-            return usesCaseInsensitiveComparison ? Expression.Call(exp, ExtensionMethods.ToLowerMethod) : exp;
+            return exp != null && usesCaseInsensitiveComparison ? Expression.Call(exp, ExtensionMethods.ToLowerMethod) : exp;
         }
     }
 }
