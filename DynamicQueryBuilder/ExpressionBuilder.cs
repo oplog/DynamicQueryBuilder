@@ -474,11 +474,6 @@ namespace DynamicQueryBuilder
                        : stringFilterValue?.ToLowerInvariant())
                     : null;
             }
-            
-            if (convertedValue is DateTime dateTimeValue)
-            {
-                convertedValue = DateTime.SpecifyKind(dateTimeValue, DateTimeKind.Utc).ToUniversalTime();
-            }
 
             if (convertedValue is DateTime dateTimeValue)
             {
