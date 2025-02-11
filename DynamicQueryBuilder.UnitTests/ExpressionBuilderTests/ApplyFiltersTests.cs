@@ -35,7 +35,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
         public void ApplyFilterShouldBeAbleToHandleMemberQueries_Any()
         {
             IQueryable<TestModel> returnedSet = PrepareForMemberQuery(FilterOperation.Any);
-            Assert.Equal(2, returnedSet.Count());
+            Assert.Equal(3, returnedSet.Count());
             Assert.Equal("testOne", returnedSet.ElementAt(0).Name);
             Assert.Equal("testTwo", returnedSet.ElementAt(1).Name);
         }
@@ -125,7 +125,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
                     new Filter
                     {
                         Value = "null",
-                        PropertyName = "Name",
+                        PropertyName = "NameN",
                         Operator = FilterOperation.Equals,
                         LogicalOperator = LogicalOperator.AndAlso
                     },
@@ -142,7 +142,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             IQueryable<TestModel> returnedSet = currentSet.ApplyFilters(filters).AsQueryable();
             string paramName = nameof(TestModel).ToLower();
-            string expectedQuery = $"{paramName} => (({paramName}.Name == null) AndAlso ({paramName}.AgeN == null))";
+            string expectedQuery = $"{paramName} => (({paramName}.NameN == null) AndAlso ({paramName}.AgeN == null))";
             var expressionMethodCall = returnedSet.Expression as MethodCallExpression;
             Assert.NotNull(expressionMethodCall);
             /* First member of the MethodCallExpression.Arguments is always the type that the expression was written for
@@ -180,9 +180,9 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             Assert.Equal(resultOfAscendingOption.ElementAt(2).Age, currentSet.ElementAt(1).Age);
 
             IQueryable<TestModel> resultOfDescendingOption = currentSet.ApplyFilters(descendingSortingOptions);
-            Assert.Equal(resultOfDescendingOption.ElementAt(0).Age, currentSet.ElementAt(1).Age);
-            Assert.Equal(resultOfDescendingOption.ElementAt(1).Age, currentSet.ElementAt(2).Age);
-            Assert.Equal(resultOfDescendingOption.ElementAt(2).Age, currentSet.ElementAt(0).Age);
+            Assert.Equal(resultOfDescendingOption.ElementAt(0).Age, currentSet.ElementAt(3).Age);
+            Assert.Equal(resultOfDescendingOption.ElementAt(1).Age, currentSet.ElementAt(1).Age);
+            Assert.Equal(resultOfDescendingOption.ElementAt(2).Age, currentSet.ElementAt(2).Age);
 
             IQueryable<TestModel> resultOfDirectionNotSpecified = currentSet.ApplyFilters(directionNotSpecifiedSortingOptions);
             Assert.Equal(resultOfDirectionNotSpecified.ElementAt(0).Age, currentSet.ElementAt(0).Age);
@@ -341,9 +341,10 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
 
             List<TestModel> result = currentSet.ApplyFilters(filters).ToList();
             Assert.NotEmpty(result);
-            Assert.Equal(2, result.Count);
+            Assert.Equal(3, result.Count);
             Assert.Equal(currentSet.ElementAtOrDefault(0), result[0]);
             Assert.Equal(currentSet.ElementAtOrDefault(1), result[1]);
+            Assert.Equal(currentSet.ElementAtOrDefault(3), result[2]);
         }
 
         [Theory]
@@ -365,7 +366,7 @@ namespace DynamicQueryBuilder.UnitTests.ExpressionBuilderTests
             };
 
             List<TestModel> result = currentSet.ApplyFilters(filters).ToList();
-            Assert.Equal(expectedMonths.Count(), result.Count());
+            Assert.Equal(expectedMonths.Count, result.Count);
 
             foreach (Months resultMonth in result.Select(x => x.Month))
             {

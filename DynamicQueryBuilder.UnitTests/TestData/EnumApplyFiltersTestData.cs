@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace DynamicQueryBuilder.UnitTests.TestData
 {
-    public class EnumApplyFiltersTestData
+    public static class EnumApplyFiltersTestData
     {
         public static IEnumerable<object[]> Data
         {
@@ -14,13 +14,13 @@ namespace DynamicQueryBuilder.UnitTests.TestData
                 yield return new object[] { Months.November, FilterOperation.Equals, new List<Months> { Months.November } };
 
                 // NotEqual
-                yield return new object[] { Months.November, FilterOperation.NotEqual, new List<Months> { Months.February, Months.April } };
+                yield return new object[] { Months.November, FilterOperation.NotEqual, new List<Months> { Months.February, Months.April, Months.May } };
 
                 // GreaterThan
-                yield return new object[] { Months.February, FilterOperation.GreaterThan, new List<Months> { Months.April, Months.November } };
+                yield return new object[] { Months.February, FilterOperation.GreaterThan, new List<Months> { Months.April, Months.May, Months.November } };
 
                 // GreaterThanOrEqual
-                yield return new object[] { Months.February, FilterOperation.GreaterThanOrEqual, new List<Months> { Months.February, Months.April, Months.November } };
+                yield return new object[] { Months.February, FilterOperation.GreaterThanOrEqual, new List<Months> { Months.February, Months.April, Months.May, Months.November } };
 
                 // LessThan
                 yield return new object[] { Months.April, FilterOperation.LessThan, new List<Months> { Months.February } };
