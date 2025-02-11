@@ -14,29 +14,7 @@ namespace DynamicQueryBuilder.UnitTests.TestData
                 {
                     Age = 10,
                     Name = "testOne",
-                    Month = Months.February,
-                    InnerTestModels = new List<InnerTestModel>
-                    {
-                        new InnerTestModel
-                        {
-                            Role = "Admin"
-                        },
-                        new InnerTestModel
-                        {
-                            Role = "User"
-                        }
-                    },
-                    InnerPrimitiveList = new List<string>
-                    {
-                        "1",
-                        "2",
-                        "3"
-                    }
-                },
-                new TestModel
-                {
-                    Age = 123,
-                    Name = null,
+                    NameN = "testOne",
                     Month = Months.February,
                     InnerTestModels = new List<InnerTestModel>
                     {
@@ -60,6 +38,7 @@ namespace DynamicQueryBuilder.UnitTests.TestData
                 {
                     Age = 12,
                     Name = "testThree",
+                    NameN = "testThree",
                     Month = Months.April,
                     InnerTestModels = new List<InnerTestModel>
                     {
@@ -83,6 +62,7 @@ namespace DynamicQueryBuilder.UnitTests.TestData
                 {
                     Age = 11,
                     Name = "testTwo",
+                    NameN = "testTwo",
                     Month = Months.November,
                     InnerTestModels = new List<InnerTestModel>
                     {
@@ -101,6 +81,30 @@ namespace DynamicQueryBuilder.UnitTests.TestData
                         "7",
                         "7"
                     }
+                },
+                new TestModel
+                {
+	                Age = 123,
+	                Name = "testFour",
+	                NameN = null,
+	                Month = Months.May,
+	                InnerTestModels = new List<InnerTestModel>
+	                {
+		                new InnerTestModel
+		                {
+			                Role = "Admin"
+		                },
+		                new InnerTestModel
+		                {
+			                Role = "User"
+		                }
+	                },
+	                InnerPrimitiveList = new List<string>
+	                {
+		                "1",
+		                "2",
+		                "3"
+	                }
                 }
             }.AsQueryable();
         }

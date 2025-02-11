@@ -9,6 +9,8 @@ namespace DynamicQueryBuilder.UnitTests.TestModels
         public int? AgeN { get; set; }
 
         public string Name { get; set; }
+        
+        public string NameN { get; set; }
 
         public Months Month { get; set; }
 
